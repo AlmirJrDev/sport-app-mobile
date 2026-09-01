@@ -1,0 +1,157 @@
+import { getPlayer } from "../player/identity";
+import { readGames, updateGame, writeGames } from "./store";
+import { endsAt } from "./types";
+import type { Coordinates, Game, NewGame } from "./types";
+
+const EARTH_RADIUS_KM = 6371;
+
+export const GRACE_MINUTES = 30;
+export const PURGE_AFTER_HOURS = 24;
+
+function toRadians(degrees: number): number {
+    return (degrees * Math.PI) / 180;
+}
+
+export function distanceInKm(from: Coordinates, to: Coordinates): number {
+    const deltaLat = toRadians(to.latitude - from.latitude);
+    const deltaLon = toRadians(to.longitude - from.longitude);
+
+    const a =
+        Math.sin(deltaLat / 2) ** 2 +
+        Math.cos(toRadians(from.latitude)) *
+            Math.cos(toRadians(to.latitude)) *
+            Math.sin(deltaLon / 2) ** 2;
+
+    return EARTH_RADIUS_KM * 2 * Math.asin(Math.sqrt(a));
+}
+
+export function isVisible(game: Game, now = Date.now()): boolean {
+    if (game.status === "encerrado") {
+        return false;
+    }
+
+    return now < endsAt(game).getTime() + GRACE_MINUTES * 60 * 1000;
+}
+
+function isPurgeable(game: Game, now = Date.now()): boolean {
+    return now > endsAt(game).getTime() + PURGE_AFTER_HOURS * 60 * 60 * 1000;
+}
+
+async function loadLiveGames(): Promise<Game[]> {
+    const games = await readGames();
+    const kept = games.filter((game) => !isPurgeable(game));
+
+    if (kept.length !== games.length) {
+        await writeGames(kept);
+    }
+
+    return kept;
+}
+
+export async function listNearbyGames(
+    center: Coordinates,
+    radiusKm: number,
+): Promise<Game[]> {
+    const games = await loadLiveGames();
+    const horizon = Date.now() + 24 * 60 * 60 * 1000;
+
+    return games
+        .filter(
+            (game) =>
+                isVisible(game) &&
+                new Date(game.startsAt).getTime() <= horizon &&
+                distanceInKm(center, game.coordinates) <= radiusKm,
+        )
+        .sort(
+            (a, b) =>
+                new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+        );
+}
+
+export async function getGame(gameId: string): Promise<Game | null> {
+    const games = await loadLiveGames();
+
+    return games.find((game) => game.id === gameId) ?? null;
+}
+
+export async function createGame(input: NewGame): Promise<Game> {
+    const [games, player] = await Promise.all([readGames(), getPlayer()]);
+
+    const game: Game = {
+        ...input,
+        id: `gm-${Date.now().toString(36)}`,
+        ownerId: player.id,
+        status: "aberto",
+        attendees: [],
+        score: { home: 0, away: 0 },
+    };
+
+    await writeGames([...games, game]);
+
+    return game;
+}
+
+export async function deleteGame(gameId: string): Promise<void> {
+    const games = await readGames();
+
+    await writeGames(games.filter((game) => game.id !== gameId));
+}
+
+export async function toggleAttendance(gameId: string): Promise<Game | null> {
+    const player = await getPlayer();
+
+    return updateGame(gameId, (game) => {
+        const already = game.attendees.some(
+            (attendee) => attendee.playerId === player.id,
+        );
+
+        if (already) {
+            return {
+                ...game,
+                attendees: game.attendees.filter(
+                    (attendee) => attendee.playerId !== player.id,
+                ),
+            };
+        }
+
+        return {
+            ...game,
+            attendees: [
+                ...game.attendees,
+                { playerId: player.id, name: player.name, arrived: false },
+            ],
+        };
+    });
+}
+
+export async function toggleArrival(gameId: string): Promise<Game | null> {
+    const player = await getPlayer();
+
+    return updateGame(gameId, (game) => ({
+        ...game,
+        attendees: game.attendees.map((attendee) =>
+            attendee.playerId === player.id
+                ? { ...attendee, arrived: !attendee.arrived }
+                : attendee,
+        ),
+    }));
+}
+
+export async function addPoints(
+    gameId: string,
+    side: "home" | "away",
+    points: number,
+): Promise<Game | null> {
+    return updateGame(gameId, (game) => ({
+        ...game,
+        status: game.status === "aberto" ? "em-andamento" : game.status,
+        score: {
+            ...game.score,
+            [side]: Math.max(0, game.score[side] + points),
+        },
+    }));
+}
+
+export async function finishGame(gameId: string): Promise<Game | null> {
+    return updateGame(gameId, (game) => ({ ...game, status: "encerrado" }));
+}

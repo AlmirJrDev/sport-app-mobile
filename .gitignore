@@ -39,3 +39,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+.expo-export/
+
+# scratch local
+tunnel-*.log
+tunnel-*.err
+tunnel-result.txt
+tunnel-retry.ps1

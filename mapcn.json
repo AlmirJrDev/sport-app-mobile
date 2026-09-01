@@ -1,0 +1,91 @@
+{
+  "$schema": "https://mapcn-rn.dev/schema/mapcn.json",
+  "schemaVersion": 2,
+  "renderer": "maplibre",
+  "provider": {
+    "id": "carto",
+    "envKey": null
+  },
+  "styling": "none",
+  "aliases": {
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks",
+    "components": "@/components"
+  },
+  "components": {
+    "core": {
+      "version": "2.0.0",
+      "files": [
+        {
+          "path": "lib/mapcn/types.ts",
+          "hash": "sha256-665d57efefd60b0e"
+        },
+        {
+          "path": "lib/mapcn/geo.ts",
+          "hash": "sha256-324b546ee6ae6d4e"
+        },
+        {
+          "path": "lib/mapcn/colors.ts",
+          "hash": "sha256-c4691d1900c7f3e7"
+        },
+        {
+          "path": "lib/mapcn/scale.ts",
+          "hash": "sha256-c4d3fe85f71c152a"
+        },
+        {
+          "path": "lib/mapcn/provider.ts",
+          "hash": "sha256-16529c2ea80c87a2"
+        },
+        {
+          "path": "lib/mapcn/style.ts",
+          "hash": "sha256-7e9e3cfec61c4132"
+        },
+        {
+          "path": "components/ui/mapcn/map-types.ts",
+          "hash": "sha256-c628c9e20e2165c9"
+        }
+      ]
+    },
+    "map": {
+      "version": "2.0.0",
+      "files": [
+        {
+          "path": "components/ui/mapcn/map.tsx",
+          "hash": "sha256-d4824f1cf3f5897b"
+        },
+        {
+          "path": "components/ui/mapcn/map-renderer.tsx",
+          "hash": "sha256-11ac48274723798e"
+        }
+      ]
+    },
+    "marker": {
+      "version": "2.0.0",
+      "files": [
+        {
+          "path": "components/ui/mapcn/map-marker.tsx",
+          "hash": "sha256-e791880c9b5b6d52"
+        }
+      ]
+    },
+    "location": {
+      "version": "2.0.0",
+      "files": [
+        {
+          "path": "hooks/use-location-tracking.ts",
+          "hash": "sha256-ec06266e9f53b919"
+        }
+      ]
+    },
+    "location-puck": {
+      "version": "2.0.0",
+      "files": [
+        {
+          "path": "components/ui/mapcn/map-location-puck.tsx",
+          "hash": "sha256-3217764be7dab42c"
+        }
+      ]
+    }
+  }
+}

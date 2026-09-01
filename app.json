@@ -1,25 +1,48 @@
 {
   "expo": {
-    "name": "sport-app-mobile",
+    "name": "Projeto H",
     "slug": "sport-app-mobile",
+    "scheme": "projetoh",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.projetoh.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "O Projeto H usa sua localização para mostrar os jogos acontecendo perto de você."
+      }
     },
     "android": {
+      "package": "com.projetoh.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Projeto H usa sua localização para mostrar os jogos acontecendo perto de você."
+        }
+      ],
+      "@maplibre/maplibre-react-native",
+      "expo-font"
+    ]
   }
 }
