@@ -1,8 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { AuthError, isValidEmail, signUp } from "../src/auth/account";
+import {
+    AuthError,
+    isValidEmail,
+    passwordProblems,
+    register,
+    signIn,
+    verifyEmail,
+} from "../src/auth/account";
+import {
+    clearPending,
+    readPending,
+    savePending,
+} from "../src/auth/pending";
+import { toIsoDate, ufToCode } from "../src/auth/uf";
 import { useSession } from "../src/auth/useSession";
 import { colors, spacing, type } from "../src/design/tokens";
 import { Button, Card, Eyebrow, Field } from "../src/design/ui";
@@ -11,35 +24,72 @@ export default function SignUpScreen() {
     const router = useRouter();
     const { reload } = useSession();
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [step, setStep] = useState<1 | 2>(1);
+    const [verifyToken, setVerifyToken] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
 
-    const nameError =
-        name.length > 0 && name.trim().length < 2 ? "Nome muito curto." : "";
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    useEffect(() => {
+        let active = true;
+
+        readPending().then((pending) => {
+            if (active && pending) {
+                setEmail(pending.email);
+                setVerifyToken(pending.token);
+                setStep(2);
+                setNotice(
+                    "Você já tinha começado um cadastro com esse e-mail. Continuando de onde parou.",
+                );
+            }
+        });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [uf, setUf] = useState("");
+    const [city, setCity] = useState("");
+    const [birthDate, setBirthDate] = useState("");
+
     const emailError =
         email.length > 0 && !isValidEmail(email) ? "E-mail inválido." : "";
+    const missing = passwordProblems(password);
     const passwordError =
-        password.length > 0 && password.length < 6
-            ? "Use pelo menos 6 caracteres."
+        password.length > 0 && missing.length > 0
+            ? `Falta: ${missing.join(", ")}.`
             : "";
 
-    const canSubmit =
-        name.trim().length >= 2 &&
-        isValidEmail(email) &&
-        password.length >= 6 &&
+    const canSubmitStep1 =
+        isValidEmail(email) && missing.length === 0 && !busy;
+
+    const ufCode = ufToCode(uf);
+    const isoBirth = toIsoDate(birthDate);
+    const canSubmitStep2 =
+        firstName.trim().length >= 2 &&
+        lastName.trim().length >= 2 &&
+        phone.replace(/\D/g, "").length >= 10 &&
+        ufCode !== null &&
+        city.trim().length >= 2 &&
+        isoBirth !== null &&
         !busy;
 
-    const handleSubmit = async () => {
+    const handleStep1 = async () => {
         setBusy(true);
         setError(null);
 
         try {
-            await signUp(name, email, password);
-            reload();
-            router.replace("/");
+            const token = await register(email, password);
+            await savePending({ email: email.trim(), token });
+            setVerifyToken(token);
+            setStep(2);
         } catch (raw) {
             setError(
                 raw instanceof AuthError
@@ -51,55 +101,163 @@ export default function SignUpScreen() {
         }
     };
 
+    const handleStep2 = async () => {
+        if (ufCode === null || isoBirth === null) {
+            return;
+        }
+
+        setBusy(true);
+        setError(null);
+
+        try {
+            await verifyEmail(verifyToken, {
+                firstName,
+                lastName,
+                phone: phone.replace(/\D/g, ""),
+                uf: ufCode,
+                city,
+                birthDate: isoBirth,
+            });
+
+            await clearPending();
+
+            if (!password) {
+                router.replace("/entrar");
+                return;
+            }
+
+            await signIn(email, password);
+            reload();
+            router.replace("/");
+        } catch (raw) {
+            setError(
+                raw instanceof AuthError
+                    ? raw.message
+                    : "Não deu para concluir o cadastro.",
+            );
+        } finally {
+            setBusy(false);
+        }
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.content}>
             <View style={styles.header}>
-                <Eyebrow>Projeto H</Eyebrow>
-                <Text style={[type.displayMd, styles.title]}>Criar conta</Text>
-                <Text style={[type.bodyMd, styles.lead]}>
-                    Seu nome é o que os outros jogadores veem na lista de
-                    presença.
+                <Eyebrow>{step === 1 ? "Passo 1 de 2" : "Passo 2 de 2"}</Eyebrow>
+                <Text style={[type.displayMd, styles.title]}>
+                    {step === 1 ? "Criar conta" : "Seus dados"}
                 </Text>
+                <Text style={[type.bodyMd, styles.lead]}>
+                    {step === 1
+                        ? "Comece com e-mail e senha."
+                        : "Seu nome é o que os outros jogadores veem na lista de presença."}
+                </Text>
+
+                {notice ? (
+                    <Text style={[type.bodySm, styles.notice]}>{notice}</Text>
+                ) : null}
             </View>
 
-            <Card style={styles.card}>
-                <Field
-                    label="Nome"
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Como te chamam na quadra"
-                    error={nameError}
-                />
+            {step === 1 ? (
+                <Card style={styles.card}>
+                    <Field
+                        label="E-mail"
+                        value={email}
+                        onChangeText={setEmail}
+                        placeholder="voce@email.com"
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        error={emailError}
+                    />
 
-                <Field
-                    label="E-mail"
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="voce@email.com"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    error={emailError}
-                />
+                    <Field
+                        label="Senha"
+                        value={password}
+                        onChangeText={setPassword}
+                        placeholder="8+ com maiúscula, número e símbolo"
+                        secureTextEntry
+                        error={passwordError}
+                    />
 
-                <Field
-                    label="Senha"
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Mínimo 6 caracteres"
-                    secureTextEntry
-                    error={passwordError}
-                />
+                    {error ? (
+                        <Text style={[type.bodySm, styles.error]}>{error}</Text>
+                    ) : null}
 
-                {error ? (
-                    <Text style={[type.bodySm, styles.error]}>{error}</Text>
-                ) : null}
+                    <Button
+                        label={busy ? "Enviando…" : "Continuar"}
+                        onPress={handleStep1}
+                        disabled={!canSubmitStep1}
+                    />
+                </Card>
+            ) : (
+                <Card style={styles.card}>
+                    <Field
+                        label="Nome"
+                        value={firstName}
+                        onChangeText={setFirstName}
+                        placeholder="Almir"
+                    />
 
-                <Button
-                    label={busy ? "Criando…" : "Criar conta"}
-                    onPress={handleSubmit}
-                    disabled={!canSubmit}
-                />
-            </Card>
+                    <Field
+                        label="Sobrenome"
+                        value={lastName}
+                        onChangeText={setLastName}
+                        placeholder="Gomes"
+                    />
+
+                    <Field
+                        label="Telefone"
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder="19999999999"
+                        keyboardType="phone-pad"
+                    />
+
+                    <Field
+                        label="Cidade"
+                        value={city}
+                        onChangeText={setCity}
+                        placeholder="Campinas"
+                    />
+
+                    <Field
+                        label="Estado (UF)"
+                        value={uf}
+                        onChangeText={setUf}
+                        placeholder="SP"
+                        autoCapitalize="characters"
+                        maxLength={2}
+                        error={
+                            uf.length === 2 && ufCode === null
+                                ? "UF não existe."
+                                : ""
+                        }
+                    />
+
+                    <Field
+                        label="Data de nascimento"
+                        value={birthDate}
+                        onChangeText={setBirthDate}
+                        placeholder="20/05/1998"
+                        maxLength={10}
+                        error={
+                            birthDate.length === 10 && isoBirth === null
+                                ? "Data inválida."
+                                : ""
+                        }
+                    />
+
+                    {error ? (
+                        <Text style={[type.bodySm, styles.error]}>{error}</Text>
+                    ) : null}
+
+                    <Button
+                        label={busy ? "Concluindo…" : "Concluir cadastro"}
+                        onPress={handleStep2}
+                        disabled={!canSubmitStep2}
+                    />
+                </Card>
+            )}
 
             <View style={styles.footer}>
                 <Text style={[type.bodySm, styles.lead]}>Já tem conta?</Text>
@@ -133,6 +291,9 @@ const styles = StyleSheet.create({
     },
     error: {
         color: colors.primary,
+    },
+    notice: {
+        color: colors.ink,
     },
     footer: {
         flexDirection: "row",

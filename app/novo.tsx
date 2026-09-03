@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     Pressable,
@@ -10,6 +10,13 @@ import {
 } from "react-native";
 
 import GameMap from "../src/components/GameMap";
+import {
+    listModalities,
+    listSports,
+    prettify,
+    type Modality,
+    type Sport,
+} from "../src/api/catalog";
 import { colors, font, radius, spacing, type } from "../src/design/tokens";
 import { createGame } from "../src/games/service";
 import {
@@ -119,6 +126,11 @@ export default function NewGameScreen() {
     };
 
     const [point, setPoint] = useState<Coordinates>(initialPoint);
+    const [sports, setSports] = useState<Sport[]>([]);
+    const [modalities, setModalities] = useState<Modality[]>([]);
+    const [sportId, setSportId] = useState("");
+    const [modalityId, setModalityId] = useState("");
+    const [offline, setOffline] = useState(false);
     const [sport, setSport] = useState(SPORTS[0]);
     const [modality, setModality] = useState(MODALITIES[SPORTS[0]][0]);
     const [placeName, setPlaceName] = useState("");
@@ -128,16 +140,91 @@ export default function NewGameScreen() {
     const [level, setLevel] = useState<SkillLevel>("intermediario");
     const [spots, setSpots] = useState("10");
     const [saving, setSaving] = useState(false);
+    const [notice, setNotice] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+
+        listSports()
+            .then(async (list) => {
+                if (!active || list.length === 0) {
+                    return;
+                }
+
+                setSports(list);
+                setSportId(list[0].id);
+                setSport(prettify(list[0].description));
+
+                const mods = await listModalities(list[0].id);
+
+                if (active && mods.length > 0) {
+                    setModalities(mods);
+                    setModalityId(mods[0].id);
+                    setModality(mods[0].description);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setOffline(true);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     const startsAt = composeStart(dayOffset, time);
     const isPast = startsAt !== null && startsAt.getTime() < Date.now();
     const canSave =
         placeName.trim().length > 0 && startsAt !== null && !isPast && !saving;
 
-    const handleSelectSport = (value: string) => {
+    const handleSelectSport = async (value: string) => {
+        if (offline) {
+            setSport(value);
+            setModality(MODALITIES[value][0]);
+            return;
+        }
+
+        const chosen = sports.find((one) => prettify(one.description) === value);
+
+        if (!chosen) {
+            return;
+        }
+
         setSport(value);
-        setModality(MODALITIES[value][0]);
+        setSportId(chosen.id);
+        setModalities([]);
+        setModality("");
+        setModalityId("");
+
+        const mods = await listModalities(chosen.id);
+
+        setModalities(mods);
+
+        if (mods.length > 0) {
+            setModality(mods[0].description);
+            setModalityId(mods[0].id);
+        }
     };
+
+    const handleSelectModality = (value: string) => {
+        setModality(value);
+
+        const chosen = modalities.find((one) => one.description === value);
+
+        if (chosen) {
+            setModalityId(chosen.id);
+        }
+    };
+
+    const sportOptions = offline
+        ? SPORTS
+        : sports.map((one) => prettify(one.description));
+
+    const modalityOptions = offline
+        ? MODALITIES[sport] ?? []
+        : modalities.map((one) => one.description);
 
     const handleSave = async () => {
         if (!startsAt) {
@@ -145,17 +232,29 @@ export default function NewGameScreen() {
         }
 
         setSaving(true);
+        setNotice(null);
 
-        await createGame({
-            sport,
-            modality,
-            placeName: placeName.trim(),
-            startsAt: startsAt.toISOString(),
-            durationMinutes,
-            level,
-            spots: Math.max(2, Number(spots) || 10),
-            coordinates: point,
-        });
+        const { fallbackReason } = await createGame(
+            {
+                sport,
+                modality,
+                placeName: placeName.trim(),
+                startsAt: startsAt.toISOString(),
+                durationMinutes,
+                level,
+                spots: Math.max(2, Number(spots) || 10),
+                coordinates: point,
+            },
+            { sportId, modalityId },
+        );
+
+        if (fallbackReason) {
+            setSaving(false);
+            setNotice(
+                `Não deu para salvar na API (${fallbackReason}). Marquei como jogo de demonstração, só neste aparelho.`,
+            );
+            return;
+        }
 
         router.back();
     };
@@ -187,16 +286,16 @@ export default function NewGameScreen() {
 
             <OptionRow
                 label="Esporte"
-                options={SPORTS}
+                options={sportOptions}
                 selected={sport}
                 onSelect={handleSelectSport}
             />
 
             <OptionRow
                 label="Modalidade"
-                options={MODALITIES[sport]}
+                options={modalityOptions}
                 selected={modality}
-                onSelect={setModality}
+                onSelect={handleSelectModality}
             />
 
             <View style={styles.field}>
@@ -325,6 +424,8 @@ export default function NewGameScreen() {
                 />
             </View>
 
+            {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+
             <Pressable
                 style={[styles.save, !canSave && styles.saveDisabled]}
                 disabled={!canSave}
@@ -419,6 +520,10 @@ const styles = StyleSheet.create({
     timeInput: {
         width: 90,
         textAlign: "center",
+    },
+    notice: {
+        ...type.bodySm,
+        color: colors.primary,
     },
     save: {
         alignItems: "center",

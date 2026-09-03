@@ -1,4 +1,6 @@
 import { getPlayer } from "../player/identity";
+import { readOverlay, writeOverlay } from "./overlay";
+import { createRemoteGame, getRemoteGame, listRemoteGames } from "./remote";
 import { readGames, updateGame, writeGames } from "./store";
 import { endsAt } from "./types";
 import type { Coordinates, Game, NewGame } from "./types";
@@ -37,7 +39,7 @@ function isPurgeable(game: Game, now = Date.now()): boolean {
     return now > endsAt(game).getTime() + PURGE_AFTER_HOURS * 60 * 60 * 1000;
 }
 
-async function loadLiveGames(): Promise<Game[]> {
+async function loadLocalGames(): Promise<Game[]> {
     const games = await readGames();
     const kept = games.filter((game) => !isPurgeable(game));
 
@@ -52,43 +54,90 @@ export async function listNearbyGames(
     center: Coordinates,
     radiusKm: number,
 ): Promise<Game[]> {
-    const games = await loadLiveGames();
     const horizon = Date.now() + 24 * 60 * 60 * 1000;
 
-    return games
-        .filter(
-            (game) =>
-                isVisible(game) &&
-                new Date(game.startsAt).getTime() <= horizon &&
-                distanceInKm(center, game.coordinates) <= radiusKm,
-        )
-        .sort(
-            (a, b) =>
-                new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-        );
+    const local = (await loadLocalGames()).filter(
+        (game) =>
+            isVisible(game) &&
+            new Date(game.startsAt).getTime() <= horizon &&
+            distanceInKm(center, game.coordinates) <= radiusKm,
+    );
+
+    let remote: Game[] = [];
+
+    try {
+        remote = (await listRemoteGames(center, radiusKm)).filter(isVisible);
+    } catch {
+        // API fora do ar ou sem rede: o mapa segue com os jogos locais
+    }
+
+    return [...remote, ...local].sort(
+        (a, b) =>
+            new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
 }
 
 export async function getGame(gameId: string): Promise<Game | null> {
-    const games = await loadLiveGames();
+    const local = await loadLocalGames();
+    const found = local.find((game) => game.id === gameId);
 
-    return games.find((game) => game.id === gameId) ?? null;
+    if (found) {
+        return found;
+    }
+
+    return getRemoteGame(gameId);
 }
 
-export async function createGame(input: NewGame): Promise<Game> {
-    const [games, player] = await Promise.all([readGames(), getPlayer()]);
+async function isLocal(gameId: string): Promise<boolean> {
+    const local = await readGames();
 
-    const game: Game = {
-        ...input,
-        id: `gm-${Date.now().toString(36)}`,
-        ownerId: player.id,
-        status: "aberto",
-        attendees: [],
-        score: { home: 0, away: 0 },
-    };
+    return local.some((game) => game.id === gameId);
+}
 
-    await writeGames([...games, game]);
+export interface CreateResult {
+    game: Game;
+    fallbackReason: string | null;
+}
 
-    return game;
+export async function createGame(
+    input: NewGame,
+    ids: { sportId: string; modalityId: string },
+): Promise<CreateResult> {
+    try {
+        const game = await createRemoteGame({
+            sport_id: ids.sportId,
+            modality_id: ids.modalityId,
+            place_name: input.placeName,
+            starts_at: input.startsAt,
+            duration_minutes: input.durationMinutes,
+            level: input.level,
+            spots: input.spots,
+            latitude: input.coordinates.latitude,
+            longitude: input.coordinates.longitude,
+        });
+
+        return { game, fallbackReason: null };
+    } catch (raw) {
+        const reason =
+            raw instanceof Error ? raw.message : "A API recusou o jogo.";
+
+        const games = await readGames();
+        const player = await getPlayer().catch(() => null);
+
+        const game: Game = {
+            ...input,
+            source: "local",
+            id: `gm-${Date.now().toString(36)}`,
+            ownerId: player?.id ?? "local",
+            status: "aberto",
+            attendees: [],
+            score: { home: 0, away: 0 },
+        };
+
+        await writeGames([...games, game]);
+
+        return { game, fallbackReason: reason };
+    }
 }
 
 export async function deleteGame(gameId: string): Promise<void> {
@@ -100,41 +149,57 @@ export async function deleteGame(gameId: string): Promise<void> {
 export async function toggleAttendance(gameId: string): Promise<Game | null> {
     const player = await getPlayer();
 
-    return updateGame(gameId, (game) => {
-        const already = game.attendees.some(
+    const toggle = (attendees: Game["attendees"]) => {
+        const already = attendees.some(
             (attendee) => attendee.playerId === player.id,
         );
 
-        if (already) {
-            return {
-                ...game,
-                attendees: game.attendees.filter(
-                    (attendee) => attendee.playerId !== player.id,
-                ),
-            };
-        }
+        return already
+            ? attendees.filter((attendee) => attendee.playerId !== player.id)
+            : [
+                  ...attendees,
+                  { playerId: player.id, name: player.name, arrived: false },
+              ];
+    };
 
-        return {
+    if (await isLocal(gameId)) {
+        return updateGame(gameId, (game) => ({
             ...game,
-            attendees: [
-                ...game.attendees,
-                { playerId: player.id, name: player.name, arrived: false },
-            ],
-        };
-    });
+            attendees: toggle(game.attendees),
+        }));
+    }
+
+    await writeOverlay(gameId, (current) => ({
+        ...current,
+        attendees: toggle(current.attendees),
+    }));
+
+    return getRemoteGame(gameId);
 }
 
 export async function toggleArrival(gameId: string): Promise<Game | null> {
     const player = await getPlayer();
 
-    return updateGame(gameId, (game) => ({
-        ...game,
-        attendees: game.attendees.map((attendee) =>
+    const flip = (attendees: Game["attendees"]) =>
+        attendees.map((attendee) =>
             attendee.playerId === player.id
                 ? { ...attendee, arrived: !attendee.arrived }
                 : attendee,
-        ),
+        );
+
+    if (await isLocal(gameId)) {
+        return updateGame(gameId, (game) => ({
+            ...game,
+            attendees: flip(game.attendees),
+        }));
+    }
+
+    await writeOverlay(gameId, (current) => ({
+        ...current,
+        attendees: flip(current.attendees),
     }));
+
+    return getRemoteGame(gameId);
 }
 
 export async function addPoints(
@@ -142,16 +207,41 @@ export async function addPoints(
     side: "home" | "away",
     points: number,
 ): Promise<Game | null> {
-    return updateGame(gameId, (game) => ({
-        ...game,
-        status: game.status === "aberto" ? "em-andamento" : game.status,
+    if (await isLocal(gameId)) {
+        return updateGame(gameId, (game) => ({
+            ...game,
+            status: game.status === "aberto" ? "em-andamento" : game.status,
+            score: {
+                ...game.score,
+                [side]: Math.max(0, game.score[side] + points),
+            },
+        }));
+    }
+
+    await writeOverlay(gameId, (current) => ({
+        ...current,
         score: {
-            ...game.score,
-            [side]: Math.max(0, game.score[side] + points),
+            ...current.score,
+            [side]: Math.max(0, current.score[side] + points),
         },
     }));
+
+    return getRemoteGame(gameId);
 }
 
 export async function finishGame(gameId: string): Promise<Game | null> {
-    return updateGame(gameId, (game) => ({ ...game, status: "encerrado" }));
+    if (await isLocal(gameId)) {
+        return updateGame(gameId, (game) => ({
+            ...game,
+            status: "encerrado",
+        }));
+    }
+
+    await writeOverlay(gameId, (current) => ({ ...current, finished: true }));
+
+    return getRemoteGame(gameId);
+}
+
+export async function readOverlayFor(gameId: string) {
+    return readOverlay(gameId);
 }

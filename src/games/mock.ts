@@ -22,6 +22,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-01",
             ownerId: "seed",
+            source: "local",
             sport: "Basquete",
             modality: "3x3",
             placeName: "Quadra do Taquaral",
@@ -40,6 +41,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-02",
             ownerId: "seed",
+            source: "local",
             sport: "Futsal",
             modality: "5x5",
             placeName: "Ginásio do Cambuí",
@@ -58,6 +60,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-03",
             ownerId: "seed",
+            source: "local",
             sport: "Vôlei",
             modality: "4x4",
             placeName: "Areia do Parque Portugal",
@@ -73,6 +76,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-04",
             ownerId: "seed",
+            source: "local",
             sport: "Basquete",
             modality: "5x5",
             placeName: "Praça Arautos da Paz",
@@ -102,6 +106,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-05",
             ownerId: "seed",
+            source: "local",
             sport: "Futebol",
             modality: "Society 7x7",
             placeName: "Society Barão Geraldo",
@@ -117,6 +122,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-06",
             ownerId: "seed",
+            source: "local",
             sport: "Futsal",
             modality: "5x5",
             placeName: "Quadra do Jardim Aurélia",
@@ -132,6 +138,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-07",
             ownerId: "seed",
+            source: "local",
             sport: "Basquete",
             modality: "3x3",
             placeName: "Quadra da Vila Industrial",
@@ -147,6 +154,7 @@ export function seedGames(): Game[] {
         {
             id: "gm-08",
             ownerId: "seed",
+            source: "local",
             sport: "Vôlei",
             modality: "6x6",
             placeName: "Ginásio da Unicamp",

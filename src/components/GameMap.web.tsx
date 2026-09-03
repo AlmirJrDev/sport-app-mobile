@@ -81,7 +81,15 @@ export default function GameMap({
             element.style.height = `${size}px`;
             element.style.borderRadius = "50%";
             element.style.border = `2px solid ${colors.canvas}`;
-            element.style.backgroundColor = isSelected ? colors.primary : colors.ink;
+            const isDemo = game.source === "local";
+
+            element.style.backgroundColor = isSelected
+                ? colors.primary
+                : isDemo
+                  ? colors.canvas
+                  : colors.ink;
+            element.style.borderColor =
+                isSelected || !isDemo ? colors.canvas : colors.ink;
             element.style.boxShadow = "0 1px 4px rgba(0,0,0,0.4)";
             element.style.cursor = "pointer";
 

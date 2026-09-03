@@ -57,6 +57,14 @@ export default function GameSheet({
                 </Pressable>
             </View>
 
+            {game.source === "local" ? (
+                <View style={styles.demo}>
+                    <Text style={[type.caption, styles.demoLabel]}>
+                        Demonstração · só neste aparelho
+                    </Text>
+                </View>
+            ) : null}
+
             <View style={styles.facts}>
                 <Text style={[type.bodySm, styles.fact]}>
                     {timeFormatter.format(new Date(game.startsAt))}
@@ -146,6 +154,17 @@ const styles = StyleSheet.create({
         rowGap: spacing.xs,
     },
     fact: {
+        color: colors.bodyMid,
+    },
+    demo: {
+        alignSelf: "flex-start",
+        paddingVertical: spacing.xxs,
+        paddingHorizontal: spacing.sm,
+        borderRadius: radius.pill,
+        borderWidth: 1,
+        borderColor: colors.mute,
+    },
+    demoLabel: {
         color: colors.bodyMid,
     },
     live: {

@@ -18,7 +18,10 @@ export interface Score {
     away: number;
 }
 
+export type GameSource = "api" | "local";
+
 export interface Game {
+    source: GameSource;
     id: string;
     ownerId: string;
     sport: string;

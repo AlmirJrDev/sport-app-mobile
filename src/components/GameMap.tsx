@@ -52,6 +52,7 @@ export default function GameMap({
                     <View
                         style={[
                             styles.pin,
+                            game.source === "local" && styles.pinDemo,
                             selectedGameId === game.id && styles.pinSelected,
                         ]}
                     />
@@ -71,10 +72,15 @@ const styles = StyleSheet.create({
         backgroundColor: colors.ink,
         elevation: 4,
     },
+    pinDemo: {
+        backgroundColor: colors.canvas,
+        borderColor: colors.ink,
+    },
     pinSelected: {
         width: 26,
         height: 26,
         borderRadius: 13,
         backgroundColor: colors.primary,
+        borderColor: colors.canvas,
     },
 });
