@@ -24,6 +24,7 @@ import {
     endsAt,
     type Game,
 } from "../../src/games/types";
+import { addToCalendar } from "../../src/calendar/addToCalendar";
 import { getPlayer } from "../../src/player/identity";
 
 const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -99,6 +100,17 @@ export default function GameScreen() {
                     Termina {timeFormatter.format(endsAt(game))} ·{" "}
                     {game.durationMinutes} min
                 </Text>
+
+                {!isFinished ? (
+                    <Pressable
+                        style={styles.calendario}
+                        onPress={() => addToCalendar(game)}
+                    >
+                        <Text style={styles.calendarioTexto}>
+                            Adicionar ao calendário
+                        </Text>
+                    </Pressable>
+                ) : null}
             </View>
 
             <View style={styles.block}>
@@ -326,6 +338,20 @@ const styles = StyleSheet.create({
     },
     finishLabel: {
         ...type.bodySm,
+        fontFamily: font.semibold,
+        color: colors.ink,
+    },
+    calendario: {
+        alignSelf: "flex-start",
+        marginTop: 6,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: colors.mute,
+    },
+    calendarioTexto: {
+        ...type.caption,
         fontFamily: font.semibold,
         color: colors.ink,
     },

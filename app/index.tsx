@@ -11,6 +11,7 @@ import {
 import { useLocationTracking } from "@/hooks/use-location-tracking";
 import { signOut } from "../src/auth/account";
 import { useSession } from "../src/auth/useSession";
+import GameList from "../src/components/GameList";
 import GameMap from "../src/components/GameMap";
 import GameSheet from "../src/components/GameSheet";
 import { colors, radius, spacing, type } from "../src/design/tokens";
@@ -36,6 +37,7 @@ export default function MapScreen() {
     const [games, setGames] = useState<Game[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [mapCenter, setMapCenter] = useState<Coordinates | null>(null);
+    const [vista, setVista] = useState<"mapa" | "lista">("mapa");
 
     const center: Coordinates = coordinate
         ? { longitude: coordinate[0], latitude: coordinate[1] }
@@ -105,6 +107,32 @@ export default function MapScreen() {
     const semLocalizacao = permission === "denied" || status === "error";
     const selectedGame = games.find((game) => game.id === selectedId) ?? null;
 
+    const alternador = (
+        <View style={styles.alternador}>
+            {(["mapa", "lista"] as const).map((opcao) => (
+                <Pressable
+                    key={opcao}
+                    style={[
+                        styles.aba,
+                        vista === opcao && styles.abaAtiva,
+                    ]}
+                    onPress={() => setVista(opcao)}
+                >
+                    <Text
+                        style={[
+                            type.buttonSm,
+                            vista === opcao
+                                ? styles.abaTextoAtivo
+                                : styles.abaTexto,
+                        ]}
+                    >
+                        {opcao === "mapa" ? "Mapa" : "Lista"}
+                    </Text>
+                </Pressable>
+            ))}
+        </View>
+    );
+
     const handleToggleJoin = async () => {
         if (!selectedGame) {
             return;
@@ -140,14 +168,24 @@ export default function MapScreen() {
                 </View>
             ) : null}
 
-            <GameMap
-                center={center}
-                games={games}
-                selectedGameId={selectedId}
-                onSelectGame={(game) => setSelectedId(game.id)}
-                onClearSelection={() => setSelectedId(null)}
-                onCenterChange={setMapCenter}
-            />
+            {alternador}
+
+            {vista === "mapa" ? (
+                <GameMap
+                    center={center}
+                    games={games}
+                    selectedGameId={selectedId}
+                    onSelectGame={(game) => setSelectedId(game.id)}
+                    onClearSelection={() => setSelectedId(null)}
+                    onCenterChange={setMapCenter}
+                />
+            ) : (
+                <GameList
+                    games={games}
+                    center={center}
+                    onOpen={(game) => router.push(`/jogo/${game.id}`)}
+                />
+            )}
 
             {selectedGame ? (
                 <GameSheet
@@ -223,5 +261,29 @@ const styles = StyleSheet.create({
     },
     avisoAcao: {
         color: colors.primary,
+    },
+    alternador: {
+        flexDirection: "row",
+        gap: spacing.xs,
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.md,
+        paddingBottom: spacing.sm,
+    },
+    aba: {
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        borderRadius: radius.pill,
+        borderWidth: 1,
+        borderColor: colors.mute,
+    },
+    abaAtiva: {
+        borderColor: "transparent",
+        backgroundColor: colors.ink,
+    },
+    abaTexto: {
+        color: colors.body,
+    },
+    abaTextoAtivo: {
+        color: colors.onPrimary,
     },
 });
