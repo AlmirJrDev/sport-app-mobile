@@ -34,7 +34,7 @@ export async function listSports(): Promise<Sport[]> {
         return sportsCache;
     }
 
-    const { data } = await apiFetch<Sport[]>("/sports");
+    const { data } = await apiFetch<Sport[]>("/sports", { auth: true });
     sportsCache = Array.isArray(data) ? data : [];
 
     return sportsCache;
@@ -49,6 +49,7 @@ export async function listModalities(sportId: string): Promise<Modality[]> {
 
     const { data } = await apiFetch<Modality[]>(
         `/sports/${sportId}/modalities`,
+        { auth: true },
     );
     const list = Array.isArray(data) ? data : [];
 

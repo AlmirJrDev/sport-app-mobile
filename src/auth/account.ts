@@ -209,13 +209,11 @@ export async function getSession(): Promise<Account | null> {
         return cached;
     }
 
-    if (await hasToken()) {
-        const fresh = await loadMe();
+    const fresh = await loadMe();
 
-        if (fresh) {
-            await saveAccount(fresh);
-            return fresh;
-        }
+    if (fresh) {
+        await saveAccount(fresh);
+        return fresh;
     }
 
     const stored = await AsyncStorage.getItem(ACCOUNT_KEY);

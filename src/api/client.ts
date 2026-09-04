@@ -1,6 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
-export const API_BASE = "https://api--sport-app--cjlm46fp2mm6.code.run";
+export const API_ORIGIN = "https://api--sport-app--cjlm46fp2mm6.code.run";
+
+/**
+ * No web passamos pelo proxy da Vercel para ficar na mesma origem: o cookie
+ * de sessão é SameSite=Lax e o navegador não o envia entre domínios.
+ * No nativo não existe origem, então falamos direto com a API.
+ */
+export const API_BASE = Platform.OS === "web" ? "/api" : API_ORIGIN;
 
 const ACCESS_KEY = "projetoh:access_token";
 const REFRESH_KEY = "projetoh:refresh_token";
@@ -196,7 +204,7 @@ export async function apiFetch<T>(
         }
     }
 
-    if (response.status === 401 && auth && retryOn401 && refreshToken) {
+    if (response.status === 401 && auth && retryOn401) {
         const renewed = await refreshSession();
 
         if (renewed) {

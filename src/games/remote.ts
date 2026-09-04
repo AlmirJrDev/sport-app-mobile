@@ -69,7 +69,9 @@ export async function listRemoteGames(
         radius: String(Math.round(radiusKm * 1000)),
     });
 
-    const { data } = await apiFetch<ApiGame[]>(`/games/map?${query}`);
+    const { data } = await apiFetch<ApiGame[]>(`/games/map?${query}`, {
+        auth: true,
+    });
     const list = Array.isArray(data) ? data : [];
 
     return Promise.all(list.map(toGame));
@@ -77,7 +79,9 @@ export async function listRemoteGames(
 
 export async function getRemoteGame(id: string): Promise<Game | null> {
     try {
-        const { data } = await apiFetch<ApiGame>(`/games/${id}`);
+        const { data } = await apiFetch<ApiGame>(`/games/${id}`, {
+            auth: true,
+        });
 
         return data ? toGame(data) : null;
     } catch {
