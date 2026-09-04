@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
     ApiError,
     apiFetch,
@@ -6,6 +8,8 @@ import {
     pickTokens,
     setTokens,
 } from "../api/client";
+
+const ACCOUNT_KEY = "projetoh:account";
 
 export interface Account {
     id: string;
@@ -146,19 +150,47 @@ export async function signIn(
     const account = await loadMe();
 
     if (account) {
+        await saveAccount(account);
         return account;
     }
 
-    const detalhe = describePayload(raw);
+    const fromBody = accountFromLogin(raw, email);
+
+    if (fromBody) {
+        await saveAccount(fromBody);
+        cached = fromBody;
+
+        return fromBody;
+    }
 
     throw new ApiError(
-        tokens.access
-            ? `Peguei o token no login, mas /users/me recusou. Resposta do login — ${detalhe}`
-            : `O login não devolveu token no corpo e o cookie não autenticou /users/me. Resposta do login — ${detalhe}`,
+        `O login não devolveu token nem perfil. Resposta — ${describePayload(raw)}`,
         500,
         [],
         raw,
     );
+}
+
+/**
+ * O login responde com o perfil mas sem token: os tokens vão só em cookie,
+ * que não atravessa domínios. Dá para saber quem entrou, não para chamar
+ * rota autenticada.
+ */
+function accountFromLogin(raw: unknown, email: string): Account | null {
+    if (!raw || typeof raw !== "object") {
+        return null;
+    }
+
+    const body = raw as Record<string, unknown>;
+    const first = typeof body.first_name === "string" ? body.first_name : "";
+    const last = typeof body.last_name === "string" ? body.last_name : "";
+    const name = `${first} ${last}`.trim();
+
+    if (!name) {
+        return null;
+    }
+
+    return { id: email.trim().toLowerCase(), name, email: email.trim() };
 }
 
 async function loadMe(): Promise<Account | null> {
@@ -177,13 +209,28 @@ export async function getSession(): Promise<Account | null> {
         return cached;
     }
 
-    const stored = await hasToken();
+    if (await hasToken()) {
+        const fresh = await loadMe();
 
-    if (!stored) {
-        return null;
+        if (fresh) {
+            await saveAccount(fresh);
+            return fresh;
+        }
     }
 
-    return loadMe();
+    const stored = await AsyncStorage.getItem(ACCOUNT_KEY);
+
+    if (stored) {
+        cached = JSON.parse(stored) as Account;
+        return cached;
+    }
+
+    return null;
+}
+
+async function saveAccount(account: Account): Promise<void> {
+    cached = account;
+    await AsyncStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
 }
 
 export async function signOut(): Promise<void> {
@@ -194,5 +241,6 @@ export async function signOut(): Promise<void> {
     }
 
     cached = null;
+    await AsyncStorage.removeItem(ACCOUNT_KEY);
     await setTokens(null, null);
 }

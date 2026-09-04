@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import {
@@ -23,11 +23,13 @@ import { Button, Card, Eyebrow, Field } from "../src/design/ui";
 export default function SignUpScreen() {
     const router = useRouter();
     const { reload } = useSession();
+    const { token: tokenFromLink } = useLocalSearchParams<{ token?: string }>();
 
     const [step, setStep] = useState<1 | 2>(1);
     const [verifyToken, setVerifyToken] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
+    const [sent, setSent] = useState(false);
     const [busy, setBusy] = useState(false);
 
     const [email, setEmail] = useState("");
@@ -35,6 +37,16 @@ export default function SignUpScreen() {
 
     useEffect(() => {
         let active = true;
+
+        if (tokenFromLink) {
+            setVerifyToken(tokenFromLink);
+            setStep(2);
+            setNotice(
+                "E-mail confirmado. Complete seus dados para concluir o cadastro.",
+            );
+
+            return;
+        }
 
         readPending().then((pending) => {
             if (active && pending) {
@@ -50,7 +62,7 @@ export default function SignUpScreen() {
         return () => {
             active = false;
         };
-    }, []);
+    }, [tokenFromLink]);
 
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -89,7 +101,7 @@ export default function SignUpScreen() {
             const token = await register(email, password);
             await savePending({ email: email.trim(), token });
             setVerifyToken(token);
-            setStep(2);
+            setSent(true);
         } catch (raw) {
             setError(
                 raw instanceof AuthError
@@ -158,7 +170,26 @@ export default function SignUpScreen() {
                 ) : null}
             </View>
 
-            {step === 1 ? (
+            {sent ? (
+                <Card style={styles.card}>
+                    <Text style={[type.bodyMd, styles.title]}>
+                        Confira seu e-mail
+                    </Text>
+                    <Text style={[type.bodySm, styles.lead]}>
+                        Enviamos um link para {email}. Abra ele para completar
+                        seus dados e concluir o cadastro.
+                    </Text>
+
+                    <Button
+                        label="Continuar aqui mesmo"
+                        variant="tertiary"
+                        onPress={() => {
+                            setSent(false);
+                            setStep(2);
+                        }}
+                    />
+                </Card>
+            ) : step === 1 ? (
                 <Card style={styles.card}>
                     <Field
                         label="E-mail"
