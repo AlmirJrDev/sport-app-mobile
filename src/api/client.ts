@@ -8,7 +8,12 @@ export const API_ORIGIN = "https://api--sport-app--cjlm46fp2mm6.code.run";
  * de sessão é SameSite=Lax e o navegador não o envia entre domínios.
  * No nativo não existe origem, então falamos direto com a API.
  */
-export const API_BASE = Platform.OS === "web" ? "/api" : API_ORIGIN;
+export const API_PREFIX = "/v1";
+
+export const API_BASE =
+    Platform.OS === "web"
+        ? `/api${API_PREFIX}`
+        : `${API_ORIGIN}${API_PREFIX}`;
 
 const ACCESS_KEY = "projetoh:access_token";
 const REFRESH_KEY = "projetoh:refresh_token";
