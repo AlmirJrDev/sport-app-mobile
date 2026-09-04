@@ -102,21 +102,7 @@ export default function MapScreen() {
         );
     }
 
-    if (permission === "denied" || status === "error") {
-        return (
-            <View style={styles.centered}>
-                {header}
-                <Text style={[type.bodyMd, styles.message]}>
-                    {permission === "denied"
-                        ? "Sem a localização não dá para mostrar os jogos perto de você."
-                        : "Não consegui pegar sua localização."}
-                </Text>
-
-                <Button label="Tentar de novo" onPress={start} />
-            </View>
-        );
-    }
-
+    const semLocalizacao = permission === "denied" || status === "error";
     const selectedGame = games.find((game) => game.id === selectedId) ?? null;
 
     const handleToggleJoin = async () => {
@@ -139,6 +125,20 @@ export default function MapScreen() {
     return (
         <View style={styles.container}>
             {header}
+
+            {semLocalizacao ? (
+                <View style={styles.aviso}>
+                    <Text style={[type.bodySm, styles.avisoTexto]}>
+                        Sem a sua localização, o mapa abre em Campinas.
+                    </Text>
+
+                    <Pressable onPress={start} hitSlop={8}>
+                        <Text style={[type.buttonSm, styles.avisoAcao]}>
+                            Usar minha localização
+                        </Text>
+                    </Pressable>
+                </View>
+            ) : null}
 
             <GameMap
                 center={center}
@@ -205,5 +205,23 @@ const styles = StyleSheet.create({
     },
     counterLabel: {
         color: colors.body,
+    },
+    aviso: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: spacing.md,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        backgroundColor: colors.canvasSoft,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.mute,
+    },
+    avisoTexto: {
+        flex: 1,
+        color: colors.body,
+    },
+    avisoAcao: {
+        color: colors.primary,
     },
 });
