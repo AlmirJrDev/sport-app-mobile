@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, spacing, type } from "../design/tokens";
-import { distanceInKm } from "../games/service";
+import { distanceFor } from "../games/service";
 import { SKILL_LABEL, currentStatus, type Coordinates, type Game } from "../games/types";
 
 const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -34,7 +34,7 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
     return (
         <ScrollView contentContainerStyle={styles.lista}>
             {games.map((game) => {
-                const distancia = distanceInKm(center, game.coordinates);
+                const distancia = distanceFor(game, center);
                 const chegaram = game.attendees.filter(
                     (one) => one.arrived,
                 ).length;

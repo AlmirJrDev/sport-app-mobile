@@ -76,6 +76,7 @@ export default function GameScreen() {
     const isFull = game.attendees.length >= game.spots && !me;
     const isFinished = currentStatus(game) === "encerrado";
     const isOwner = game.ownerId === playerId;
+    const travado = isFull || (Boolean(me) && game.source === "api");
 
     const run = async (action: Promise<Game | null>) => {
         const updated = await action;
@@ -100,6 +101,12 @@ export default function GameScreen() {
                     Termina {timeFormatter.format(endsAt(game))} ·{" "}
                     {game.durationMinutes} min
                 </Text>
+
+                {game.creatorName ? (
+                    <Text style={styles.subtitle}>
+                        Marcado por {game.creatorName}
+                    </Text>
+                ) : null}
 
                 {!isFinished ? (
                     <Pressable
@@ -197,17 +204,19 @@ export default function GameScreen() {
                         style={[
                             styles.action,
                             styles.actionPrimary,
-                            isFull && styles.actionDisabled,
+                            travado && styles.actionDisabled,
                         ]}
-                        disabled={isFull}
+                        disabled={travado}
                         onPress={() => run(toggleAttendance(game.id))}
                     >
                         <Text style={styles.actionPrimaryLabel}>
                             {isFull
                                 ? "Sem vagas"
-                                : me
-                                  ? "Cancelar presença"
-                                  : "Vou jogar"}
+                                : !me
+                                  ? "Vou jogar"
+                                  : game.source === "api"
+                                    ? "Confirmado"
+                                    : "Cancelar presença"}
                         </Text>
                     </Pressable>
 

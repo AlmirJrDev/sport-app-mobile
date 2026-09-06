@@ -97,12 +97,14 @@ export default function GameSheet({
                     label={
                         isFull
                             ? "Sem vagas"
-                            : isJoined
-                              ? "Cancelar presença"
-                              : "Vou jogar"
+                            : !isJoined
+                              ? "Vou jogar"
+                              : game.source === "api"
+                                ? "Confirmado"
+                                : "Cancelar presença"
                     }
                     variant={isJoined ? "secondary" : "primary"}
-                    disabled={isFull}
+                    disabled={isFull || (isJoined && game.source === "api")}
                     onPress={onToggleJoin}
                     style={styles.action}
                 />

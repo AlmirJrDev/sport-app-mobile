@@ -1,6 +1,11 @@
 import { getPlayer } from "../player/identity";
 import { readOverlay, writeOverlay } from "./overlay";
-import { createRemoteGame, getRemoteGame, listRemoteGames } from "./remote";
+import {
+    createRemoteGame,
+    getRemoteGame,
+    joinRemoteGame,
+    listRemoteGames,
+} from "./remote";
 import { readGames, updateGame, writeGames } from "./store";
 import { endsAt } from "./types";
 import type { Coordinates, Game, NewGame } from "./types";
@@ -25,6 +30,10 @@ export function distanceInKm(from: Coordinates, to: Coordinates): number {
             Math.sin(deltaLon / 2) ** 2;
 
     return EARTH_RADIUS_KM * 2 * Math.asin(Math.sqrt(a));
+}
+
+export function distanceFor(game: Game, from: Coordinates): number {
+    return game.distanceKm ?? distanceInKm(from, game.coordinates);
 }
 
 export function isVisible(game: Game, now = Date.now()): boolean {
@@ -149,32 +158,31 @@ export async function deleteGame(gameId: string): Promise<void> {
 export async function toggleAttendance(gameId: string): Promise<Game | null> {
     const player = await getPlayer();
 
-    const toggle = (attendees: Game["attendees"]) => {
-        const already = attendees.some(
-            (attendee) => attendee.playerId === player.id,
-        );
-
-        return already
-            ? attendees.filter((attendee) => attendee.playerId !== player.id)
-            : [
-                  ...attendees,
-                  { playerId: player.id, name: player.name, arrived: false },
-              ];
-    };
-
     if (await isLocal(gameId)) {
-        return updateGame(gameId, (game) => ({
-            ...game,
-            attendees: toggle(game.attendees),
-        }));
+        return updateGame(gameId, (game) => {
+            const already = game.attendees.some(
+                (attendee) => attendee.playerId === player.id,
+            );
+
+            return {
+                ...game,
+                attendees: already
+                    ? game.attendees.filter(
+                          (attendee) => attendee.playerId !== player.id,
+                      )
+                    : [
+                          ...game.attendees,
+                          {
+                              playerId: player.id,
+                              name: player.name,
+                              arrived: false,
+                          },
+                      ],
+            };
+        });
     }
 
-    await writeOverlay(gameId, (current) => ({
-        ...current,
-        attendees: toggle(current.attendees),
-    }));
-
-    return getRemoteGame(gameId);
+    return joinRemoteGame(gameId);
 }
 
 export async function toggleArrival(gameId: string): Promise<Game | null> {

@@ -24,6 +24,10 @@ export interface Game {
     source: GameSource;
     id: string;
     ownerId: string;
+    /** Nome de quem marcou, quando a API informa. */
+    creatorName?: string;
+    /** Distância calculada pelo servidor, em km. */
+    distanceKm?: number;
     sport: string;
     modality: string;
     placeName: string;

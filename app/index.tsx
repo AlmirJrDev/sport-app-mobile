@@ -18,7 +18,7 @@ import { colors, radius, spacing, type } from "../src/design/tokens";
 import { Button } from "../src/design/ui";
 import { FALLBACK_CENTER } from "../src/games/mock";
 import {
-    distanceInKm,
+    distanceFor,
     listNearbyGames,
     toggleAttendance,
 } from "../src/games/service";
@@ -190,7 +190,7 @@ export default function MapScreen() {
             {selectedGame ? (
                 <GameSheet
                     game={selectedGame}
-                    distanceKm={distanceInKm(center, selectedGame.coordinates)}
+                    distanceKm={distanceFor(selectedGame, center)}
                     isJoined={selectedGame.attendees.some(
                         (one) => one.playerId === account.id,
                     )}
