@@ -33,6 +33,7 @@ export default function MapScreen() {
     });
 
     const [games, setGames] = useState<Game[]>([]);
+    const [erroApi, setErroApi] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [mapCenter, setMapCenter] = useState<Coordinates | null>(null);
     const [vista, setVista] = useState<"mapa" | "lista">("mapa");
@@ -47,7 +48,10 @@ export default function MapScreen() {
         status === "starting";
 
     const refresh = useCallback(() => {
-        listNearbyGames(center, RADIUS_KM).then(setGames);
+        listNearbyGames(center, RADIUS_KM).then((resultado) => {
+            setGames(resultado.games);
+            setErroApi(resultado.remoteError);
+        });
     }, [center.latitude, center.longitude]);
 
     useFocusEffect(
@@ -165,6 +169,17 @@ export default function MapScreen() {
                 ) : null}
 
                 {alternador}
+
+                {erroApi ? (
+                    <View style={styles.falha}>
+                        <Text style={[type.label, styles.falhaRotulo]}>
+                            Só demonstração
+                        </Text>
+                        <Text style={[type.caption, styles.falhaTexto]}>
+                            {erroApi}
+                        </Text>
+                    </View>
+                ) : null}
             </View>
 
             {selectedGame ? (
@@ -274,6 +289,19 @@ const styles = StyleSheet.create({
     },
     avisoAcao: {
         color: colors.primary,
+    },
+    falha: {
+        marginHorizontal: spacing.lg,
+        padding: spacing.md,
+        borderRadius: radius.sm,
+        backgroundColor: colors.ink,
+        gap: spacing.xxs,
+    },
+    falhaRotulo: {
+        color: colors.primary,
+    },
+    falhaTexto: {
+        color: colors.onPrimary,
     },
     alternador: {
         flexDirection: "row",

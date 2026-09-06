@@ -59,10 +59,15 @@ async function loadLocalGames(): Promise<Game[]> {
     return kept;
 }
 
+export interface NearbyGames {
+    games: Game[];
+    remoteError: string | null;
+}
+
 export async function listNearbyGames(
     center: Coordinates,
     radiusKm: number,
-): Promise<Game[]> {
+): Promise<NearbyGames> {
     const horizon = Date.now() + 24 * 60 * 60 * 1000;
 
     const local = (await loadLocalGames()).filter(
@@ -73,17 +78,21 @@ export async function listNearbyGames(
     );
 
     let remote: Game[] = [];
+    let remoteError: string | null = null;
 
     try {
         remote = (await listRemoteGames(center, radiusKm)).filter(isVisible);
-    } catch {
-        // API fora do ar ou sem rede: o mapa segue com os jogos locais
+    } catch (raw) {
+        remoteError =
+            raw instanceof Error ? raw.message : "Não deu para falar com a API.";
     }
 
-    return [...remote, ...local].sort(
+    const games = [...remote, ...local].sort(
         (a, b) =>
             new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
     );
+
+    return { games, remoteError };
 }
 
 export async function getGame(gameId: string): Promise<Game | null> {
