@@ -126,7 +126,7 @@ export default function SignUpScreen() {
                 firstName,
                 lastName,
                 phone: phone.replace(/\D/g, ""),
-                uf: ufCode,
+                uf: uf.trim().toUpperCase(),
                 city,
                 birthDate: isoBirth,
             });

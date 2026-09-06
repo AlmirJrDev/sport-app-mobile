@@ -21,7 +21,7 @@ export interface ProfileInput {
     firstName: string;
     lastName: string;
     phone: string;
-    uf: number;
+    uf: string;
     city: string;
     birthDate: string;
 }
@@ -128,7 +128,7 @@ export async function verifyEmail(
             first_name: profile.firstName.trim(),
             last_name: profile.lastName.trim(),
             phone: profile.phone.trim(),
-            uf: profile.uf,
+            uf: profile.uf.trim().toUpperCase(),
             city: profile.city.trim(),
             birth_date: profile.birthDate,
         },

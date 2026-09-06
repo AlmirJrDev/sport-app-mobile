@@ -1,4 +1,5 @@
 import { API_BASE, apiFetch } from "../api/client";
+import { formatUf } from "../auth/uf";
 
 interface ApiSport {
     id: string;
@@ -34,11 +35,13 @@ function fullName(api: ApiProfile): string {
 }
 
 function place(api: ApiProfile): string | null {
-    if (api.city && api.uf) {
-        return `${api.city}, ${api.uf}`;
+    const uf = formatUf(api.uf);
+
+    if (api.city && uf) {
+        return `${api.city}, ${uf}`;
     }
 
-    return api.city ?? api.uf ?? null;
+    return api.city ?? uf ?? null;
 }
 
 export interface ProfileEdit {

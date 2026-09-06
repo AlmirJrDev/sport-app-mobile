@@ -53,3 +53,22 @@ export function toIsoDate(input: string): string | null {
 
     return `${year}-${month}-${day}`;
 }
+
+const UF_BY_CODE: Record<string, string> = Object.fromEntries(
+    Object.entries(UF_CODES).map(([sigla, codigo]) => [String(codigo), sigla]),
+);
+
+/** Contas antigas guardaram o código do IBGE ("35"); as novas guardam "SP". */
+export function formatUf(value: string | number | null | undefined): string | null {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    const bruto = String(value).trim();
+
+    if (bruto === "") {
+        return null;
+    }
+
+    return UF_BY_CODE[bruto] ?? bruto.toUpperCase();
+}
