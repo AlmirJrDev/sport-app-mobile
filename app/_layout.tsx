@@ -64,6 +64,10 @@ export default function RootLayout() {
                     options={{ title: "Editar perfil" }}
                 />
                 <Stack.Screen
+                    name="atleta/[id]"
+                    options={{ title: "Atleta" }}
+                />
+                <Stack.Screen
                     name="entrar"
                     options={{ title: "Entrar", headerShown: false }}
                 />

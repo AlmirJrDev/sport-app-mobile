@@ -91,6 +91,15 @@ export async function updateProfile(
     });
 }
 
+/** A resposta só serve se vier objeto com id — fora disso é HTML ou erro. */
+function isProfile(data: unknown): data is ApiProfile {
+    return (
+        typeof data === "object" &&
+        data !== null &&
+        typeof (data as ApiProfile).id === "string"
+    );
+}
+
 function toProfile(data: ApiProfile): Profile {
     return {
         id: data.id,
@@ -112,7 +121,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
             auth: true,
         });
 
-        return data ? toProfile(data) : null;
+        return isProfile(data) ? toProfile(data) : null;
     } catch {
         return null;
     }
@@ -125,7 +134,7 @@ export async function getMyProfile(): Promise<Profile | null> {
             auth: true,
         });
 
-        return data ? toProfile(data) : null;
+        return isProfile(data) ? toProfile(data) : null;
     } catch {
         return null;
     }

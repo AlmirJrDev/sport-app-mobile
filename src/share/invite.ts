@@ -32,6 +32,19 @@ export function gameLink(game: Game): string {
     return `${APP_URL}/jogo/${game.id}`;
 }
 
+export function profileLink(userId: string): string {
+    return `${APP_URL}/atleta/${userId}`;
+}
+
+export function profileText(nome: string, userId: string): string {
+    return [
+        `${nome} no Projeto H.`,
+        "Veja o perfil e chame para jogar:",
+        "",
+        profileLink(userId),
+    ].join("\n");
+}
+
 export function inviteText(game: Game): string {
     const vagas = Math.max(0, game.spots - game.attendees.length);
 

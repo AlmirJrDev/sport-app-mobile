@@ -23,6 +23,8 @@ import {
     ATHLETE_STATS,
 } from "../../src/mock/athlete";
 import { getMyProfile, type Profile } from "../../src/profile/remote";
+import { profileText } from "../../src/share/invite";
+import { shareInvite } from "../../src/share/share";
 
 const TREND_LABEL = {
     up: "↑",
@@ -117,14 +119,34 @@ export default function PerfilScreen() {
                     </Text>
                 )}
 
-                <Pressable
-                    style={styles.editar}
-                    onPress={() => router.push("/perfil/editar")}
-                >
-                    <Text style={[type.label, styles.editarTexto]}>
-                        Editar perfil
-                    </Text>
-                </Pressable>
+                <View style={styles.acoes}>
+                    <Pressable
+                        style={styles.editar}
+                        onPress={() => router.push("/perfil/editar")}
+                    >
+                        <Text style={[type.label, styles.editarTexto]}>
+                            Editar perfil
+                        </Text>
+                    </Pressable>
+
+                    {perfil ? (
+                        <Pressable
+                            style={styles.editar}
+                            onPress={() =>
+                                shareInvite(
+                                    profileText(
+                                        perfil.name || nome,
+                                        perfil.id,
+                                    ),
+                                )
+                            }
+                        >
+                            <Text style={[type.label, styles.editarTexto]}>
+                                Compartilhar
+                            </Text>
+                        </Pressable>
+                    ) : null}
+                </View>
             </View>
 
             <Secao titulo="Rankings">
@@ -288,6 +310,12 @@ const styles = StyleSheet.create({
     bio: {
         color: colors.body,
         textAlign: "center",
+    },
+    acoes: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "center",
+        gap: spacing.sm,
     },
     editar: {
         marginTop: spacing.md,
