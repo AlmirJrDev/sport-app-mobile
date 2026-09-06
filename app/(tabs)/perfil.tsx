@@ -22,7 +22,7 @@ import {
     ATHLETE_SEASON,
     ATHLETE_STATS,
 } from "../../src/mock/athlete";
-import { getProfile, type Profile } from "../../src/profile/remote";
+import { getMyProfile, type Profile } from "../../src/profile/remote";
 
 const TREND_LABEL = {
     up: "↑",
@@ -37,7 +37,7 @@ export default function PerfilScreen() {
 
     useEffect(() => {
         if (account) {
-            getProfile(account.id).then(setPerfil);
+            getMyProfile().then(setPerfil);
         }
     }, [account?.id]);
 

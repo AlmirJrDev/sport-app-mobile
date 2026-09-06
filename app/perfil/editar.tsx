@@ -15,7 +15,7 @@ import { listSports, prettify, type Sport } from "../../src/api/catalog";
 import { colors, radius, spacing, type } from "../../src/design/tokens";
 import { Button, Field } from "../../src/design/ui";
 import { pickImage, type PickedImage } from "../../src/profile/pickImage";
-import { getProfile, updateProfile } from "../../src/profile/remote";
+import { getMyProfile, updateProfile } from "../../src/profile/remote";
 
 export default function EditarPerfilScreen() {
     const router = useRouter();
@@ -27,6 +27,7 @@ export default function EditarPerfilScreen() {
 
     const [foto, setFoto] = useState<PickedImage | null>(null);
     const [fotoAtual, setFotoAtual] = useState<string | null>(null);
+    const [perfilId, setPerfilId] = useState<string | null>(null);
     const [nome, setNome] = useState("");
     const [sobrenome, setSobrenome] = useState("");
     const [bio, setBio] = useState("");
@@ -40,11 +41,13 @@ export default function EditarPerfilScreen() {
             return;
         }
 
-        Promise.all([getProfile(account.id), listSports().catch(() => [])])
+        Promise.all([getMyProfile(), listSports().catch(() => [])])
             .then(([perfil, lista]) => {
                 setEsportes(lista);
 
                 if (perfil) {
+                    setPerfilId(perfil.id);
+
                     const partes = perfil.name.split(" ");
 
                     setNome(partes[0] ?? "");
@@ -81,12 +84,22 @@ export default function EditarPerfilScreen() {
             return;
         }
 
+        const alvo = perfilId ?? account.id;
+
+        if (!alvo || alvo === "sem-id") {
+            setErro(
+                "A API não informou o seu id nesta sessão. Saia e entre de novo.",
+            );
+
+            return;
+        }
+
         setSalvando(true);
         setErro(null);
 
         try {
             await updateProfile(
-                account.id,
+                alvo,
                 {
                     firstName: nome.trim() || undefined,
                     lastName: sobrenome.trim() || undefined,

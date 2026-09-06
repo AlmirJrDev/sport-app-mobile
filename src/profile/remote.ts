@@ -91,28 +91,41 @@ export async function updateProfile(
     });
 }
 
+function toProfile(data: ApiProfile): Profile {
+    return {
+        id: data.id,
+        name: fullName(data),
+        city: place(data),
+        mainSport: data.mainSport?.description ?? null,
+        height: data.height ?? null,
+        weight: data.weight ?? null,
+        bio: data.bio ?? null,
+        avatarUrl: data.avatar_id
+            ? `${API_BASE}/media/${data.avatar_id}`
+            : null,
+    };
+}
+
 export async function getProfile(userId: string): Promise<Profile | null> {
     try {
         const { data } = await apiFetch<ApiProfile>(`/users/${userId}`, {
             auth: true,
         });
 
-        if (!data) {
-            return null;
-        }
+        return data ? toProfile(data) : null;
+    } catch {
+        return null;
+    }
+}
 
-        return {
-            id: data.id,
-            name: fullName(data),
-            city: place(data),
-            mainSport: data.mainSport?.description ?? null,
-            height: data.height ?? null,
-            weight: data.weight ?? null,
-            bio: data.bio ?? null,
-            avatarUrl: data.avatar_id
-                ? `${API_BASE}/media/${data.avatar_id}`
-                : null,
-        };
+/** O próprio perfil vem por rota própria — não depende de saber o id. */
+export async function getMyProfile(): Promise<Profile | null> {
+    try {
+        const { data } = await apiFetch<ApiProfile>("/users/full/me", {
+            auth: true,
+        });
+
+        return data ? toProfile(data) : null;
     } catch {
         return null;
     }

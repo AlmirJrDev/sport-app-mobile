@@ -193,7 +193,26 @@ function accountFromLogin(raw: unknown, email: string): Account | null {
     return { id: email.trim().toLowerCase(), name, email: email.trim() };
 }
 
+/**
+ * /users/me devolve só first_name, last_name e avatar_id — sem id nem e-mail.
+ * O id vem do /users/full/me, e é ele que as rotas de perfil precisam.
+ */
 async function loadMe(): Promise<Account | null> {
+    try {
+        const { raw } = await apiFetch<MeResponse>("/users/full/me", {
+            auth: true,
+        });
+        const completo = toAccount(raw as MeResponse);
+
+        if (completo.id !== "sem-id") {
+            cached = completo;
+
+            return cached;
+        }
+    } catch {
+        // cai para a rota curta abaixo
+    }
+
     try {
         const { raw } = await apiFetch<MeResponse>("/users/me", { auth: true });
         cached = toAccount(raw as MeResponse);
