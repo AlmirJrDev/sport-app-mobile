@@ -53,7 +53,10 @@ export default function RootLayout() {
                     contentStyle: { backgroundColor: colors.canvas },
                 }}
             >
-                <Stack.Screen name="index" options={{ title: "Jogos perto" }} />
+                <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                />
                 <Stack.Screen name="novo" options={{ title: "Marcar jogo" }} />
                 <Stack.Screen name="jogo/[id]" options={{ title: "Jogo" }} />
                 <Stack.Screen

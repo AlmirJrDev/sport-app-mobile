@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Redirect, Stack, useFocusEffect, useRouter } from "expo-router";
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import {
     ActivityIndicator,
     Pressable,
@@ -9,25 +9,24 @@ import {
 } from "react-native";
 
 import { useLocationTracking } from "@/hooks/use-location-tracking";
-import { signOut } from "../src/auth/account";
-import { useSession } from "../src/auth/useSession";
-import GameList from "../src/components/GameList";
-import GameMap from "../src/components/GameMap";
-import GameSheet from "../src/components/GameSheet";
-import { colors, font, radius, spacing, type } from "../src/design/tokens";
-import { FALLBACK_CENTER } from "../src/games/mock";
+import { useSession } from "../../src/auth/useSession";
+import GameList from "../../src/components/GameList";
+import GameMap from "../../src/components/GameMap";
+import GameSheet from "../../src/components/GameSheet";
+import { colors, font, radius, spacing, type } from "../../src/design/tokens";
+import { FALLBACK_CENTER } from "../../src/games/mock";
 import {
     distanceFor,
     listNearbyGames,
     toggleAttendance,
-} from "../src/games/service";
-import type { Coordinates, Game } from "../src/games/types";
+} from "../../src/games/service";
+import type { Coordinates, Game } from "../../src/games/types";
 
 const RADIUS_KM = 10;
 
 export default function MapScreen() {
     const router = useRouter();
-    const { account, loading, reload } = useSession();
+    const { account, loading } = useSession();
     const { coordinate, status, permission, start } = useLocationTracking({
         autoStart: true,
         accuracy: "balanced",
@@ -71,30 +70,9 @@ export default function MapScreen() {
         return <Redirect href="/entrar" />;
     }
 
-    const handleSignOut = async () => {
-        await signOut();
-        reload();
-        router.replace("/entrar");
-    };
-
-    const header = (
-        <Stack.Screen
-            options={{
-                headerRight: () => (
-                    <Pressable onPress={handleSignOut} hitSlop={12}>
-                        <Text style={[type.buttonSm, styles.signOut]}>
-                            Sair
-                        </Text>
-                    </Pressable>
-                ),
-            }}
-        />
-    );
-
     if (isLocating) {
         return (
             <View style={styles.centered}>
-                {header}
                 <ActivityIndicator color={colors.ink} />
                 <Text style={[type.bodyMd, styles.message]}>
                     Procurando você no mapa…
@@ -154,8 +132,6 @@ export default function MapScreen() {
 
     return (
         <View style={styles.container}>
-            {header}
-
             {vista === "mapa" ? (
                 <GameMap
                     center={center}
@@ -235,9 +211,6 @@ const styles = StyleSheet.create({
     message: {
         color: colors.body,
         textAlign: "center",
-    },
-    signOut: {
-        color: colors.ink,
     },
     rodape: {
         position: "absolute",
