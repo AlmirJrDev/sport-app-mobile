@@ -147,6 +147,15 @@ export default function PerfilScreen() {
                         </Pressable>
                     ) : null}
                 </View>
+
+                <Pressable
+                    style={styles.previa}
+                    onPress={() => router.push("/onboarding?novo=1")}
+                >
+                    <Text style={[type.label, styles.previaTexto]}>
+                        Ver onboarding de boas-vindas
+                    </Text>
+                </Pressable>
             </View>
 
             <Secao titulo="Rankings">
@@ -327,6 +336,13 @@ const styles = StyleSheet.create({
     },
     editarTexto: {
         color: colors.ink,
+    },
+    previa: {
+        marginTop: spacing.sm,
+        paddingVertical: spacing.xs,
+    },
+    previaTexto: {
+        color: colors.bodyMid,
     },
     vazio: {
         color: colors.bodyMid,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Redirect, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import {
     ActivityIndicator,
     Image,
@@ -22,7 +22,11 @@ const TOTAL = 3;
 
 export default function OnboardingScreen() {
     const router = useRouter();
+    const { novo } = useLocalSearchParams<{ novo?: string }>();
     const { account, loading, reload } = useSession();
+
+    /** ?novo=1 mostra o fluxo como quem acabou de criar conta vê. */
+    const simulandoNovo = novo === "1";
 
     const [carregando, setCarregando] = useState(true);
     const [salvando, setSalvando] = useState(false);
@@ -52,9 +56,12 @@ export default function OnboardingScreen() {
                 setEsportes(lista);
 
                 if (perfil) {
+                    setPerfilId(perfil.id);
+                }
+
+                if (perfil && !simulandoNovo) {
                     const partes = perfil.name.split(" ");
 
-                    setPerfilId(perfil.id);
                     setNome(partes[0] ?? "");
                     setSobrenome(partes.slice(1).join(" "));
                     setBio(perfil.bio ?? "");
@@ -124,6 +131,12 @@ export default function OnboardingScreen() {
     };
 
     const sair = () => {
+        if (simulandoNovo) {
+            router.back();
+
+            return;
+        }
+
         if (jaTinhaPerfil) {
             router.back();
         } else {
@@ -308,6 +321,14 @@ export default function OnboardingScreen() {
                         multiline
                     />
                 </View>
+            ) : null}
+
+            {simulandoNovo ? (
+                <Text style={[type.caption, styles.aviso]}>
+                    Prévia de como quem acaba de criar conta vê esta tela. Seus
+                    dados atuais não foram carregados, e salvar aqui só grava o
+                    que você preencher.
+                </Text>
             ) : null}
 
             {erro ? (
