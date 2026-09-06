@@ -108,23 +108,25 @@ export default function GameSheet({
             </Pressable>
 
             <View style={styles.rodape}>
-                <Pressable onPress={onOpen} hitSlop={8}>
-                    <Text style={[type.label, styles.link]}>Abrir jogo</Text>
-                </Pressable>
-
-                <Pressable
-                    onPress={() => shareInvite(inviteText(game))}
-                    hitSlop={8}
-                >
-                    <Text style={[type.label, styles.link]}>
-                        Chamar o pessoal
+                <Pressable style={styles.secundario} onPress={onOpen}>
+                    <Text style={[type.label, styles.secundarioTexto]}>
+                        Abrir jogo
                     </Text>
                 </Pressable>
 
-                <Pressable onPress={onClose} hitSlop={8}>
-                    <Text style={[type.label, styles.linkSuave]}>Fechar</Text>
+                <Pressable
+                    style={styles.secundario}
+                    onPress={() => shareInvite(inviteText(game))}
+                >
+                    <Text style={[type.label, styles.secundarioTexto]}>
+                        Convidar
+                    </Text>
                 </Pressable>
             </View>
+
+            <Pressable style={styles.fechar} onPress={onClose}>
+                <Text style={[type.label, styles.fecharTexto]}>Fechar</Text>
+            </Pressable>
         </View>
     );
 }
@@ -227,12 +229,24 @@ const styles = StyleSheet.create({
     },
     rodape: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        gap: spacing.sm,
     },
-    link: {
+    secundario: {
+        flex: 1,
+        alignItems: "center",
+        paddingVertical: spacing.md,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: colors.ink,
+    },
+    secundarioTexto: {
         color: colors.ink,
     },
-    linkSuave: {
+    fechar: {
+        alignItems: "center",
+        paddingVertical: spacing.sm,
+    },
+    fecharTexto: {
         color: colors.bodyMid,
     },
 });
