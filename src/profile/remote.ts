@@ -41,6 +41,56 @@ function place(api: ApiProfile): string | null {
     return api.city ?? api.uf ?? null;
 }
 
+export interface ProfileEdit {
+    firstName?: string;
+    lastName?: string;
+    bio?: string;
+    height?: number;
+    weight?: number;
+    mainSportId?: string;
+}
+
+export async function updateProfile(
+    userId: string,
+    dados: ProfileEdit,
+    avatar?: { uri: string; name: string; type: string; file?: unknown } | null,
+): Promise<void> {
+    const form = new FormData();
+
+    const campos: Record<string, string | undefined> = {
+        first_name: dados.firstName,
+        last_name: dados.lastName,
+        bio: dados.bio,
+        height: dados.height !== undefined ? String(dados.height) : undefined,
+        weight: dados.weight !== undefined ? String(dados.weight) : undefined,
+        main_sport: dados.mainSportId,
+    };
+
+    for (const [chave, valor] of Object.entries(campos)) {
+        if (valor !== undefined && valor !== "") {
+            form.append(chave, valor);
+        }
+    }
+
+    if (avatar) {
+        if (avatar.file) {
+            form.append("avatar", avatar.file as Blob, avatar.name);
+        } else {
+            form.append("avatar", {
+                uri: avatar.uri,
+                name: avatar.name,
+                type: avatar.type,
+            } as unknown as Blob);
+        }
+    }
+
+    await apiFetch(`/users/${userId}`, {
+        method: "PATCH",
+        body: form,
+        auth: true,
+    });
+}
+
 export async function getProfile(userId: string): Promise<Profile | null> {
     try {
         const { data } = await apiFetch<ApiProfile>(`/users/${userId}`, {

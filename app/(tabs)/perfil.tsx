@@ -116,6 +116,15 @@ export default function PerfilScreen() {
                         Esporte, altura e cidade ainda não preenchidos.
                     </Text>
                 )}
+
+                <Pressable
+                    style={styles.editar}
+                    onPress={() => router.push("/perfil/editar")}
+                >
+                    <Text style={[type.label, styles.editarTexto]}>
+                        Editar perfil
+                    </Text>
+                </Pressable>
             </View>
 
             <Secao titulo="Rankings">
@@ -279,6 +288,17 @@ const styles = StyleSheet.create({
     bio: {
         color: colors.body,
         textAlign: "center",
+    },
+    editar: {
+        marginTop: spacing.md,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: colors.ink,
+    },
+    editarTexto: {
+        color: colors.ink,
     },
     vazio: {
         color: colors.bodyMid,

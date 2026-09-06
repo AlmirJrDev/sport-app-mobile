@@ -60,6 +60,10 @@ export default function RootLayout() {
                 <Stack.Screen name="novo" options={{ title: "Marcar jogo" }} />
                 <Stack.Screen name="jogo/[id]" options={{ title: "Jogo" }} />
                 <Stack.Screen
+                    name="perfil/editar"
+                    options={{ title: "Editar perfil" }}
+                />
+                <Stack.Screen
                     name="entrar"
                     options={{ title: "Entrar", headerShown: false }}
                 />

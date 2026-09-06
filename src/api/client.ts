@@ -182,8 +182,9 @@ export async function apiFetch<T>(
     await loadTokens();
 
     const headers: Record<string, string> = {};
+    const isForm = typeof FormData !== "undefined" && body instanceof FormData;
 
-    if (body !== undefined) {
+    if (body !== undefined && !isForm) {
         headers["Content-Type"] = "application/json";
     }
 
@@ -195,7 +196,12 @@ export async function apiFetch<T>(
         method,
         headers,
         credentials: "include",
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body:
+            body === undefined
+                ? undefined
+                : isForm
+                  ? (body as FormData)
+                  : JSON.stringify(body),
     });
 
     const text = await response.text();
