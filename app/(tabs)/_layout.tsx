@@ -7,6 +7,7 @@ type IconName = keyof typeof MaterialIcons.glyphMap;
 
 const ABAS: { name: string; title: string; icon: IconName }[] = [
     { name: "index", title: "Buscar", icon: "explore" },
+    { name: "locais", title: "Locais", icon: "place" },
     { name: "rankings", title: "Rankings", icon: "bar-chart" },
     { name: "notificacoes", title: "Avisos", icon: "notifications-none" },
     { name: "perfil", title: "Perfil", icon: "person-outline" },

@@ -25,6 +25,8 @@ import {
     type Game,
 } from "../../src/games/types";
 import { addToCalendar } from "../../src/calendar/addToCalendar";
+import { inviteText } from "../../src/share/invite";
+import { shareInvite } from "../../src/share/share";
 import { getPlayer } from "../../src/player/identity";
 
 const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -42,6 +44,7 @@ export default function GameScreen() {
     const [game, setGame] = useState<Game | null>(null);
     const [playerId, setPlayerId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [avisoConvite, setAvisoConvite] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         const [found, player] = await Promise.all([getGame(id), getPlayer()]);
@@ -112,14 +115,37 @@ export default function GameScreen() {
                 ) : null}
 
                 {!isFinished ? (
-                    <Pressable
-                        style={styles.calendario}
-                        onPress={() => addToCalendar(game)}
-                    >
-                        <Text style={styles.calendarioTexto}>
-                            Adicionar ao calendário
-                        </Text>
-                    </Pressable>
+                    <View style={styles.acoesTopo}>
+                        <Pressable
+                            style={styles.convite}
+                            onPress={async () => {
+                                const ok = await shareInvite(inviteText(game));
+
+                                setAvisoConvite(
+                                    ok
+                                        ? "Convite pronto para mandar no grupo."
+                                        : "Não deu para compartilhar por aqui.",
+                                );
+                            }}
+                        >
+                            <Text style={styles.conviteTexto}>
+                                Chamar o pessoal
+                            </Text>
+                        </Pressable>
+
+                        <Pressable
+                            style={styles.calendario}
+                            onPress={() => addToCalendar(game)}
+                        >
+                            <Text style={styles.calendarioTexto}>
+                                Adicionar ao calendário
+                            </Text>
+                        </Pressable>
+                    </View>
+                ) : null}
+
+                {avisoConvite ? (
+                    <Text style={styles.subtitle}>{avisoConvite}</Text>
                 ) : null}
             </View>
 
@@ -380,9 +406,24 @@ const styles = StyleSheet.create({
         ...type.headlineSm,
         color: colors.onPrimary,
     },
+    acoesTopo: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+        marginTop: 6,
+    },
+    convite: {
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 6,
+        backgroundColor: colors.primary,
+    },
+    conviteTexto: {
+        ...type.label,
+        color: colors.onPrimary,
+    },
     calendario: {
         alignSelf: "flex-start",
-        marginTop: 6,
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 6,

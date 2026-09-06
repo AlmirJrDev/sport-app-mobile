@@ -1,6 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, spacing, type } from "../design/tokens";
+import { inviteText } from "../share/invite";
+import { shareInvite } from "../share/share";
 import {
     SKILL_LABEL,
     currentStatus,
@@ -108,6 +110,15 @@ export default function GameSheet({
             <View style={styles.rodape}>
                 <Pressable onPress={onOpen} hitSlop={8}>
                     <Text style={[type.label, styles.link]}>Abrir jogo</Text>
+                </Pressable>
+
+                <Pressable
+                    onPress={() => shareInvite(inviteText(game))}
+                    hitSlop={8}
+                >
+                    <Text style={[type.label, styles.link]}>
+                        Chamar o pessoal
+                    </Text>
                 </Pressable>
 
                 <Pressable onPress={onClose} hitSlop={8}>
