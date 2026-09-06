@@ -2,7 +2,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, spacing, type } from "../design/tokens";
 import { distanceFor } from "../games/service";
-import { SKILL_LABEL, currentStatus, type Coordinates, type Game } from "../games/types";
+import {
+    SKILL_LABEL,
+    currentStatus,
+    type Coordinates,
+    type Game,
+} from "../games/types";
 
 const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
     weekday: "short",
@@ -20,7 +25,7 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
     if (games.length === 0) {
         return (
             <View style={styles.vazio}>
-                <Text style={[type.bodyMd, styles.vazioTitulo]}>
+                <Text style={[type.headlineSm, styles.vazioTitulo]}>
                     Nenhum jogo por perto
                 </Text>
                 <Text style={[type.bodySm, styles.vazioTexto]}>
@@ -33,11 +38,10 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
 
     return (
         <ScrollView contentContainerStyle={styles.lista}>
+            <Text style={[type.headlineSm, styles.secao]}>Próximos a você</Text>
+
             {games.map((game) => {
                 const distancia = distanceFor(game, center);
-                const chegaram = game.attendees.filter(
-                    (one) => one.arrived,
-                ).length;
                 const emAndamento = currentStatus(game) === "em-andamento";
 
                 return (
@@ -46,63 +50,52 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
                         style={styles.item}
                         onPress={() => onOpen(game)}
                     >
-                        <View style={styles.linhaTopo}>
-                            <Text style={[type.bodyMdStrong, styles.titulo]}>
+                        <View style={styles.selo}>
+                            <Text style={[type.statMd, styles.seloLetra]}>
+                                {game.sport.slice(0, 1)}
+                            </Text>
+                        </View>
+
+                        <View style={styles.miolo}>
+                            <Text style={[type.headlineSm, styles.titulo]}>
                                 {game.sport} {game.modality}
                             </Text>
 
-                            <Text style={[type.bodySm, styles.hora]}>
-                                {dayFormatter.format(new Date(game.startsAt))}
+                            <Text style={[type.caption, styles.detalhe]}>
+                                {dayFormatter.format(new Date(game.startsAt))} ·{" "}
+                                {SKILL_LABEL[game.level]} ·{" "}
+                                {game.attendees.length}/{game.spots}
                             </Text>
-                        </View>
 
-                        <Text style={[type.bodySm, styles.local]}>
-                            {game.placeName}
-                        </Text>
+                            {emAndamento || game.source === "local" ? (
+                                <View style={styles.etiquetas}>
+                                    {emAndamento ? (
+                                        <Text
+                                            style={[type.label, styles.aoVivo]}
+                                        >
+                                            Ao vivo {game.score.home}x
+                                            {game.score.away}
+                                        </Text>
+                                    ) : null}
 
-                        <View style={styles.linhaFatos}>
-                            <Text style={[type.caption, styles.fato]}>
-                                {distancia.toFixed(1).replace(".", ",")} km
-                            </Text>
-                            <Text style={[type.caption, styles.fato]}>
-                                {SKILL_LABEL[game.level]}
-                            </Text>
-                            <Text style={[type.caption, styles.fato]}>
-                                {game.attendees.length}/{game.spots} confirmados
-                            </Text>
-                            {chegaram > 0 ? (
-                                <Text style={[type.caption, styles.fato]}>
-                                    {chegaram} na quadra
-                                </Text>
-                            ) : null}
-                        </View>
-
-                        <View style={styles.etiquetas}>
-                            {emAndamento ? (
-                                <View
-                                    style={[styles.etiqueta, styles.etiquetaViva]}
-                                >
-                                    <Text
-                                        style={[
-                                            type.caption,
-                                            styles.etiquetaVivaTexto,
-                                        ]}
-                                    >
-                                        Em andamento · {game.score.home} x{" "}
-                                        {game.score.away}
-                                    </Text>
+                                    {game.source === "local" ? (
+                                        <Text
+                                            style={[type.label, styles.demo]}
+                                        >
+                                            Demonstração
+                                        </Text>
+                                    ) : null}
                                 </View>
                             ) : null}
+                        </View>
 
-                            {game.source === "local" ? (
-                                <View style={styles.etiqueta}>
-                                    <Text
-                                        style={[type.caption, styles.etiquetaTexto]}
-                                    >
-                                        Demonstração
-                                    </Text>
-                                </View>
-                            ) : null}
+                        <View style={styles.distancia}>
+                            <Text style={[type.statMd, styles.distanciaNumero]}>
+                                {distancia.toFixed(1).replace(".", ",")}
+                            </Text>
+                            <Text style={[type.label, styles.distanciaUnidade]}>
+                                km
+                            </Text>
                         </View>
                     </Pressable>
                 );
@@ -114,62 +107,62 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
 const styles = StyleSheet.create({
     lista: {
         padding: spacing.lg,
-        gap: spacing.md,
+        paddingTop: 104,
+        paddingBottom: spacing.xxxl,
+        gap: spacing.sm,
+    },
+    secao: {
+        color: colors.ink,
+        marginBottom: spacing.xs,
     },
     item: {
-        gap: spacing.xs,
-        padding: spacing.lg,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.md,
+        padding: spacing.md,
         borderRadius: radius.md,
         backgroundColor: colors.canvasSoft,
     },
-    linhaTopo: {
-        flexDirection: "row",
-        alignItems: "baseline",
-        justifyContent: "space-between",
-        gap: spacing.md,
+    selo: {
+        width: 48,
+        height: 48,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        backgroundColor: colors.canvas,
+    },
+    seloLetra: {
+        color: colors.primary,
+    },
+    miolo: {
+        flex: 1,
+        gap: spacing.xxs,
     },
     titulo: {
         color: colors.ink,
-        flex: 1,
     },
-    hora: {
-        color: colors.ink,
-    },
-    local: {
+    detalhe: {
         color: colors.body,
-    },
-    linhaFatos: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        columnGap: spacing.md,
-        rowGap: spacing.xxs,
-        marginTop: spacing.xxs,
-    },
-    fato: {
-        color: colors.bodyMid,
     },
     etiquetas: {
         flexDirection: "row",
-        flexWrap: "wrap",
-        gap: spacing.sm,
-        marginTop: spacing.xs,
+        gap: spacing.md,
+        marginTop: spacing.xxs,
     },
-    etiqueta: {
-        paddingVertical: spacing.xxs,
-        paddingHorizontal: spacing.sm,
-        borderRadius: radius.pill,
-        borderWidth: 1,
-        borderColor: colors.mute,
+    aoVivo: {
+        color: colors.primary,
     },
-    etiquetaTexto: {
+    demo: {
         color: colors.bodyMid,
     },
-    etiquetaViva: {
-        borderColor: "transparent",
-        backgroundColor: colors.ink,
+    distancia: {
+        alignItems: "flex-end",
     },
-    etiquetaVivaTexto: {
-        color: colors.onPrimary,
+    distanciaNumero: {
+        color: colors.ink,
+    },
+    distanciaUnidade: {
+        color: colors.bodyMid,
     },
     vazio: {
         flex: 1,

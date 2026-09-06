@@ -33,6 +33,7 @@ export const radius = {
 };
 
 export const font = {
+    condensed: "BebasNeue_400Regular",
     regular: "Inter_400Regular",
     medium: "Inter_500Medium",
     semibold: "Inter_600SemiBold",
@@ -111,5 +112,38 @@ export const type: Record<string, TextStyle> = {
         fontSize: 14.4,
         lineHeight: 14.4,
         letterSpacing: 0.144,
+    },
+    headlineMd: {
+        fontFamily: font.condensed,
+        fontSize: 36,
+        lineHeight: 36,
+        letterSpacing: 0.7,
+        textTransform: "uppercase",
+    },
+    headlineSm: {
+        fontFamily: font.condensed,
+        fontSize: 26,
+        lineHeight: 26,
+        letterSpacing: 0.5,
+        textTransform: "uppercase",
+    },
+    statLg: {
+        fontFamily: font.condensed,
+        fontSize: 44,
+        lineHeight: 44,
+        letterSpacing: 2,
+    },
+    statMd: {
+        fontFamily: font.condensed,
+        fontSize: 24,
+        lineHeight: 24,
+        letterSpacing: 1,
+    },
+    label: {
+        fontFamily: font.semibold,
+        fontSize: 12,
+        lineHeight: 16,
+        letterSpacing: 1.2,
+        textTransform: "uppercase",
     },
 };

@@ -14,8 +14,7 @@ import { useSession } from "../src/auth/useSession";
 import GameList from "../src/components/GameList";
 import GameMap from "../src/components/GameMap";
 import GameSheet from "../src/components/GameSheet";
-import { colors, radius, spacing, type } from "../src/design/tokens";
-import { Button } from "../src/design/ui";
+import { colors, font, radius, spacing, type } from "../src/design/tokens";
 import { FALLBACK_CENTER } from "../src/games/mock";
 import {
     distanceFor,
@@ -116,11 +115,14 @@ export default function MapScreen() {
                         styles.aba,
                         vista === opcao && styles.abaAtiva,
                     ]}
-                    onPress={() => setVista(opcao)}
+                    onPress={() => {
+                        setVista(opcao);
+                        setSelectedId(null);
+                    }}
                 >
                     <Text
                         style={[
-                            type.buttonSm,
+                            type.label,
                             vista === opcao
                                 ? styles.abaTextoAtivo
                                 : styles.abaTexto,
@@ -154,22 +156,6 @@ export default function MapScreen() {
         <View style={styles.container}>
             {header}
 
-            {semLocalizacao ? (
-                <View style={styles.aviso}>
-                    <Text style={[type.bodySm, styles.avisoTexto]}>
-                        Sem a sua localização, o mapa abre em Campinas.
-                    </Text>
-
-                    <Pressable onPress={start} hitSlop={8}>
-                        <Text style={[type.buttonSm, styles.avisoAcao]}>
-                            Usar minha localização
-                        </Text>
-                    </Pressable>
-                </View>
-            ) : null}
-
-            {alternador}
-
             {vista === "mapa" ? (
                 <GameMap
                     center={center}
@@ -187,6 +173,24 @@ export default function MapScreen() {
                 />
             )}
 
+            <View style={styles.topo} pointerEvents="box-none">
+                {semLocalizacao ? (
+                    <View style={styles.aviso}>
+                        <Text style={[type.caption, styles.avisoTexto]}>
+                            Mapa aberto em Campinas
+                        </Text>
+
+                        <Pressable onPress={start} hitSlop={8}>
+                            <Text style={[type.label, styles.avisoAcao]}>
+                                Ativar
+                            </Text>
+                        </Pressable>
+                    </View>
+                ) : null}
+
+                {alternador}
+            </View>
+
             {selectedGame ? (
                 <GameSheet
                     game={selectedGame}
@@ -199,12 +203,16 @@ export default function MapScreen() {
                     onClose={() => setSelectedId(null)}
                 />
             ) : (
-                <View style={styles.bottomBar}>
-                    <Text style={[type.bodySm, styles.counterLabel]}>
-                        {games.length} jogos num raio de {RADIUS_KM} km
-                    </Text>
+                <View style={styles.rodape} pointerEvents="box-none">
+                    <View style={styles.contador}>
+                        <Text style={[type.label, styles.contadorTexto]}>
+                            {games.length} jogos · {RADIUS_KM} km
+                        </Text>
+                    </View>
 
-                    <Button label="Marcar jogo" onPress={handleCreate} />
+                    <Pressable style={styles.fab} onPress={handleCreate}>
+                        <Text style={styles.fabSinal}>+</Text>
+                    </Pressable>
                 </View>
             )}
         </View>
@@ -231,29 +239,61 @@ const styles = StyleSheet.create({
     signOut: {
         color: colors.ink,
     },
-    bottomBar: {
+    rodape: {
         position: "absolute",
         left: spacing.lg,
         right: spacing.lg,
         bottom: spacing.lg,
-        padding: spacing.lg,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         gap: spacing.md,
-        borderRadius: radius.md,
-        backgroundColor: colors.canvas,
     },
-    counterLabel: {
+    contador: {
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        borderRadius: radius.pill,
+        backgroundColor: colors.canvas,
+        borderWidth: 1,
+        borderColor: colors.mute,
+    },
+    contadorTexto: {
         color: colors.body,
+    },
+    fab: {
+        width: 56,
+        height: 56,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.pill,
+        backgroundColor: colors.primary,
+    },
+    fabSinal: {
+        fontFamily: font.condensed,
+        fontSize: 36,
+        lineHeight: 40,
+        color: colors.onPrimary,
+    },
+    topo: {
+        position: "absolute",
+        left: 0,
+        right: 56,
+        top: 0,
+        gap: spacing.sm,
+        paddingTop: spacing.md,
     },
     aviso: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         gap: spacing.md,
+        marginHorizontal: spacing.lg,
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,
-        backgroundColor: colors.canvasSoft,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.mute,
+        borderRadius: radius.pill,
+        backgroundColor: colors.canvas,
+        borderWidth: 1,
+        borderColor: colors.mute,
     },
     avisoTexto: {
         flex: 1,
@@ -264,10 +304,8 @@ const styles = StyleSheet.create({
     },
     alternador: {
         flexDirection: "row",
-        gap: spacing.xs,
+        gap: spacing.sm,
         paddingHorizontal: spacing.lg,
-        paddingTop: spacing.md,
-        paddingBottom: spacing.sm,
     },
     aba: {
         paddingVertical: spacing.sm,
@@ -275,6 +313,7 @@ const styles = StyleSheet.create({
         borderRadius: radius.pill,
         borderWidth: 1,
         borderColor: colors.mute,
+        backgroundColor: colors.canvas,
     },
     abaAtiva: {
         borderColor: "transparent",

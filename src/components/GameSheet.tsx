@@ -1,7 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, spacing, type } from "../design/tokens";
-import { Button } from "../design/ui";
 import {
     SKILL_LABEL,
     currentStatus,
@@ -9,10 +8,8 @@ import {
     type Game,
 } from "../games/types";
 
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
+const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
     weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
 });
 
 const hourFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -37,153 +34,196 @@ export default function GameSheet({
     onOpen,
     onClose,
 }: GameSheetProps) {
-    const arrived = game.attendees.filter((one) => one.arrived).length;
-    const isFull = game.attendees.length >= game.spots && !isJoined;
+    const vagas = Math.max(0, game.spots - game.attendees.length);
+    const isFull = vagas === 0 && !isJoined;
+    const travado = isFull || (isJoined && game.source === "api");
+    const start = new Date(game.startsAt);
+
+    const rotulo = isFull
+        ? "Sem vagas"
+        : !isJoined
+          ? "Vou jogar"
+          : game.source === "api"
+            ? "Confirmado"
+            : "Cancelar presença";
 
     return (
-        <View style={styles.sheet}>
-            <View style={styles.header}>
-                <View style={styles.headerText}>
-                    <Text style={[type.displaySubSm, styles.title]}>
+        <View style={styles.card}>
+            <View style={styles.topo}>
+                <View style={styles.identidade}>
+                    <Text style={[type.headlineMd, styles.titulo]}>
                         {game.sport} {game.modality}
                     </Text>
-                    <Text style={[type.bodySm, styles.place]}>
+                    <Text style={[type.bodySm, styles.local]}>
                         {game.placeName}
                     </Text>
                 </View>
 
-                <Pressable onPress={onClose} hitSlop={12}>
-                    <Text style={[type.buttonSm, styles.close]}>Fechar</Text>
-                </Pressable>
-            </View>
-
-            {game.source === "local" ? (
-                <View style={styles.demo}>
-                    <Text style={[type.caption, styles.demoLabel]}>
-                        Demonstração · só neste aparelho
+                <View style={styles.vagas}>
+                    <Text style={[type.statMd, styles.vagasNumero]}>
+                        {vagas}
+                    </Text>
+                    <Text style={[type.label, styles.vagasRotulo]}>
+                        {vagas === 1 ? "vaga" : "vagas"}
                     </Text>
                 </View>
-            ) : null}
+            </View>
 
-            <View style={styles.facts}>
-                <Text style={[type.bodySm, styles.fact]}>
-                    {timeFormatter.format(new Date(game.startsAt))}
-                </Text>
-                <Text style={[type.bodySm, styles.fact]}>
-                    {distanceKm.toFixed(1).replace(".", ",")} km
-                </Text>
-                <Text style={[type.bodySm, styles.fact]}>
-                    {SKILL_LABEL[game.level]}
-                </Text>
-                <Text style={[type.bodySm, styles.fact]}>
-                    {game.attendees.length}/{game.spots} confirmados
-                </Text>
-                <Text style={[type.bodySm, styles.fact]}>
-                    {arrived} já chegaram
-                </Text>
+            <View style={styles.chips}>
+                <Chip texto={SKILL_LABEL[game.level]} />
+                <Chip
+                    texto={`${dayFormatter.format(start)} ${hourFormatter.format(start)}`}
+                />
+                <Chip texto={`${distanceKm.toFixed(1).replace(".", ",")} km`} />
+                {game.source === "local" ? <Chip texto="Demonstração" /> : null}
             </View>
 
             {currentStatus(game) === "em-andamento" ? (
-                <View style={styles.live}>
-                    <Text style={[type.bodySmStrong, styles.liveLabel]}>
-                        Em andamento · {game.score.home} x {game.score.away} ·
-                        vai até {hourFormatter.format(endsAt(game))}
+                <View style={styles.aoVivo}>
+                    <Text style={[type.label, styles.aoVivoRotulo]}>
+                        Ao vivo
+                    </Text>
+                    <Text style={[type.statMd, styles.aoVivoPlacar]}>
+                        {game.score.home} x {game.score.away}
+                    </Text>
+                    <Text style={[type.caption, styles.aoVivoAte]}>
+                        até {hourFormatter.format(endsAt(game))}
                     </Text>
                 </View>
             ) : null}
 
-            <View style={styles.actions}>
-                <Button
-                    label={
-                        isFull
-                            ? "Sem vagas"
-                            : !isJoined
-                              ? "Vou jogar"
-                              : game.source === "api"
-                                ? "Confirmado"
-                                : "Cancelar presença"
-                    }
-                    variant={isJoined ? "secondary" : "primary"}
-                    disabled={isFull || (isJoined && game.source === "api")}
-                    onPress={onToggleJoin}
-                    style={styles.action}
-                />
+            <Pressable
+                style={[styles.cta, travado && styles.ctaTravado]}
+                disabled={travado}
+                onPress={onToggleJoin}
+            >
+                <Text
+                    style={[
+                        type.headlineSm,
+                        travado ? styles.ctaRotuloTravado : styles.ctaRotulo,
+                    ]}
+                >
+                    {rotulo}
+                </Text>
+            </Pressable>
 
-                <Button
-                    label="Abrir jogo"
-                    variant="tertiary"
-                    onPress={onOpen}
-                    style={styles.action}
-                />
+            <View style={styles.rodape}>
+                <Pressable onPress={onOpen} hitSlop={8}>
+                    <Text style={[type.label, styles.link]}>Abrir jogo</Text>
+                </Pressable>
+
+                <Pressable onPress={onClose} hitSlop={8}>
+                    <Text style={[type.label, styles.linkSuave]}>Fechar</Text>
+                </Pressable>
             </View>
         </View>
     );
 }
 
+function Chip({ texto }: { texto: string }) {
+    return (
+        <View style={styles.chip}>
+            <Text style={[type.label, styles.chipTexto]}>{texto}</Text>
+        </View>
+    );
+}
+
 const styles = StyleSheet.create({
-    sheet: {
+    card: {
         position: "absolute",
-        left: 0,
-        right: 0,
-        bottom: 0,
+        left: spacing.lg,
+        right: spacing.lg,
+        bottom: spacing.lg,
         padding: spacing.xl,
         gap: spacing.md,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.mute,
         backgroundColor: colors.canvas,
-        borderTopLeftRadius: radius.md,
-        borderTopRightRadius: radius.md,
     },
-    header: {
+    topo: {
         flexDirection: "row",
         alignItems: "flex-start",
         gap: spacing.md,
     },
-    headerText: {
+    identidade: {
         flex: 1,
+        gap: spacing.xxs,
     },
-    title: {
+    titulo: {
         color: colors.ink,
     },
-    place: {
+    local: {
         color: colors.body,
     },
-    close: {
-        color: colors.body,
+    vagas: {
+        alignItems: "center",
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.md,
+        borderRadius: radius.sm,
+        backgroundColor: colors.canvasSoft,
     },
-    facts: {
+    vagasNumero: {
+        color: colors.primary,
+    },
+    vagasRotulo: {
+        color: colors.bodyMid,
+    },
+    chips: {
         flexDirection: "row",
         flexWrap: "wrap",
-        columnGap: spacing.lg,
-        rowGap: spacing.xs,
+        gap: spacing.sm,
     },
-    fact: {
-        color: colors.bodyMid,
-    },
-    demo: {
-        alignSelf: "flex-start",
-        paddingVertical: spacing.xxs,
-        paddingHorizontal: spacing.sm,
-        borderRadius: radius.pill,
-        borderWidth: 1,
-        borderColor: colors.mute,
-    },
-    demoLabel: {
-        color: colors.bodyMid,
-    },
-    live: {
-        paddingVertical: spacing.sm,
+    chip: {
+        paddingVertical: spacing.xs,
         paddingHorizontal: spacing.md,
         borderRadius: radius.pill,
         backgroundColor: colors.canvasSoft,
-        alignSelf: "flex-start",
     },
-    liveLabel: {
+    chipTexto: {
+        color: colors.body,
+    },
+    aoVivo: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.md,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        borderRadius: radius.sm,
+        backgroundColor: colors.ink,
+    },
+    aoVivoRotulo: {
+        color: colors.primary,
+    },
+    aoVivoPlacar: {
+        color: colors.onPrimary,
+    },
+    aoVivoAte: {
+        color: colors.mute,
+    },
+    cta: {
+        alignItems: "center",
+        paddingVertical: spacing.md,
+        borderRadius: radius.sm,
+        backgroundColor: colors.primary,
+    },
+    ctaTravado: {
+        backgroundColor: colors.canvasSoft,
+    },
+    ctaRotulo: {
+        color: colors.onPrimary,
+    },
+    ctaRotuloTravado: {
+        color: colors.bodyMid,
+    },
+    rodape: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+    },
+    link: {
         color: colors.ink,
     },
-    actions: {
-        flexDirection: "row",
-        gap: spacing.sm,
-    },
-    action: {
-        flex: 1,
+    linkSuave: {
+        color: colors.bodyMid,
     },
 });

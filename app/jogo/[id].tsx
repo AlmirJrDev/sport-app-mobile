@@ -178,7 +178,7 @@ export default function GameScreen() {
 
                 {isOwner ? (
                     <Pressable
-                        style={styles.finish}
+                        style={styles.finishGhost}
                         onPress={async () => {
                             await deleteGame(game.id);
                             router.back();
@@ -209,7 +209,12 @@ export default function GameScreen() {
                         disabled={travado}
                         onPress={() => run(toggleAttendance(game.id))}
                     >
-                        <Text style={styles.actionPrimaryLabel}>
+                        <Text
+                            style={[
+                                styles.actionPrimaryLabel,
+                                travado && styles.actionTravadoLabel,
+                            ]}
+                        >
                             {isFull
                                 ? "Sem vagas"
                                 : !me
@@ -276,8 +281,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     title: {
-        ...type.displayXs,
-        fontFamily: font.semibold,
+        ...type.headlineMd,
         color: colors.ink,
     },
     subtitle: {
@@ -285,9 +289,8 @@ const styles = StyleSheet.create({
         color: colors.body,
     },
     sectionTitle: {
-        ...type.bodySm,
-        fontFamily: font.semibold,
-        color: colors.ink,
+        ...type.label,
+        color: colors.bodyMid,
     },
     scoreboard: {
         flexDirection: "row",
@@ -303,13 +306,13 @@ const styles = StyleSheet.create({
         borderColor: colors.mute,
     },
     teamName: {
-        ...type.caption,
-        color: colors.body,
+        ...type.label,
+        color: colors.bodyMid,
     },
     score: {
-        fontSize: 40,
-        lineHeight: 44,
-        fontFamily: font.bold,
+        ...type.statLg,
+        fontSize: 56,
+        lineHeight: 56,
         color: colors.ink,
     },
     pointButtons: {
@@ -326,9 +329,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.mute,
     },
     pointLabel: {
+        ...type.label,
         color: colors.onPrimary,
-        ...type.caption,
-        fontFamily: font.semibold,
     },
     undo: {
         paddingVertical: 4,
@@ -340,15 +342,18 @@ const styles = StyleSheet.create({
     },
     finish: {
         alignItems: "center",
+        paddingVertical: 14,
+        borderRadius: radius.sm,
+        backgroundColor: colors.primary,
+    },
+    finishGhost: {
+        alignItems: "center",
         paddingVertical: 12,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: colors.mute,
+        borderRadius: radius.sm,
     },
     finishLabel: {
-        ...type.bodySm,
-        fontFamily: font.semibold,
-        color: colors.ink,
+        ...type.headlineSm,
+        color: colors.onPrimary,
     },
     calendario: {
         alignSelf: "flex-start",
@@ -369,8 +374,7 @@ const styles = StyleSheet.create({
         color: colors.body,
     },
     deleteLabel: {
-        ...type.bodySm,
-        fontFamily: font.semibold,
+        ...type.label,
         color: colors.primary,
     },
     actions: {
@@ -390,7 +394,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.primary,
     },
     actionDisabled: {
-        backgroundColor: colors.mute,
+        backgroundColor: colors.canvasSoft,
     },
     actionLabel: {
         ...type.bodySm,
@@ -401,6 +405,9 @@ const styles = StyleSheet.create({
         ...type.bodySm,
         fontFamily: font.semibold,
         color: colors.onPrimary,
+    },
+    actionTravadoLabel: {
+        color: colors.body,
     },
     list: {
         gap: 2,
