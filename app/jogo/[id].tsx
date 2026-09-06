@@ -74,7 +74,9 @@ export default function GameScreen() {
     const me = game.attendees.find((one) => one.playerId === playerId);
     const arrived = game.attendees.filter((one) => one.arrived);
     const isFull = game.attendees.length >= game.spots && !me;
-    const isFinished = currentStatus(game) === "encerrado";
+    const situacao = currentStatus(game);
+    const isFinished = situacao === "encerrado";
+    const placarAberto = situacao === "em-andamento";
     const isOwner = game.ownerId === playerId;
     const travado = isFull;
     const chegadaTravada = game.source === "api" && Boolean(me?.arrived);
@@ -139,9 +141,10 @@ export default function GameScreen() {
                                         key={points}
                                         style={[
                                             styles.point,
-                                            isFinished && styles.pointDisabled,
+                                            !placarAberto &&
+                                                styles.pointDisabled,
                                         ]}
-                                        disabled={isFinished}
+                                        disabled={!placarAberto}
                                         onPress={() =>
                                             run(addPoints(game.id, side, points))
                                         }
@@ -155,7 +158,7 @@ export default function GameScreen() {
 
                             <Pressable
                                 style={styles.undo}
-                                disabled={isFinished}
+                                disabled={!placarAberto}
                                 onPress={() => run(addPoints(game.id, side, -1))}
                             >
                                 <Text style={styles.undoLabel}>−1</Text>
@@ -163,6 +166,13 @@ export default function GameScreen() {
                         </View>
                     ))}
                 </View>
+
+                {!placarAberto && !isFinished ? (
+                    <Text style={styles.finished}>
+                        O placar abre {timeFormatter.format(new Date(game.startsAt))},
+                        quando o jogo começa.
+                    </Text>
+                ) : null}
 
                 {isFinished ? (
                     <Text style={styles.finished}>

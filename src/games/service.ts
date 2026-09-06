@@ -10,7 +10,7 @@ import {
     listRemoteGames,
 } from "./remote";
 import { readGames, updateGame, writeGames } from "./store";
-import { endsAt } from "./types";
+import { currentStatus, endsAt } from "./types";
 import type { Coordinates, Game, NewGame } from "./types";
 
 const EARTH_RADIUS_KM = 6371;
@@ -244,10 +244,15 @@ export async function addPoints(
     side: "home" | "away",
     points: number,
 ): Promise<Game | null> {
+    const alvo = await getGame(gameId);
+
+    if (!alvo || currentStatus(alvo) !== "em-andamento") {
+        return alvo;
+    }
+
     if (await isLocal(gameId)) {
         return updateGame(gameId, (game) => ({
             ...game,
-            status: game.status === "aberto" ? "em-andamento" : game.status,
             score: {
                 ...game.score,
                 [side]: Math.max(0, game.score[side] + points),
