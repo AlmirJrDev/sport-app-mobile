@@ -36,16 +36,14 @@ export default function GameSheet({
 }: GameSheetProps) {
     const vagas = Math.max(0, game.spots - game.attendees.length);
     const isFull = vagas === 0 && !isJoined;
-    const travado = isFull || (isJoined && game.source === "api");
+    const travado = isFull;
     const start = new Date(game.startsAt);
 
     const rotulo = isFull
         ? "Sem vagas"
-        : !isJoined
-          ? "Vou jogar"
-          : game.source === "api"
-            ? "Confirmado"
-            : "Cancelar presença";
+        : isJoined
+          ? "Cancelar presença"
+          : "Vou jogar";
 
     return (
         <View style={styles.card}>

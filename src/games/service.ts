@@ -1,9 +1,12 @@
 import { getPlayer } from "../player/identity";
 import { readOverlay, writeOverlay } from "./overlay";
 import {
+    arriveRemoteGame,
     createRemoteGame,
+    finishRemoteGame,
     getRemoteGame,
     joinRemoteGame,
+    leaveRemoteGame,
     listRemoteGames,
 } from "./remote";
 import { readGames, updateGame, writeGames } from "./store";
@@ -191,7 +194,12 @@ export async function toggleAttendance(gameId: string): Promise<Game | null> {
         });
     }
 
-    return joinRemoteGame(gameId);
+    const remoto = await getRemoteGame(gameId);
+    const jaEstou = remoto?.attendees.some(
+        (attendee) => attendee.playerId === player.id,
+    );
+
+    return jaEstou ? leaveRemoteGame(gameId) : joinRemoteGame(gameId);
 }
 
 export async function toggleArrival(gameId: string): Promise<Game | null> {
@@ -211,9 +219,21 @@ export async function toggleArrival(gameId: string): Promise<Game | null> {
         }));
     }
 
+    const game = await arriveRemoteGame(gameId);
+
     await writeOverlay(gameId, (current) => ({
         ...current,
-        attendees: flip(current.attendees),
+        attendees: game.attendees.map((attendee) =>
+            attendee.playerId === player.id
+                ? { ...attendee, arrived: true }
+                : {
+                      ...attendee,
+                      arrived: current.attendees.some(
+                          (one) =>
+                              one.playerId === attendee.playerId && one.arrived,
+                      ),
+                  },
+        ),
     }));
 
     return getRemoteGame(gameId);
@@ -254,9 +274,9 @@ export async function finishGame(gameId: string): Promise<Game | null> {
         }));
     }
 
-    await writeOverlay(gameId, (current) => ({ ...current, finished: true }));
+    await finishRemoteGame(gameId);
 
-    return getRemoteGame(gameId);
+    return null;
 }
 
 export async function readOverlayFor(gameId: string) {

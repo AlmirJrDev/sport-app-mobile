@@ -157,6 +157,31 @@ export async function joinRemoteGame(id: string): Promise<Game> {
     return game;
 }
 
+export async function leaveRemoteGame(id: string): Promise<Game> {
+    const { data } = await apiFetch<ApiGame>(`/games/${id}/leave`, {
+        method: "POST",
+        auth: true,
+    });
+
+    return toGame(data);
+}
+
+export async function arriveRemoteGame(id: string): Promise<Game> {
+    const { data } = await apiFetch<ApiGame>(`/games/${id}/arrive`, {
+        method: "POST",
+        auth: true,
+    });
+
+    return toGame(data);
+}
+
+export async function finishRemoteGame(id: string): Promise<void> {
+    await apiFetch<void>(`/games/${id}/finish`, {
+        method: "POST",
+        auth: true,
+    });
+}
+
 export async function createRemoteGame(
     payload: CreateGamePayload,
 ): Promise<Game> {

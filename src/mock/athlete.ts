@@ -15,8 +15,6 @@ export interface AthleteBadge {
     detail: string;
 }
 
-export const ATHLETE_TAGS = ["Basquete", "Wolves Academy", "1,95 m"];
-
 export const ATHLETE_RANKINGS: AthleteRanking[] = [
     { scope: "Nacional", position: 42, trend: "down" },
     { scope: "Estadual", position: 8, trend: "up" },

@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Redirect, useRouter } from "expo-router";
 import {
     ActivityIndicator,
+    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -19,8 +21,8 @@ import {
     ATHLETE_RANKINGS,
     ATHLETE_SEASON,
     ATHLETE_STATS,
-    ATHLETE_TAGS,
 } from "../../src/mock/athlete";
+import { getProfile, type Profile } from "../../src/profile/remote";
 
 const TREND_LABEL = {
     up: "↑",
@@ -31,6 +33,13 @@ const TREND_LABEL = {
 export default function PerfilScreen() {
     const router = useRouter();
     const { account, loading, reload } = useSession();
+    const [perfil, setPerfil] = useState<Profile | null>(null);
+
+    useEffect(() => {
+        if (account) {
+            getProfile(account.id).then(setPerfil);
+        }
+    }, [account?.id]);
 
     const sair = async () => {
         await signOut();
@@ -50,37 +59,63 @@ export default function PerfilScreen() {
         return <Redirect href="/entrar" />;
     }
 
-    const iniciais = account.name
+    const nome = perfil?.name || account.name;
+
+    const iniciais = nome
         .split(" ")
         .slice(0, 2)
         .map((parte) => parte.slice(0, 1))
         .join("");
 
+    const etiquetas = [
+        perfil?.mainSport,
+        perfil?.city,
+        perfil?.height
+            ? `${(perfil.height / 100).toFixed(2).replace(".", ",")} m`
+            : null,
+        perfil?.weight ? `${perfil.weight} kg` : null,
+    ].filter((item): item is string => Boolean(item));
+
     return (
         <ScrollView contentContainerStyle={styles.conteudo}>
             <View style={styles.capa}>
-                <View style={styles.avatar}>
-                    <Text style={[type.statLg, styles.avatarTexto]}>
-                        {iniciais.toUpperCase()}
-                    </Text>
-                </View>
+                {perfil?.avatarUrl ? (
+                    <Image
+                        source={{ uri: perfil.avatarUrl }}
+                        style={styles.avatarFoto}
+                    />
+                ) : (
+                    <View style={styles.avatar}>
+                        <Text style={[type.statLg, styles.avatarTexto]}>
+                            {iniciais.toUpperCase()}
+                        </Text>
+                    </View>
+                )}
 
-                <Text style={[type.headlineMd, styles.nome]}>
-                    {account.name}
-                </Text>
+                <Text style={[type.headlineMd, styles.nome]}>{nome}</Text>
                 <Text style={[type.caption, styles.email]}>
                     {account.email}
                 </Text>
 
-                <View style={styles.etiquetas}>
-                    {ATHLETE_TAGS.map((tag) => (
-                        <View key={tag} style={styles.etiqueta}>
-                            <Text style={[type.label, styles.etiquetaTexto]}>
-                                {tag}
-                            </Text>
-                        </View>
-                    ))}
-                </View>
+                {perfil?.bio ? (
+                    <Text style={[type.caption, styles.bio]}>{perfil.bio}</Text>
+                ) : null}
+
+                {etiquetas.length > 0 ? (
+                    <View style={styles.etiquetas}>
+                        {etiquetas.map((tag) => (
+                            <View key={tag} style={styles.etiqueta}>
+                                <Text style={[type.label, styles.etiquetaTexto]}>
+                                    {tag}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                ) : (
+                    <Text style={[type.caption, styles.vazio]}>
+                        Esporte, altura e cidade ainda não preenchidos.
+                    </Text>
+                )}
             </View>
 
             <Secao titulo="Rankings">
@@ -166,7 +201,7 @@ export default function PerfilScreen() {
                 </View>
             </Secao>
 
-            <MockNotice texto="Estatísticas, conquistas e rankings são de exemplo — a API hoje só guarda nome, e-mail e cidade." />
+            <MockNotice texto="Estatísticas, conquistas e rankings ainda são de exemplo — nome, foto, esporte, altura e bio já vêm da API." />
 
             <Pressable style={styles.sair} onPress={sair}>
                 <Text style={[type.label, styles.sairTexto]}>Sair da conta</Text>
@@ -231,8 +266,23 @@ const styles = StyleSheet.create({
         borderColor: colors.primary,
         backgroundColor: colors.canvas,
     },
+    avatarFoto: {
+        width: 88,
+        height: 88,
+        borderRadius: radius.pill,
+        borderWidth: 2,
+        borderColor: colors.primary,
+    },
     avatarTexto: {
         color: colors.primary,
+    },
+    bio: {
+        color: colors.body,
+        textAlign: "center",
+    },
+    vazio: {
+        color: colors.bodyMid,
+        textAlign: "center",
     },
     nome: {
         color: colors.ink,

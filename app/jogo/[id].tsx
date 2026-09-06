@@ -76,7 +76,8 @@ export default function GameScreen() {
     const isFull = game.attendees.length >= game.spots && !me;
     const isFinished = currentStatus(game) === "encerrado";
     const isOwner = game.ownerId === playerId;
-    const travado = isFull || (Boolean(me) && game.source === "api");
+    const travado = isFull;
+    const chegadaTravada = game.source === "api" && Boolean(me?.arrived);
 
     const run = async (action: Promise<Game | null>) => {
         const updated = await action;
@@ -167,16 +168,24 @@ export default function GameScreen() {
                     <Text style={styles.finished}>
                         Jogo encerrado — já saiu do mapa.
                     </Text>
-                ) : (
+                ) : game.source === "local" || isOwner ? (
                     <Pressable
                         style={styles.finish}
-                        onPress={() => run(finishGame(game.id))}
+                        onPress={async () => {
+                            const atualizado = await finishGame(game.id);
+
+                            if (atualizado) {
+                                setGame(atualizado);
+                            } else {
+                                router.back();
+                            }
+                        }}
                     >
                         <Text style={styles.finishLabel}>Encerrar jogo</Text>
                     </Pressable>
-                )}
+                ) : null}
 
-                {isOwner ? (
+                {isOwner && game.source === "local" ? (
                     <Pressable
                         style={styles.finishGhost}
                         onPress={async () => {
@@ -217,21 +226,27 @@ export default function GameScreen() {
                         >
                             {isFull
                                 ? "Sem vagas"
-                                : !me
-                                  ? "Vou jogar"
-                                  : game.source === "api"
-                                    ? "Confirmado"
-                                    : "Cancelar presença"}
+                                : me
+                                  ? "Cancelar presença"
+                                  : "Vou jogar"}
                         </Text>
                     </Pressable>
 
                     {me ? (
                         <Pressable
-                            style={styles.action}
+                            style={[
+                                styles.action,
+                                chegadaTravada && styles.actionDisabled,
+                            ]}
+                            disabled={chegadaTravada}
                             onPress={() => run(toggleArrival(game.id))}
                         >
                             <Text style={styles.actionLabel}>
-                                {me.arrived ? "Não cheguei" : "Cheguei"}
+                                {chegadaTravada
+                                    ? "Você chegou"
+                                    : me.arrived
+                                      ? "Não cheguei"
+                                      : "Cheguei"}
                             </Text>
                         </Pressable>
                     ) : null}
