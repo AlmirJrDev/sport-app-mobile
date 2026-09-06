@@ -140,7 +140,7 @@ export default function SignUpScreen() {
 
             await signIn(email, password);
             reload();
-            router.replace("/");
+            router.replace("/onboarding");
         } catch (raw) {
             setError(
                 raw instanceof AuthError

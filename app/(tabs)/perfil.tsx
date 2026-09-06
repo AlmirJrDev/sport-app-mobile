@@ -122,7 +122,7 @@ export default function PerfilScreen() {
                 <View style={styles.acoes}>
                     <Pressable
                         style={styles.editar}
-                        onPress={() => router.push("/perfil/editar")}
+                        onPress={() => router.push("/onboarding")}
                     >
                         <Text style={[type.label, styles.editarTexto]}>
                             Editar perfil
