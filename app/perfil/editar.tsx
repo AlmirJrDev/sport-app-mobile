@@ -14,6 +14,7 @@ import { useSession } from "../../src/auth/useSession";
 import { listSports, prettify, type Sport } from "../../src/api/catalog";
 import { colors, radius, spacing, type } from "../../src/design/tokens";
 import { Button, Field } from "../../src/design/ui";
+import { AvatarCropper, HAS_CROPPER } from "../../src/profile/cropper";
 import { pickImage, type PickedImage } from "../../src/profile/pickImage";
 import { getMyProfile, updateProfile } from "../../src/profile/remote";
 
@@ -28,6 +29,7 @@ export default function EditarPerfilScreen() {
     const [foto, setFoto] = useState<PickedImage | null>(null);
     const [fotoAtual, setFotoAtual] = useState<string | null>(null);
     const [perfilId, setPerfilId] = useState<string | null>(null);
+    const [recortando, setRecortando] = useState<PickedImage | null>(null);
     const [nome, setNome] = useState("");
     const [sobrenome, setSobrenome] = useState("");
     const [bio, setBio] = useState("");
@@ -74,7 +76,13 @@ export default function EditarPerfilScreen() {
     const escolherFoto = async () => {
         const escolhida = await pickImage();
 
-        if (escolhida) {
+        if (!escolhida) {
+            return;
+        }
+
+        if (HAS_CROPPER) {
+            setRecortando(escolhida);
+        } else {
             setFoto(escolhida);
         }
     };
@@ -124,6 +132,19 @@ export default function EditarPerfilScreen() {
     };
 
     const previa = foto?.uri ?? fotoAtual;
+
+    if (recortando) {
+        return (
+            <AvatarCropper
+                image={recortando}
+                onCancel={() => setRecortando(null)}
+                onDone={(recortada) => {
+                    setFoto(recortada);
+                    setRecortando(null);
+                }}
+            />
+        );
+    }
 
     return (
         <ScrollView contentContainerStyle={styles.conteudo}>
