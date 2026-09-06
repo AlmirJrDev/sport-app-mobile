@@ -17,6 +17,7 @@
     "expo-location": "^57.0.14",
     "expo-router": "~57.0.17",
     "expo-status-bar": "~57.0.1",
+    "firebase": "^12.18.0",
     "maplibre-gl": "^6.6.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
