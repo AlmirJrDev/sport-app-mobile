@@ -8,6 +8,8 @@ import {
     Text,
     View,
 } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
     addPoints,
@@ -17,7 +19,9 @@ import {
     toggleArrival,
     toggleAttendance,
 } from "../../src/games/service";
-import { colors, font, radius, spacing, type } from "../../src/design/tokens";
+import { Icon } from "../../src/design/icons";
+import { Avatar, Stripes } from "../../src/design/pieces";
+import { colors, radius, size, spacing, type } from "../../src/design/tokens";
 import {
     SKILL_LABEL,
     currentStatus,
@@ -29,8 +33,13 @@ import { inviteText } from "../../src/share/invite";
 import { shareInvite } from "../../src/share/share";
 import { getPlayer } from "../../src/player/identity";
 
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
+const diaHora = new Intl.DateTimeFormat("pt-BR", {
     weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+});
+
+const hora = new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
 });
@@ -40,11 +49,11 @@ const POINT_STEPS = [1, 2, 3];
 export default function GameScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
+    const insets = useSafeAreaInsets();
 
     const [game, setGame] = useState<Game | null>(null);
     const [playerId, setPlayerId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const [avisoConvite, setAvisoConvite] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         const [found, player] = await Promise.all([getGame(id), getPlayer()]);
@@ -60,29 +69,35 @@ export default function GameScreen() {
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator />
+            <View style={styles.centro}>
+                <ActivityIndicator color={colors.ink} />
             </View>
         );
     }
 
     if (!game) {
         return (
-            <View style={styles.centered}>
-                <Text style={styles.message}>Jogo não encontrado.</Text>
+            <View style={styles.centro}>
+                <Text style={[type.corpo, styles.centroTexto]}>
+                    Jogo não encontrado.
+                </Text>
             </View>
         );
     }
 
     const me = game.attendees.find((one) => one.playerId === playerId);
-    const arrived = game.attendees.filter((one) => one.arrived);
+    const chegaram = game.attendees.filter((one) => one.arrived).length;
     const isFull = game.attendees.length >= game.spots && !me;
     const situacao = currentStatus(game);
     const isFinished = situacao === "encerrado";
-    const placarAberto = situacao === "em-andamento";
+    const aoVivo = situacao === "em-andamento";
     const isOwner = game.ownerId === playerId;
-    const travado = isFull;
     const chegadaTravada = game.source === "api" && Boolean(me?.arrived);
+    const livres = Math.max(0, game.spots - game.attendees.length);
+    const preenchido = Math.min(
+        1,
+        game.spots > 0 ? game.attendees.length / game.spots : 0,
+    );
 
     const run = async (action: Promise<Game | null>) => {
         const updated = await action;
@@ -93,404 +108,599 @@ export default function GameScreen() {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.block}>
-                <Text style={styles.title}>
-                    {game.sport} {game.modality}
-                </Text>
-                <Text style={styles.subtitle}>{game.placeName}</Text>
-                <Text style={styles.subtitle}>
-                    {timeFormatter.format(new Date(game.startsAt))} ·{" "}
-                    {SKILL_LABEL[game.level]}
-                </Text>
-                <Text style={styles.subtitle}>
-                    Termina {timeFormatter.format(endsAt(game))} ·{" "}
-                    {game.durationMinutes} min
-                </Text>
+        <View style={styles.tela}>
+            <ScrollView contentContainerStyle={styles.conteudo}>
+                <View
+                    style={[
+                        styles.hero,
+                        { paddingTop: insets.top + spacing.md },
+                    ]}
+                >
+                    <Stripes caption="foto da quadra" rounded={0} style={StyleSheet.absoluteFill} />
 
-                {game.creatorName ? (
-                    <Text style={styles.subtitle}>
-                        Marcado por {game.creatorName}
-                    </Text>
-                ) : null}
+                    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+                        <Defs>
+                            <LinearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+                                <Stop offset="0" stopColor="#0E0B09" stopOpacity="0.5" />
+                                <Stop offset="0.4" stopColor="#0E0B09" stopOpacity="0" />
+                                <Stop offset="1" stopColor="#0E0B09" stopOpacity="0.78" />
+                            </LinearGradient>
+                        </Defs>
+                        <Rect width="100%" height="100%" fill="url(#fade)" />
+                    </Svg>
 
-                {!isFinished ? (
-                    <View style={styles.acoesTopo}>
+                    <View style={styles.heroTopo}>
                         <Pressable
-                            style={styles.convite}
-                            onPress={async () => {
-                                const ok = await shareInvite(inviteText(game));
-
-                                setAvisoConvite(
-                                    ok
-                                        ? "Convite pronto para mandar no grupo."
-                                        : "Não deu para compartilhar por aqui.",
-                                );
-                            }}
+                            style={styles.voltar}
+                            onPress={() => router.back()}
                         >
-                            <Text style={styles.conviteTexto}>
-                                Chamar o pessoal
-                            </Text>
+                            <Icon name="chevron" size={20} color={colors.ink} />
                         </Pressable>
 
                         <Pressable
-                            style={styles.calendario}
-                            onPress={() => addToCalendar(game)}
+                            style={styles.convite}
+                            onPress={() => shareInvite(inviteText(game))}
                         >
-                            <Text style={styles.calendarioTexto}>
-                                Adicionar ao calendário
+                            <Icon
+                                name="compartilhar"
+                                size={18}
+                                color={colors.ink}
+                            />
+                            <Text style={[type.labelCampo, styles.conviteTexto]}>
+                                Convidar
                             </Text>
                         </Pressable>
                     </View>
-                ) : null}
 
-                {avisoConvite ? (
-                    <Text style={styles.subtitle}>{avisoConvite}</Text>
-                ) : null}
-            </View>
-
-            <View style={styles.block}>
-                <Text style={styles.sectionTitle}>Placar</Text>
-
-                <View style={styles.scoreboard}>
-                    {(["home", "away"] as const).map((side) => (
-                        <View style={styles.team} key={side}>
-                            <Text style={styles.teamName}>
-                                {side === "home" ? "Time A" : "Time B"}
-                            </Text>
-
-                            <Text style={styles.score}>{game.score[side]}</Text>
-
-                            <View style={styles.pointButtons}>
-                                {POINT_STEPS.map((points) => (
-                                    <Pressable
-                                        key={points}
-                                        style={[
-                                            styles.point,
-                                            !placarAberto &&
-                                                styles.pointDisabled,
-                                        ]}
-                                        disabled={!placarAberto}
-                                        onPress={() =>
-                                            run(addPoints(game.id, side, points))
-                                        }
-                                    >
-                                        <Text style={styles.pointLabel}>
-                                            +{points}
-                                        </Text>
-                                    </Pressable>
-                                ))}
+                    <View style={styles.heroRodape}>
+                        <View style={styles.heroChips}>
+                            <View style={styles.chipStatus}>
+                                <Text
+                                    style={[type.eyebrow, styles.chipStatusTexto]}
+                                >
+                                    {isFinished
+                                        ? "Encerrado"
+                                        : aoVivo
+                                          ? "Ao vivo"
+                                          : "Aberto"}
+                                </Text>
                             </View>
 
-                            <Pressable
-                                style={styles.undo}
-                                disabled={!placarAberto}
-                                onPress={() => run(addPoints(game.id, side, -1))}
-                            >
-                                <Text style={styles.undoLabel}>−1</Text>
-                            </Pressable>
+                            <View style={styles.chipEsporte}>
+                                <Text
+                                    style={[
+                                        type.eyebrow,
+                                        styles.chipEsporteTexto,
+                                    ]}
+                                >
+                                    {game.sport} {game.modality}
+                                </Text>
+                            </View>
                         </View>
-                    ))}
+
+                        <Text style={[type.tituloHero, styles.heroTitulo]}>
+                            {game.placeName}
+                        </Text>
+                    </View>
                 </View>
 
-                {!placarAberto && !isFinished ? (
-                    <Text style={styles.finished}>
-                        O placar abre {timeFormatter.format(new Date(game.startsAt))},
-                        quando o jogo começa.
-                    </Text>
-                ) : null}
+                <View style={styles.corpo}>
+                    <View style={styles.grade}>
+                        <View style={styles.cardGrade}>
+                            <Text style={[type.labelCampo, styles.rotulo]}>
+                                Começa
+                            </Text>
+                            <Text style={[type.statCard, styles.valor]}>
+                                {diaHora.format(new Date(game.startsAt))}
+                            </Text>
+                            <Text style={[type.metadado, styles.nota]}>
+                                até {hora.format(endsAt(game))} ·{" "}
+                                {game.durationMinutes} min
+                            </Text>
+                        </View>
 
-                {isFinished ? (
-                    <Text style={styles.finished}>
-                        Jogo encerrado — já saiu do mapa.
-                    </Text>
-                ) : game.source === "local" || isOwner ? (
-                    <Pressable
-                        style={styles.finish}
-                        onPress={async () => {
-                            const atualizado = await finishGame(game.id);
+                        <View style={styles.cardGrade}>
+                            <Text style={[type.labelCampo, styles.rotulo]}>
+                                Nível
+                            </Text>
+                            <Text style={[type.statCard, styles.valor]}>
+                                {SKILL_LABEL[game.level]}
+                            </Text>
+                            {game.creatorName ? (
+                                <Text style={[type.metadado, styles.nota]}>
+                                    por {game.creatorName}
+                                </Text>
+                            ) : null}
+                        </View>
+                    </View>
 
-                            if (atualizado) {
-                                setGame(atualizado);
-                            } else {
-                                router.back();
-                            }
-                        }}
-                    >
-                        <Text style={styles.finishLabel}>Encerrar jogo</Text>
-                    </Pressable>
-                ) : null}
+                    <View style={styles.bloco}>
+                        <View style={styles.blocoTopo}>
+                            <Text style={[type.labelCampo, styles.rotulo]}>
+                                Vagas
+                            </Text>
+                            <Text style={[type.statMd, styles.valor]}>
+                                {game.attendees.length} / {game.spots}
+                            </Text>
+                        </View>
 
-                {isOwner && game.source === "local" ? (
-                    <Pressable
-                        style={styles.finishGhost}
-                        onPress={async () => {
-                            await deleteGame(game.id);
-                            router.back();
-                        }}
-                    >
-                        <Text style={styles.deleteLabel}>
-                            Cancelar e apagar marcação
+                        <View style={styles.trilha}>
+                            <View
+                                style={[
+                                    styles.trilhaFill,
+                                    { width: `${preenchido * 100}%` },
+                                ]}
+                            />
+                        </View>
+
+                        <Text style={[type.metadado, styles.nota]}>
+                            {livres === 0
+                                ? "Quadra cheia — entre na fila de espera"
+                                : `${livres} ${livres === 1 ? "vaga livre" : "vagas livres"} · ${chegaram} já na quadra`}
                         </Text>
-                    </Pressable>
-                ) : null}
-            </View>
+                    </View>
 
-            <View style={styles.block}>
-                <Text style={styles.sectionTitle}>
-                    Quem vai · {game.attendees.length}/{game.spots}
-                </Text>
-                <Text style={styles.subtitle}>
-                    {arrived.length} já chegaram na quadra
-                </Text>
-
-                <View style={styles.actions}>
-                    <Pressable
-                        style={[
-                            styles.action,
-                            styles.actionPrimary,
-                            travado && styles.actionDisabled,
-                        ]}
-                        disabled={travado}
-                        onPress={() => run(toggleAttendance(game.id))}
-                    >
-                        <Text
-                            style={[
-                                styles.actionPrimaryLabel,
-                                travado && styles.actionTravadoLabel,
-                            ]}
-                        >
-                            {isFull
-                                ? "Sem vagas"
-                                : me
-                                  ? "Cancelar presença"
-                                  : "Vou jogar"}
+                    <View style={styles.bloco}>
+                        <Text style={[type.labelCampo, styles.rotulo]}>
+                            Placar
                         </Text>
-                    </Pressable>
 
-                    {me ? (
+                        <View style={styles.placar}>
+                            {(["home", "away"] as const).map((lado) => (
+                                <View style={styles.time} key={lado}>
+                                    <Text
+                                        style={[type.labelTab, styles.timeNome]}
+                                    >
+                                        {lado === "home" ? "Time A" : "Time B"}
+                                    </Text>
+
+                                    <Text
+                                        style={[type.placar, styles.timePlacar]}
+                                    >
+                                        {game.score[lado]}
+                                    </Text>
+
+                                    <View style={styles.pontos}>
+                                        {POINT_STEPS.map((valor) => (
+                                            <Pressable
+                                                key={valor}
+                                                style={[
+                                                    styles.ponto,
+                                                    !aoVivo &&
+                                                        styles.pontoTravado,
+                                                ]}
+                                                disabled={!aoVivo}
+                                                onPress={() =>
+                                                    run(
+                                                        addPoints(
+                                                            game.id,
+                                                            lado,
+                                                            valor,
+                                                        ),
+                                                    )
+                                                }
+                                            >
+                                                <Text
+                                                    style={[
+                                                        type.labelTab,
+                                                        styles.pontoTexto,
+                                                    ]}
+                                                >
+                                                    +{valor}
+                                                </Text>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+
+                                    <Pressable
+                                        disabled={!aoVivo}
+                                        onPress={() =>
+                                            run(addPoints(game.id, lado, -1))
+                                        }
+                                    >
+                                        <Text
+                                            style={[
+                                                type.metadado,
+                                                styles.desfazer,
+                                            ]}
+                                        >
+                                            −1
+                                        </Text>
+                                    </Pressable>
+                                </View>
+                            ))}
+                        </View>
+
+                        {!aoVivo && !isFinished ? (
+                            <Text style={[type.metadado, styles.nota]}>
+                                O placar abre {hora.format(new Date(game.startsAt))},
+                                quando o jogo começa.
+                            </Text>
+                        ) : null}
+
+                        {isFinished ? (
+                            <Text style={[type.metadado, styles.nota]}>
+                                Jogo encerrado — já saiu do mapa.
+                            </Text>
+                        ) : game.source === "local" || isOwner ? (
+                            <Pressable
+                                style={styles.encerrar}
+                                onPress={async () => {
+                                    const atualizado = await finishGame(game.id);
+
+                                    if (atualizado) {
+                                        setGame(atualizado);
+                                    } else {
+                                        router.back();
+                                    }
+                                }}
+                            >
+                                <Text
+                                    style={[type.labelCampo, styles.encerrarTexto]}
+                                >
+                                    Encerrar jogo
+                                </Text>
+                            </Pressable>
+                        ) : null}
+                    </View>
+
+                    <View style={styles.bloco}>
+                        <Text style={[type.labelCampo, styles.rotulo]}>
+                            Confirmados
+                        </Text>
+
+                        {game.attendees.length === 0 ? (
+                            <Text style={[type.metadado, styles.nota]}>
+                                Ninguém confirmou ainda.
+                            </Text>
+                        ) : (
+                            game.attendees.map((pessoa) => (
+                                <View style={styles.pessoa} key={pessoa.playerId}>
+                                    <Avatar name={pessoa.name} size={40} />
+
+                                    <View style={styles.pessoaTexto}>
+                                        <Text
+                                            style={[
+                                                type.nomeLista,
+                                                styles.valor,
+                                            ]}
+                                        >
+                                            {pessoa.playerId === playerId
+                                                ? `${pessoa.name} · você`
+                                                : pessoa.name}
+                                        </Text>
+                                        <Text
+                                            style={[type.metadado, styles.nota]}
+                                        >
+                                            {pessoa.arrived
+                                                ? "está na quadra"
+                                                : "confirmou presença"}
+                                        </Text>
+                                    </View>
+
+                                    <Text
+                                        style={[
+                                            type.eyebrow,
+                                            pessoa.arrived
+                                                ? styles.chegou
+                                                : styles.aCaminho,
+                                        ]}
+                                    >
+                                        {pessoa.arrived ? "chegou" : "a caminho"}
+                                    </Text>
+                                </View>
+                            ))
+                        )}
+
+                        {me ? (
+                            <Pressable
+                                style={[
+                                    styles.chegada,
+                                    chegadaTravada && styles.chegadaTravada,
+                                ]}
+                                disabled={chegadaTravada}
+                                onPress={() => run(toggleArrival(game.id))}
+                            >
+                                <Text
+                                    style={[type.labelCampo, styles.chegadaTexto]}
+                                >
+                                    {chegadaTravada
+                                        ? "Você chegou"
+                                        : me.arrived
+                                          ? "Não cheguei"
+                                          : "Cheguei na quadra"}
+                                </Text>
+                            </Pressable>
+                        ) : null}
+                    </View>
+
+                    {isOwner && game.source === "local" ? (
                         <Pressable
-                            style={[
-                                styles.action,
-                                chegadaTravada && styles.actionDisabled,
-                            ]}
-                            disabled={chegadaTravada}
-                            onPress={() => run(toggleArrival(game.id))}
+                            style={styles.apagar}
+                            onPress={async () => {
+                                await deleteGame(game.id);
+                                router.back();
+                            }}
                         >
-                            <Text style={styles.actionLabel}>
-                                {chegadaTravada
-                                    ? "Você chegou"
-                                    : me.arrived
-                                      ? "Não cheguei"
-                                      : "Cheguei"}
+                            <Text style={[type.labelCampo, styles.apagarTexto]}>
+                                Cancelar e apagar marcação
                             </Text>
                         </Pressable>
                     ) : null}
                 </View>
+            </ScrollView>
 
-                <View style={styles.list}>
-                    {game.attendees.length === 0 ? (
-                        <Text style={styles.subtitle}>
-                            Ninguém confirmou ainda.
-                        </Text>
-                    ) : (
-                        game.attendees.map((one) => (
-                            <View style={styles.row} key={one.playerId}>
-                                <Text style={styles.rowName}>
-                                    {one.playerId === playerId
-                                        ? `${one.name} · você`
-                                        : one.name}
-                                </Text>
-                                <Text style={styles.rowStatus}>
-                                    {one.arrived ? "chegou" : "vai"}
-                                </Text>
-                            </View>
-                        ))
-                    )}
-                </View>
+            <View style={styles.rodape}>
+                <Pressable
+                    style={[
+                        styles.cta,
+                        (isFull || Boolean(me)) && styles.ctaNeutro,
+                    ]}
+                    disabled={isFull}
+                    onPress={() => run(toggleAttendance(game.id))}
+                >
+                    <Text
+                        style={[
+                            type.botao,
+                            isFull || me ? styles.ctaNeutroTexto : styles.ctaTexto,
+                        ]}
+                    >
+                        {isFull
+                            ? "Sem vagas"
+                            : me
+                              ? "Cancelar presença"
+                              : "Confirmar presença"}
+                    </Text>
+                </Pressable>
+
+                <Pressable
+                    style={styles.calendario}
+                    onPress={() => addToCalendar(game)}
+                >
+                    <Icon name="calendario" size={22} color={colors.ink} />
+                </Pressable>
             </View>
-        </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    content: {
-        padding: 16,
-        gap: 24,
+    tela: {
+        flex: 1,
+        backgroundColor: colors.canvas,
     },
-    centered: {
+    conteudo: {
+        paddingBottom: spacing.xl,
+    },
+    centro: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
+        padding: spacing.xl,
+        backgroundColor: colors.canvas,
     },
-    message: {
-        ...type.bodySm,
-        color: colors.ink,
-    },
-    block: {
-        gap: 8,
-    },
-    title: {
-        ...type.headlineMd,
-        color: colors.ink,
-    },
-    subtitle: {
-        ...type.caption,
+    centroTexto: {
         color: colors.body,
     },
-    sectionTitle: {
-        ...type.label,
-        color: colors.bodyMid,
+    hero: {
+        height: 250,
+        justifyContent: "space-between",
+        padding: spacing.lg,
+        overflow: "hidden",
     },
-    scoreboard: {
+    heroTopo: {
         flexDirection: "row",
-        gap: 12,
-    },
-    team: {
-        flex: 1,
         alignItems: "center",
-        gap: 8,
-        paddingVertical: 14,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: colors.mute,
+        justifyContent: "space-between",
     },
-    teamName: {
-        ...type.label,
-        color: colors.bodyMid,
-    },
-    score: {
-        ...type.statLg,
-        fontSize: 56,
-        lineHeight: 56,
-        color: colors.ink,
-    },
-    pointButtons: {
-        flexDirection: "row",
-        gap: 6,
-    },
-    point: {
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: radius.sm,
-        backgroundColor: colors.ink,
-    },
-    pointDisabled: {
-        backgroundColor: colors.mute,
-    },
-    pointLabel: {
-        ...type.label,
-        color: colors.onPrimary,
-    },
-    undo: {
-        paddingVertical: 4,
-        paddingHorizontal: 10,
-    },
-    undoLabel: {
-        ...type.caption,
-        color: colors.body,
-    },
-    finish: {
+    voltar: {
+        width: size.backButton,
+        height: size.backButton,
         alignItems: "center",
-        paddingVertical: 14,
-        borderRadius: radius.sm,
-        backgroundColor: colors.primary,
-    },
-    finishGhost: {
-        alignItems: "center",
-        paddingVertical: 12,
-        borderRadius: radius.sm,
-    },
-    finishLabel: {
-        ...type.headlineSm,
-        color: colors.onPrimary,
-    },
-    acoesTopo: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        gap: 8,
-        marginTop: 6,
+        justifyContent: "center",
+        borderRadius: size.backButton / 2,
+        backgroundColor: "rgba(255,254,251,0.92)",
     },
     convite: {
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 6,
-        backgroundColor: colors.primary,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.sm,
+        height: size.backButton,
+        paddingHorizontal: spacing.lg,
+        borderRadius: size.backButton / 2,
+        backgroundColor: "rgba(255,254,251,0.92)",
     },
     conviteTexto: {
-        ...type.label,
-        color: colors.onPrimary,
-    },
-    calendario: {
-        alignSelf: "flex-start",
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: colors.mute,
-    },
-    calendarioTexto: {
-        ...type.caption,
-        fontFamily: font.semibold,
         color: colors.ink,
     },
-    finished: {
-        ...type.caption,
-        color: colors.body,
+    heroRodape: {
+        gap: spacing.sm,
     },
-    deleteLabel: {
-        ...type.label,
-        color: colors.primary,
-    },
-    actions: {
+    heroChips: {
         flexDirection: "row",
-        gap: 8,
+        gap: spacing.sm,
     },
-    action: {
-        flex: 1,
-        alignItems: "center",
-        paddingVertical: 12,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: colors.mute,
-    },
-    actionPrimary: {
-        borderColor: "transparent",
+    chipStatus: {
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.md,
+        borderRadius: radius.pill,
         backgroundColor: colors.primary,
     },
-    actionDisabled: {
-        backgroundColor: colors.canvasSoft,
-    },
-    actionLabel: {
-        ...type.bodySm,
-        fontFamily: font.semibold,
-        color: colors.ink,
-    },
-    actionPrimaryLabel: {
-        ...type.bodySm,
-        fontFamily: font.semibold,
+    chipStatusTexto: {
         color: colors.onPrimary,
     },
-    actionTravadoLabel: {
-        color: colors.body,
+    chipEsporte: {
+        paddingVertical: spacing.xs,
+        paddingHorizontal: spacing.md,
+        borderRadius: radius.pill,
+        backgroundColor: "rgba(255,254,251,0.22)",
     },
-    list: {
-        gap: 2,
+    chipEsporteTexto: {
+        color: colors.onPrimary,
     },
-    row: {
+    heroTitulo: {
+        color: colors.onPrimary,
+    },
+    corpo: {
+        padding: spacing.xl,
+        gap: spacing.xxl,
+    },
+    grade: {
         flexDirection: "row",
-        justifyContent: "space-between",
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.mute,
+        gap: spacing.md,
     },
-    rowName: {
-        ...type.caption,
+    cardGrade: {
+        flex: 1,
+        gap: spacing.xs,
+        padding: spacing.lg,
+        borderRadius: radius.md,
+        backgroundColor: colors.canvasSoft,
+    },
+    bloco: {
+        gap: spacing.md,
+    },
+    blocoTopo: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    rotulo: {
+        color: colors.mute,
+    },
+    valor: {
         color: colors.ink,
     },
-    rowStatus: {
-        ...type.caption,
+    nota: {
         color: colors.body,
+    },
+    trilha: {
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: colors.line,
+        overflow: "hidden",
+    },
+    trilhaFill: {
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: colors.primary,
+    },
+    placar: {
+        flexDirection: "row",
+        gap: spacing.md,
+    },
+    time: {
+        flex: 1,
+        alignItems: "center",
+        gap: spacing.sm,
+        paddingVertical: spacing.lg,
+        borderRadius: radius.md,
+        backgroundColor: colors.canvasSoft,
+    },
+    timeNome: {
+        color: colors.mute,
+    },
+    timePlacar: {
+        color: colors.ink,
+    },
+    pontos: {
+        flexDirection: "row",
+        gap: spacing.xs,
+    },
+    ponto: {
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        borderRadius: 10,
+        backgroundColor: colors.ink,
+    },
+    pontoTravado: {
+        backgroundColor: colors.chipBorder,
+    },
+    pontoTexto: {
+        color: colors.onPrimary,
+    },
+    desfazer: {
+        color: colors.mute,
+    },
+    encerrar: {
+        alignItems: "center",
+        paddingVertical: spacing.md,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: colors.chipBorder,
+    },
+    encerrarTexto: {
+        color: colors.ink,
+    },
+    pessoa: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.md,
+        paddingVertical: spacing.sm,
+    },
+    pessoaTexto: {
+        flex: 1,
+    },
+    chegou: {
+        color: colors.primary,
+    },
+    aCaminho: {
+        color: colors.mute,
+    },
+    chegada: {
+        alignItems: "center",
+        paddingVertical: spacing.md,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: colors.ink,
+    },
+    chegadaTravada: {
+        borderColor: colors.chipBorder,
+    },
+    chegadaTexto: {
+        color: colors.ink,
+    },
+    apagar: {
+        alignItems: "center",
+        paddingVertical: spacing.md,
+    },
+    apagarTexto: {
+        color: colors.primary,
+    },
+    rodape: {
+        flexDirection: "row",
+        gap: spacing.md,
+        padding: spacing.lg,
+        paddingBottom: spacing.lg,
+        borderTopWidth: 1,
+        borderTopColor: colors.line,
+        backgroundColor: colors.canvas,
+    },
+    cta: {
+        flex: 1,
+        height: size.cta,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        backgroundColor: colors.primary,
+    },
+    ctaNeutro: {
+        backgroundColor: colors.canvasSoft,
+        borderWidth: 1,
+        borderColor: colors.line,
+    },
+    ctaTexto: {
+        color: colors.onPrimary,
+    },
+    ctaNeutroTexto: {
+        color: colors.ink,
+    },
+    calendario: {
+        width: size.cta,
+        height: size.cta,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: colors.chipBorder,
     },
 });

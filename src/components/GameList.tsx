@@ -9,10 +9,13 @@ import {
     type Game,
 } from "../games/types";
 
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "short",
+const horaFormatter = new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
+});
+
+const diaFormatter = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "short",
 });
 
 interface GameListProps {
@@ -25,10 +28,10 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
     if (games.length === 0) {
         return (
             <View style={styles.vazio}>
-                <Text style={[type.headlineSm, styles.vazioTitulo]}>
+                <Text style={[type.nomeCard, styles.vazioTitulo]}>
                     Nenhum jogo por perto
                 </Text>
-                <Text style={[type.bodySm, styles.vazioTexto]}>
+                <Text style={[type.corpo, styles.vazioTexto]}>
                     Marque o primeiro e ele aparece aqui para quem estiver na
                     região.
                 </Text>
@@ -38,64 +41,65 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
 
     return (
         <ScrollView contentContainerStyle={styles.lista}>
-            <Text style={[type.headlineSm, styles.secao]}>Próximos a você</Text>
-
             {games.map((game) => {
-                const distancia = distanceFor(game, center);
-                const emAndamento = currentStatus(game) === "em-andamento";
+                const inicio = new Date(game.startsAt);
+                const aoVivo = currentStatus(game) === "em-andamento";
+                const livres = Math.max(0, game.spots - game.attendees.length);
 
                 return (
                     <Pressable
                         key={game.id}
-                        style={styles.item}
+                        style={styles.card}
                         onPress={() => onOpen(game)}
                     >
-                        <View style={styles.selo}>
-                            <Text style={[type.statMd, styles.seloLetra]}>
-                                {game.sport.slice(0, 1)}
+                        <View style={styles.linhaTopo}>
+                            <Text style={[type.eyebrow, styles.status]}>
+                                {aoVivo ? "Ao vivo" : "Aberto"}
                             </Text>
-                        </View>
-
-                        <View style={styles.miolo}>
-                            <Text style={[type.headlineSm, styles.titulo]}>
-                                {game.sport} {game.modality}
-                            </Text>
-
-                            <Text style={[type.caption, styles.detalhe]}>
-                                {dayFormatter.format(new Date(game.startsAt))} ·{" "}
-                                {SKILL_LABEL[game.level]} ·{" "}
-                                {game.attendees.length}/{game.spots}
-                            </Text>
-
-                            {emAndamento || game.source === "local" ? (
-                                <View style={styles.etiquetas}>
-                                    {emAndamento ? (
-                                        <Text
-                                            style={[type.label, styles.aoVivo]}
-                                        >
-                                            Ao vivo {game.score.home}x
-                                            {game.score.away}
-                                        </Text>
-                                    ) : null}
-
-                                    {game.source === "local" ? (
-                                        <Text
-                                            style={[type.label, styles.demo]}
-                                        >
-                                            Demonstração
-                                        </Text>
-                                    ) : null}
-                                </View>
-                            ) : null}
-                        </View>
-
-                        <View style={styles.distancia}>
-                            <Text style={[type.statMd, styles.distanciaNumero]}>
-                                {distancia.toFixed(1).replace(".", ",")}
-                            </Text>
-                            <Text style={[type.label, styles.distanciaUnidade]}>
+                            <Text style={[type.metadado, styles.distancia]}>
+                                {distanceFor(game, center)
+                                    .toFixed(1)
+                                    .replace(".", ",")}{" "}
                                 km
                             </Text>
+                        </View>
+
+                        <Text style={[type.nomeCard, styles.nome]}>
+                            {game.placeName}
+                        </Text>
+
+                        <Text style={[type.corpoSm, styles.meta]}>
+                            {game.sport} {game.modality} ·{" "}
+                            {diaFormatter.format(inicio)}{" "}
+                            {horaFormatter.format(inicio)} ·{" "}
+                            {SKILL_LABEL[game.level]}
+                        </Text>
+
+                        <View style={styles.rodape}>
+                            <Text
+                                style={[
+                                    type.pontos,
+                                    livres === 0
+                                        ? styles.vagasEsgotadas
+                                        : styles.vagas,
+                                ]}
+                            >
+                                {game.attendees.length} / {game.spots}
+                            </Text>
+
+                            <Text style={[type.metadado, styles.meta]}>
+                                {livres === 0
+                                    ? "quadra cheia"
+                                    : livres === 1
+                                      ? "1 vaga livre"
+                                      : `${livres} vagas livres`}
+                            </Text>
+
+                            {game.source === "local" ? (
+                                <Text style={[type.labelTab, styles.demo]}>
+                                    demonstração
+                                </Text>
+                            ) : null}
                         </View>
                     </Pressable>
                 );
@@ -108,61 +112,47 @@ const styles = StyleSheet.create({
     lista: {
         padding: spacing.lg,
         paddingTop: 104,
-        paddingBottom: spacing.xxxl,
-        gap: spacing.sm,
-    },
-    secao: {
-        color: colors.ink,
-        marginBottom: spacing.xs,
-    },
-    item: {
-        flexDirection: "row",
-        alignItems: "center",
+        paddingBottom: 96,
         gap: spacing.md,
-        padding: spacing.md,
-        borderRadius: radius.md,
+    },
+    card: {
+        gap: spacing.xs,
+        padding: spacing.lg,
+        borderRadius: 18,
         backgroundColor: colors.canvasSoft,
     },
-    selo: {
-        width: 48,
-        height: 48,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: radius.sm,
-        backgroundColor: colors.canvas,
-    },
-    seloLetra: {
-        color: colors.primary,
-    },
-    miolo: {
-        flex: 1,
-        gap: spacing.xxs,
-    },
-    titulo: {
-        color: colors.ink,
-    },
-    detalhe: {
-        color: colors.body,
-    },
-    etiquetas: {
+    linhaTopo: {
         flexDirection: "row",
-        gap: spacing.md,
-        marginTop: spacing.xxs,
+        alignItems: "center",
+        justifyContent: "space-between",
     },
-    aoVivo: {
+    status: {
         color: colors.primary,
-    },
-    demo: {
-        color: colors.bodyMid,
     },
     distancia: {
-        alignItems: "flex-end",
+        color: colors.mute,
     },
-    distanciaNumero: {
+    nome: {
         color: colors.ink,
     },
-    distanciaUnidade: {
-        color: colors.bodyMid,
+    meta: {
+        color: colors.body,
+    },
+    rodape: {
+        flexDirection: "row",
+        alignItems: "baseline",
+        gap: spacing.sm,
+        marginTop: spacing.xs,
+    },
+    vagas: {
+        color: colors.ink,
+    },
+    vagasEsgotadas: {
+        color: colors.mute,
+    },
+    demo: {
+        marginLeft: "auto",
+        color: colors.mute,
     },
     vazio: {
         flex: 1,

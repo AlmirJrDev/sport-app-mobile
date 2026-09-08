@@ -1,22 +1,20 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors, radius, spacing, type } from "../design/tokens";
+import { Icon } from "../design/icons";
+import { Avatar } from "../design/pieces";
+import { colors, radius, shadow, size, spacing, type } from "../design/tokens";
+import { SKILL_LABEL, currentStatus, type Game } from "../games/types";
 import { inviteText } from "../share/invite";
 import { shareInvite } from "../share/share";
-import {
-    SKILL_LABEL,
-    currentStatus,
-    endsAt,
-    type Game,
-} from "../games/types";
 
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "short",
-});
-
-const hourFormatter = new Intl.DateTimeFormat("pt-BR", {
+const horaFormatter = new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
+});
+
+const diaFormatter = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "short",
 });
 
 interface GameSheetProps {
@@ -28,6 +26,34 @@ interface GameSheetProps {
     onClose: () => void;
 }
 
+/** Ponto do "ao vivo": opacidade 1 → .3 → 1, 1,6s, infinito. */
+function PontoVivo() {
+    const pulso = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        const ciclo = Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulso, {
+                    toValue: 0.3,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulso, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+            ]),
+        );
+
+        ciclo.start();
+
+        return () => ciclo.stop();
+    }, [pulso]);
+
+    return <Animated.View style={[styles.ponto, { opacity: pulso }]} />;
+}
+
 export default function GameSheet({
     game,
     distanceKm,
@@ -36,217 +62,239 @@ export default function GameSheet({
     onOpen,
     onClose,
 }: GameSheetProps) {
-    const vagas = Math.max(0, game.spots - game.attendees.length);
-    const isFull = vagas === 0 && !isJoined;
-    const travado = isFull;
-    const start = new Date(game.startsAt);
+    const inicio = new Date(game.startsAt);
+    const situacao = currentStatus(game);
+    const aoVivo = situacao === "em-andamento";
+    const lotado = game.attendees.length >= game.spots && !isJoined;
 
-    const rotulo = isFull
+    const visiveis = game.attendees.slice(0, 4);
+    const extras = game.attendees.length - visiveis.length;
+
+    const rotulo = lotado
         ? "Sem vagas"
         : isJoined
-          ? "Cancelar presença"
-          : "Vou jogar";
+          ? "Presença confirmada"
+          : "Entrar no jogo";
 
     return (
-        <View style={styles.card}>
+        <View style={styles.sheet}>
             <View style={styles.topo}>
                 <View style={styles.identidade}>
-                    <Text style={[type.headlineMd, styles.titulo]}>
-                        {game.sport} {game.modality}
-                    </Text>
-                    <Text style={[type.bodySm, styles.local]}>
+                    <View style={styles.status}>
+                        {aoVivo ? <PontoVivo /> : null}
+                        <Text style={[type.eyebrow, styles.statusTexto]}>
+                            {aoVivo ? "Ao vivo" : "Aberto"} · {game.sport}
+                        </Text>
+                    </View>
+
+                    <Text style={[type.nomeSheet, styles.nome]}>
                         {game.placeName}
                     </Text>
+
+                    <Text style={[type.corpoSm, styles.meta]}>
+                        {aoVivo
+                            ? `começou ${horaFormatter.format(inicio)}`
+                            : `${diaFormatter.format(inicio)} ${horaFormatter.format(inicio)}`}{" "}
+                        · {game.durationMinutes} min ·{" "}
+                        {distanceKm.toFixed(1).replace(".", ",")} km
+                    </Text>
                 </View>
 
-                <View style={styles.vagas}>
-                    <Text style={[type.statMd, styles.vagasNumero]}>
-                        {vagas}
+                <View style={styles.placarBloco}>
+                    <Text style={[type.placar, styles.placar]}>
+                        {aoVivo
+                            ? `${game.score.home}–${game.score.away}`
+                            : horaFormatter.format(inicio)}
                     </Text>
-                    <Text style={[type.label, styles.vagasRotulo]}>
-                        {vagas === 1 ? "vaga" : "vagas"}
+                    <Text style={[type.labelTab, styles.placarRotulo]}>
+                        {aoVivo ? "placar" : "início"}
                     </Text>
                 </View>
             </View>
 
-            <View style={styles.chips}>
-                <Chip texto={SKILL_LABEL[game.level]} />
-                <Chip
-                    texto={`${dayFormatter.format(start)} ${hourFormatter.format(start)}`}
-                />
-                <Chip texto={`${distanceKm.toFixed(1).replace(".", ",")} km`} />
-                {game.source === "local" ? <Chip texto="Demonstração" /> : null}
-            </View>
+            <View style={styles.presenca}>
+                <View style={styles.pilha}>
+                    {visiveis.map((pessoa, indice) => (
+                        <Avatar
+                            key={pessoa.playerId}
+                            name={pessoa.name}
+                            size={30}
+                            style={{
+                                marginLeft: indice === 0 ? 0 : -10,
+                                borderWidth: 2,
+                                borderColor: colors.canvas,
+                            }}
+                        />
+                    ))}
 
-            {currentStatus(game) === "em-andamento" ? (
-                <View style={styles.aoVivo}>
-                    <Text style={[type.label, styles.aoVivoRotulo]}>
-                        Ao vivo
-                    </Text>
-                    <Text style={[type.statMd, styles.aoVivoPlacar]}>
-                        {game.score.home} x {game.score.away}
-                    </Text>
-                    <Text style={[type.caption, styles.aoVivoAte]}>
-                        até {hourFormatter.format(endsAt(game))}
-                    </Text>
+                    {extras > 0 ? (
+                        <View style={styles.extras}>
+                            <Text style={[type.labelTab, styles.extrasTexto]}>
+                                +{extras}
+                            </Text>
+                        </View>
+                    ) : null}
                 </View>
-            ) : null}
 
-            <Pressable
-                style={[styles.cta, travado && styles.ctaTravado]}
-                disabled={travado}
-                onPress={onToggleJoin}
-            >
-                <Text
-                    style={[
-                        type.headlineSm,
-                        travado ? styles.ctaRotuloTravado : styles.ctaRotulo,
-                    ]}
-                >
-                    {rotulo}
+                <Text style={[type.corpoSm, styles.meta]}>
+                    {game.attendees.length} de {game.spots} confirmados ·{" "}
+                    {SKILL_LABEL[game.level]}
                 </Text>
-            </Pressable>
+            </View>
 
-            <View style={styles.rodape}>
-                <Pressable style={styles.secundario} onPress={onOpen}>
-                    <Text style={[type.label, styles.secundarioTexto]}>
-                        Abrir jogo
+            <View style={styles.acoes}>
+                <Pressable
+                    style={[
+                        styles.cta,
+                        (lotado || isJoined) && styles.ctaNeutro,
+                    ]}
+                    disabled={lotado}
+                    onPress={onToggleJoin}
+                >
+                    <Text
+                        style={[
+                            type.botaoSheet,
+                            lotado || isJoined
+                                ? styles.ctaNeutroTexto
+                                : styles.ctaTexto,
+                        ]}
+                    >
+                        {rotulo}
                     </Text>
                 </Pressable>
 
                 <Pressable
-                    style={styles.secundario}
+                    style={styles.quadrado}
                     onPress={() => shareInvite(inviteText(game))}
                 >
-                    <Text style={[type.label, styles.secundarioTexto]}>
-                        Convidar
-                    </Text>
+                    <Icon name="compartilhar" size={20} color={colors.ink} />
+                </Pressable>
+
+                <Pressable style={styles.quadrado} onPress={onOpen}>
+                    <View style={styles.chevron}>
+                        <Icon name="chevron" size={20} color={colors.ink} />
+                    </View>
                 </Pressable>
             </View>
 
-            <Pressable style={styles.fechar} onPress={onClose}>
-                <Text style={[type.label, styles.fecharTexto]}>Fechar</Text>
+            <Pressable style={styles.fechar} onPress={onClose} hitSlop={8}>
+                <Text style={[type.labelTab, styles.fecharTexto]}>Fechar</Text>
             </Pressable>
-        </View>
-    );
-}
-
-function Chip({ texto }: { texto: string }) {
-    return (
-        <View style={styles.chip}>
-            <Text style={[type.label, styles.chipTexto]}>{texto}</Text>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
+    sheet: {
         position: "absolute",
-        left: spacing.lg,
-        right: spacing.lg,
-        bottom: spacing.lg,
+        left: 0,
+        right: 0,
+        bottom: 0,
         padding: spacing.xl,
-        gap: spacing.md,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: colors.mute,
+        paddingBottom: spacing.md,
+        gap: spacing.lg,
+        borderTopLeftRadius: radius.sheet,
+        borderTopRightRadius: radius.sheet,
         backgroundColor: colors.canvas,
+        ...shadow.sheet,
     },
     topo: {
         flexDirection: "row",
         alignItems: "flex-start",
-        gap: spacing.md,
+        gap: spacing.lg,
     },
     identidade: {
         flex: 1,
-        gap: spacing.xxs,
+        gap: spacing.xs,
     },
-    titulo: {
-        color: colors.ink,
-    },
-    local: {
-        color: colors.body,
-    },
-    vagas: {
-        alignItems: "center",
-        paddingVertical: spacing.xs,
-        paddingHorizontal: spacing.md,
-        borderRadius: radius.sm,
-        backgroundColor: colors.canvasSoft,
-    },
-    vagasNumero: {
-        color: colors.primary,
-    },
-    vagasRotulo: {
-        color: colors.bodyMid,
-    },
-    chips: {
+    status: {
         flexDirection: "row",
-        flexWrap: "wrap",
+        alignItems: "center",
         gap: spacing.sm,
     },
-    chip: {
-        paddingVertical: spacing.xs,
-        paddingHorizontal: spacing.md,
-        borderRadius: radius.pill,
-        backgroundColor: colors.canvasSoft,
+    ponto: {
+        width: 7,
+        height: 7,
+        borderRadius: 4,
+        backgroundColor: colors.primary,
     },
-    chipTexto: {
-        color: colors.body,
-    },
-    aoVivo: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: spacing.md,
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.md,
-        borderRadius: radius.sm,
-        backgroundColor: colors.ink,
-    },
-    aoVivoRotulo: {
+    statusTexto: {
         color: colors.primary,
     },
-    aoVivoPlacar: {
-        color: colors.onPrimary,
+    nome: {
+        color: colors.ink,
     },
-    aoVivoAte: {
+    meta: {
+        color: colors.body,
+    },
+    placarBloco: {
+        alignItems: "flex-end",
+    },
+    placar: {
+        color: colors.ink,
+    },
+    placarRotulo: {
         color: colors.mute,
     },
-    cta: {
+    presenca: {
+        gap: spacing.sm,
+    },
+    pilha: {
+        flexDirection: "row",
         alignItems: "center",
-        paddingVertical: spacing.md,
+    },
+    extras: {
+        width: 30,
+        height: 30,
+        marginLeft: -10,
+        borderRadius: 15,
+        borderWidth: 2,
+        borderColor: colors.canvas,
+        backgroundColor: colors.ink,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    extrasTexto: {
+        color: colors.onPrimary,
+    },
+    acoes: {
+        flexDirection: "row",
+        gap: spacing.sm,
+    },
+    cta: {
+        flex: 1,
+        height: size.sheetButton,
+        alignItems: "center",
+        justifyContent: "center",
         borderRadius: radius.sm,
         backgroundColor: colors.primary,
     },
-    ctaTravado: {
+    ctaNeutro: {
         backgroundColor: colors.canvasSoft,
     },
-    ctaRotulo: {
+    ctaTexto: {
         color: colors.onPrimary,
     },
-    ctaRotuloTravado: {
-        color: colors.bodyMid,
-    },
-    rodape: {
-        flexDirection: "row",
-        gap: spacing.sm,
-    },
-    secundario: {
-        flex: 1,
-        alignItems: "center",
-        paddingVertical: spacing.md,
-        borderRadius: radius.sm,
-        borderWidth: 1,
-        borderColor: colors.ink,
-    },
-    secundarioTexto: {
+    ctaNeutroTexto: {
         color: colors.ink,
     },
-    fechar: {
+    quadrado: {
+        width: size.sheetButton,
+        height: size.sheetButton,
         alignItems: "center",
-        paddingVertical: spacing.sm,
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: colors.chipBorder,
+    },
+    chevron: {
+        transform: [{ rotate: "180deg" }],
+    },
+    fechar: {
+        alignSelf: "center",
+        paddingVertical: spacing.xs,
     },
     fecharTexto: {
-        color: colors.bodyMid,
+        color: colors.mute,
     },
 });

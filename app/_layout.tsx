@@ -58,7 +58,10 @@ export default function RootLayout() {
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen name="novo" options={{ title: "Marcar jogo" }} />
-                <Stack.Screen name="jogo/[id]" options={{ title: "Jogo" }} />
+                <Stack.Screen
+                    name="jogo/[id]"
+                    options={{ headerShown: false }}
+                />
                 <Stack.Screen
                     name="onboarding"
                     options={{ title: "Seu perfil" }}

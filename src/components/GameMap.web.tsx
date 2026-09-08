@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import {
     Map as MapLibreMap,
     Marker,
-    NavigationControl,
     setWorkerUrl,
 } from "maplibre-gl";
 
@@ -47,7 +46,6 @@ export default function GameMap({
             zoom: 12,
         });
 
-        map.addControl(new NavigationControl(), "top-right");
         map.on("click", () => onClearSelection());
         map.on("moveend", () => {
             const next = map.getCenter();
@@ -75,23 +73,34 @@ export default function GameMap({
         games.forEach((game) => {
             const element = document.createElement("div");
             const isSelected = game.id === selectedGameId;
-            const size = isSelected ? 26 : 18;
+            const size = isSelected ? 62 : 46;
 
             element.style.width = `${size}px`;
             element.style.height = `${size}px`;
             element.style.borderRadius = "50%";
-            element.style.border = `2px solid ${colors.canvas}`;
-            const isDemo = game.source === "local";
-
-            element.style.backgroundColor = isSelected
-                ? colors.primary
-                : isDemo
-                  ? colors.canvas
-                  : colors.ink;
-            element.style.borderColor =
-                isSelected || !isDemo ? colors.canvas : colors.ink;
-            element.style.boxShadow = "0 1px 4px rgba(0,0,0,0.4)";
+            element.style.display = "flex";
+            element.style.alignItems = "center";
+            element.style.justifyContent = "center";
             element.style.cursor = "pointer";
+            element.style.fontFamily = "BebasNeue_400Regular, sans-serif";
+            element.style.letterSpacing = "1px";
+            element.textContent = game.sport.slice(0, 1).toUpperCase();
+
+            if (isSelected) {
+                element.style.backgroundColor = colors.primary;
+                element.style.border = `4px solid ${colors.canvas}`;
+                element.style.color = colors.onPrimary;
+                element.style.fontSize = "30px";
+                element.style.boxShadow =
+                    "0 12px 22px -8px rgba(10,8,6,.5)";
+            } else {
+                element.style.backgroundColor = colors.canvas;
+                element.style.border = `3px solid ${colors.primary}`;
+                element.style.color = colors.primary;
+                element.style.fontSize = "22px";
+                element.style.boxShadow =
+                    "0 10px 24px -12px rgba(10,8,6,.45)";
+            }
 
             element.addEventListener("click", (event) => {
                 event.stopPropagation();

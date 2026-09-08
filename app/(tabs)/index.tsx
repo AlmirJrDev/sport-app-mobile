@@ -2,18 +2,30 @@ import { useCallback, useState } from "react";
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import {
     ActivityIndicator,
+    Image,
     Pressable,
     StyleSheet,
     Text,
     View,
 } from "react-native";
 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { useLocationTracking } from "@/hooks/use-location-tracking";
 import { useSession } from "../../src/auth/useSession";
 import GameList from "../../src/components/GameList";
 import GameMap from "../../src/components/GameMap";
 import GameSheet from "../../src/components/GameSheet";
-import { colors, font, radius, spacing, type } from "../../src/design/tokens";
+import { Icon } from "../../src/design/icons";
+import { Avatar } from "../../src/design/pieces";
+import {
+    colors,
+    radius,
+    shadow,
+    size,
+    spacing,
+    type,
+} from "../../src/design/tokens";
 import { FALLBACK_CENTER } from "../../src/games/mock";
 import {
     distanceFor,
@@ -26,6 +38,7 @@ const RADIUS_KM = 10;
 
 export default function MapScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const { account, loading } = useSession();
     const { coordinate, status, permission, start } = useLocationTracking({
         autoStart: true,
@@ -64,7 +77,7 @@ export default function MapScreen() {
 
     if (loading) {
         return (
-            <View style={styles.centered}>
+            <View style={styles.centro}>
                 <ActivityIndicator color={colors.ink} />
             </View>
         );
@@ -76,9 +89,9 @@ export default function MapScreen() {
 
     if (isLocating) {
         return (
-            <View style={styles.centered}>
+            <View style={styles.centro}>
                 <ActivityIndicator color={colors.ink} />
-                <Text style={[type.bodyMd, styles.message]}>
+                <Text style={[type.corpo, styles.centroTexto]}>
                     Procurando você no mapa…
                 </Text>
             </View>
@@ -87,35 +100,6 @@ export default function MapScreen() {
 
     const semLocalizacao = permission === "denied" || status === "error";
     const selectedGame = games.find((game) => game.id === selectedId) ?? null;
-
-    const alternador = (
-        <View style={styles.alternador}>
-            {(["mapa", "lista"] as const).map((opcao) => (
-                <Pressable
-                    key={opcao}
-                    style={[
-                        styles.aba,
-                        vista === opcao && styles.abaAtiva,
-                    ]}
-                    onPress={() => {
-                        setVista(opcao);
-                        setSelectedId(null);
-                    }}
-                >
-                    <Text
-                        style={[
-                            type.label,
-                            vista === opcao
-                                ? styles.abaTextoAtivo
-                                : styles.abaTexto,
-                        ]}
-                    >
-                        {opcao === "mapa" ? "Mapa" : "Lista"}
-                    </Text>
-                </Pressable>
-            ))}
-        </View>
-    );
 
     const handleToggleJoin = async () => {
         if (!selectedGame) {
@@ -153,29 +137,81 @@ export default function MapScreen() {
                 />
             )}
 
-            <View style={styles.topo} pointerEvents="box-none">
-                {semLocalizacao ? (
-                    <View style={styles.aviso}>
-                        <Text style={[type.caption, styles.avisoTexto]}>
-                            Mapa aberto em Campinas
-                        </Text>
+            <View
+                style={[styles.topo, { paddingTop: insets.top + 10 }]}
+                pointerEvents="box-none"
+            >
+                <View style={styles.linhaTopo}>
+                    <View style={styles.pill}>
+                        <Image
+                            source={require("../../assets/logo.png")}
+                            style={styles.logo}
+                        />
 
-                        <Pressable onPress={start} hitSlop={8}>
-                            <Text style={[type.label, styles.avisoAcao]}>
-                                Ativar
+                        <View style={styles.pillTexto}>
+                            <Text style={[type.eyebrow, styles.pillRotulo]}>
+                                Jogos perto de
+                            </Text>
+                            <Text style={[type.nomeLista, styles.pillLugar]}>
+                                {semLocalizacao ? "Campinas, SP" : "Você"} ·{" "}
+                                {RADIUS_KM} km
+                            </Text>
+                        </View>
+                    </View>
+
+                    <Pressable onPress={() => router.push("/perfil")}>
+                        <Avatar name={account.name} size={46} />
+                    </Pressable>
+                </View>
+
+                <View style={styles.chips}>
+                    {(["mapa", "lista"] as const).map((opcao) => (
+                        <Pressable
+                            key={opcao}
+                            style={[
+                                styles.chip,
+                                vista === opcao && styles.chipAtivo,
+                            ]}
+                            hitSlop={8}
+                            onPress={() => {
+                                setVista(opcao);
+                                setSelectedId(null);
+                            }}
+                        >
+                            <Text
+                                style={[
+                                    type.labelCampo,
+                                    vista === opcao
+                                        ? styles.chipTextoAtivo
+                                        : styles.chipTexto,
+                                ]}
+                            >
+                                {opcao === "mapa" ? "Mapa" : "Lista"}
                             </Text>
                         </Pressable>
-                    </View>
-                ) : null}
+                    ))}
 
-                {alternador}
+                    {semLocalizacao ? (
+                        <Pressable
+                            style={styles.chip}
+                            hitSlop={8}
+                            onPress={start}
+                        >
+                            <Text
+                                style={[type.labelCampo, styles.chipTextoAcao]}
+                            >
+                                Usar minha localização
+                            </Text>
+                        </Pressable>
+                    ) : null}
+                </View>
 
                 {erroApi ? (
                     <View style={styles.falha}>
-                        <Text style={[type.label, styles.falhaRotulo]}>
+                        <Text style={[type.eyebrow, styles.falhaRotulo]}>
                             Só demonstração
                         </Text>
-                        <Text style={[type.caption, styles.falhaTexto]}>
+                        <Text style={[type.metadado, styles.falhaTexto]}>
                             {erroApi}
                         </Text>
                     </View>
@@ -196,13 +232,13 @@ export default function MapScreen() {
             ) : (
                 <View style={styles.rodape} pointerEvents="box-none">
                     <View style={styles.contador}>
-                        <Text style={[type.label, styles.contadorTexto]}>
+                        <Text style={[type.eyebrow, styles.contadorTexto]}>
                             {games.length} jogos · {RADIUS_KM} km
                         </Text>
                     </View>
 
                     <Pressable style={styles.fab} onPress={handleCreate}>
-                        <Text style={styles.fabSinal}>+</Text>
+                        <Icon name="mais" size={26} color={colors.onPrimary} />
                     </Pressable>
                 </View>
             )}
@@ -215,7 +251,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.canvas,
     },
-    centered: {
+    centro: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
@@ -223,9 +259,86 @@ const styles = StyleSheet.create({
         gap: spacing.md,
         backgroundColor: colors.canvas,
     },
-    message: {
+    centroTexto: {
         color: colors.body,
         textAlign: "center",
+    },
+    topo: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: 0,
+        paddingTop: 10,
+        paddingHorizontal: spacing.lg,
+        gap: spacing.md,
+    },
+    linhaTopo: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.md,
+    },
+    pill: {
+        flex: 1,
+        height: 46,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.md,
+        paddingHorizontal: spacing.md,
+        borderRadius: radius.chip,
+        backgroundColor: colors.canvas,
+        ...shadow.pill,
+    },
+    logo: {
+        width: 34,
+        height: 34,
+    },
+    pillTexto: {
+        flex: 1,
+    },
+    pillRotulo: {
+        color: colors.mute,
+    },
+    pillLugar: {
+        color: colors.ink,
+    },
+    chips: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: spacing.sm,
+    },
+    chip: {
+        height: size.filterChip,
+        justifyContent: "center",
+        paddingHorizontal: spacing.lg,
+        borderRadius: 17,
+        borderWidth: 1,
+        borderColor: colors.line,
+        backgroundColor: colors.canvas,
+    },
+    chipAtivo: {
+        borderColor: "transparent",
+        backgroundColor: colors.ink,
+    },
+    chipTexto: {
+        color: colors.body,
+    },
+    chipTextoAtivo: {
+        color: colors.onPrimary,
+    },
+    chipTextoAcao: {
+        color: colors.primary,
+    },
+    falha: {
+        gap: spacing.xxs,
+        padding: spacing.md,
+        borderRadius: radius.sm,
+        backgroundColor: colors.ink,
+    },
+    falhaRotulo: {
+        color: colors.primary,
+    },
+    falhaTexto: {
+        color: colors.onPrimary,
     },
     rodape: {
         position: "absolute",
@@ -242,88 +355,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
         borderRadius: radius.pill,
         backgroundColor: colors.canvas,
-        borderWidth: 1,
-        borderColor: colors.mute,
+        ...shadow.pill,
     },
     contadorTexto: {
         color: colors.body,
     },
     fab: {
-        width: 56,
-        height: 56,
+        width: size.fab,
+        height: size.fab,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: radius.pill,
+        borderRadius: size.fab / 2,
         backgroundColor: colors.primary,
-    },
-    fabSinal: {
-        fontFamily: font.condensed,
-        fontSize: 36,
-        lineHeight: 40,
-        color: colors.onPrimary,
-    },
-    topo: {
-        position: "absolute",
-        left: 0,
-        right: 56,
-        top: 0,
-        gap: spacing.sm,
-        paddingTop: spacing.md,
-    },
-    aviso: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: spacing.md,
-        marginHorizontal: spacing.lg,
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.lg,
-        borderRadius: radius.pill,
-        backgroundColor: colors.canvas,
-        borderWidth: 1,
-        borderColor: colors.mute,
-    },
-    avisoTexto: {
-        flex: 1,
-        color: colors.body,
-    },
-    avisoAcao: {
-        color: colors.primary,
-    },
-    falha: {
-        marginHorizontal: spacing.lg,
-        padding: spacing.md,
-        borderRadius: radius.sm,
-        backgroundColor: colors.ink,
-        gap: spacing.xxs,
-    },
-    falhaRotulo: {
-        color: colors.primary,
-    },
-    falhaTexto: {
-        color: colors.onPrimary,
-    },
-    alternador: {
-        flexDirection: "row",
-        gap: spacing.sm,
-        paddingHorizontal: spacing.lg,
-    },
-    aba: {
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.lg,
-        borderRadius: radius.pill,
-        borderWidth: 1,
-        borderColor: colors.mute,
-        backgroundColor: colors.canvas,
-    },
-    abaAtiva: {
-        borderColor: "transparent",
-        backgroundColor: colors.ink,
-    },
-    abaTexto: {
-        color: colors.body,
-    },
-    abaTextoAtivo: {
-        color: colors.onPrimary,
+        ...shadow.fab,
     },
 });
