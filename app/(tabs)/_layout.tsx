@@ -1,43 +1,41 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
-import { colors, font, type } from "../../src/design/tokens";
-
-type IconName = keyof typeof MaterialIcons.glyphMap;
+import { Icon, type IconName } from "../../src/design/icons";
+import { colors, font, size, type } from "../../src/design/tokens";
 
 const ABAS: { name: string; title: string; icon: IconName }[] = [
-    { name: "index", title: "Buscar", icon: "explore" },
-    { name: "locais", title: "Locais", icon: "place" },
-    { name: "rankings", title: "Rankings", icon: "bar-chart" },
-    { name: "notificacoes", title: "Avisos", icon: "notifications-none" },
-    { name: "perfil", title: "Perfil", icon: "person-outline" },
+    { name: "index", title: "Mapa", icon: "mapa" },
+    { name: "locais", title: "Locais", icon: "locais" },
+    { name: "rankings", title: "Rankings", icon: "rankings" },
+    { name: "notificacoes", title: "Alertas", icon: "alertas" },
+    { name: "perfil", title: "Perfil", icon: "perfil" },
 ];
 
 export default function TabsLayout() {
     return (
         <Tabs
             screenOptions={{
-                headerStyle: { backgroundColor: colors.canvas },
-                headerTintColor: colors.ink,
+                headerStyle: { backgroundColor: colors.header },
+                headerTintColor: colors.onHeader,
                 headerTitleStyle: {
                     fontFamily: font.condensed,
-                    fontSize: 24,
-                    letterSpacing: 0.5,
+                    fontSize: 28,
+                    letterSpacing: 0.8,
+                    color: colors.onHeader,
                 },
                 headerShadowVisible: false,
                 sceneStyle: { backgroundColor: colors.canvas },
                 tabBarActiveTintColor: colors.primary,
-                tabBarInactiveTintColor: colors.bodyMid,
+                tabBarInactiveTintColor: colors.mute,
                 tabBarStyle: {
+                    height: size.tabBar,
+                    paddingTop: 11,
                     backgroundColor: colors.canvas,
                     borderTopWidth: 1,
-                    borderTopColor: colors.canvasSoft,
+                    borderTopColor: colors.line,
                 },
-                tabBarLabelStyle: {
-                    ...type.label,
-                    fontSize: 11,
-                    lineHeight: 14,
-                },
+                tabBarLabelStyle: type.labelTab,
+                tabBarIconStyle: { marginBottom: 6 },
             }}
         >
             {ABAS.map((aba) => (
@@ -47,10 +45,10 @@ export default function TabsLayout() {
                     options={{
                         title: aba.title,
                         tabBarIcon: ({ color }) => (
-                            <MaterialIcons
+                            <Icon
                                 name={aba.icon}
-                                size={22}
-                                color={color}
+                                size={24}
+                                color={String(color)}
                             />
                         ),
                     }}

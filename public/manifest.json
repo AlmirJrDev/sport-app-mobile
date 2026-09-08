@@ -10,8 +10,8 @@
     "client_mode": "navigate-existing"
   },
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#333333",
+  "background_color": "#FFFEFB",
+  "theme_color": "#DA680D",
   "lang": "pt-BR",
   "icons": [
     {

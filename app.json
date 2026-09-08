@@ -17,7 +17,7 @@
     "android": {
       "package": "com.projetoh.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFEFB",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -32,6 +32,11 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "single"
+    },
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1C1614"
     },
     "plugins": [
       "expo-router",
