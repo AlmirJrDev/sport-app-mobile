@@ -6,15 +6,22 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     View,
 } from "react-native";
 
 import { useLocationTracking } from "@/hooks/use-location-tracking";
 import { useSession } from "../../src/auth/useSession";
+import { DarkHeader } from "../../src/design/header";
+import { Icon } from "../../src/design/icons";
 import { colors, radius, spacing, type } from "../../src/design/tokens";
 import { FALLBACK_CENTER } from "../../src/games/mock";
 import { distanceFor, listNearbyGames } from "../../src/games/service";
-import { currentStatus, type Coordinates, type Game } from "../../src/games/types";
+import {
+    currentStatus,
+    type Coordinates,
+    type Game,
+} from "../../src/games/types";
 import { groupIntoPlaces, type Place } from "../../src/places/group";
 
 const RADIUS_KM = 10;
@@ -34,6 +41,8 @@ export default function LocaisScreen() {
     });
 
     const [places, setPlaces] = useState<Place[]>([]);
+    const [busca, setBusca] = useState("");
+    const [carregado, setCarregado] = useState(false);
 
     const center: Coordinates = coordinate
         ? { longitude: coordinate[0], latitude: coordinate[1] }
@@ -47,6 +56,7 @@ export default function LocaisScreen() {
     const refresh = useCallback(() => {
         listNearbyGames(center, RADIUS_KM).then((resultado) => {
             setPlaces(groupIntoPlaces(resultado.games));
+            setCarregado(true);
         });
     }, [center.latitude, center.longitude]);
 
@@ -70,78 +80,115 @@ export default function LocaisScreen() {
         return <Redirect href="/entrar" />;
     }
 
-    if (places.length === 0) {
-        return (
-            <View style={styles.centro}>
-                <Text style={[type.headlineSm, styles.vazioTitulo]}>
-                    Nenhuma quadra com movimento
-                </Text>
-                <Text style={[type.bodySm, styles.vazioTexto]}>
-                    Os locais aparecem aqui quando alguém marca um jogo por
-                    perto. Marque o primeiro e chame o pessoal.
-                </Text>
-            </View>
-        );
-    }
+    const termo = busca.trim().toLowerCase();
+    const visiveis = termo
+        ? places.filter((place) => place.name.toLowerCase().includes(termo))
+        : places;
+
+    const campoBusca = (
+        <View style={styles.busca}>
+            <Icon name="busca" size={18} color={colors.onHeaderSoft} />
+            <TextInput
+                style={[type.corpoSm, styles.buscaInput]}
+                placeholder="Buscar quadra ou praça"
+                placeholderTextColor={colors.onHeaderSoft}
+                value={busca}
+                onChangeText={setBusca}
+            />
+        </View>
+    );
 
     return (
-        <ScrollView contentContainerStyle={styles.conteudo}>
-            {places.map((place) => (
-                <View key={place.id} style={styles.card}>
-                    <View style={styles.topo}>
-                        <Text style={[type.headlineSm, styles.nome]}>
-                            {place.name}
-                        </Text>
+        <View style={styles.tela}>
+            <DarkHeader title="Locais">{campoBusca}</DarkHeader>
 
-                        <View style={styles.distancia}>
-                            <Text style={[type.statMd, styles.distanciaNumero]}>
-                                {distanceFor(place.games[0], center)
-                                    .toFixed(1)
-                                    .replace(".", ",")}
-                            </Text>
-                            <Text style={[type.label, styles.distanciaUnidade]}>
-                                km
-                            </Text>
-                        </View>
-                    </View>
-
-                    {place.liveGames > 0 ? (
-                        <View style={styles.agora}>
-                            <Text style={[type.label, styles.agoraTexto]}>
-                                {place.liveGames === 1
-                                    ? "1 jogo rolando agora"
-                                    : `${place.liveGames} jogos rolando agora`}
-                                {place.onCourt > 0
-                                    ? ` · ${place.onCourt} na quadra`
-                                    : ""}
-                            </Text>
-                        </View>
-                    ) : null}
-
-                    <Text style={[type.caption, styles.resumo]}>
-                        {place.games.length === 1
-                            ? "1 jogo marcado"
-                            : `${place.games.length} jogos marcados`}{" "}
-                        · {place.confirmed} confirmados
-                    </Text>
-
-                    <View style={styles.jogos}>
-                        {place.games.map((game) => (
-                            <LinhaJogo
-                                key={game.id}
-                                game={game}
-                                onPress={() => router.push(`/jogo/${game.id}`)}
-                            />
-                        ))}
-                    </View>
+            {!carregado ? (
+                <View style={styles.centro}>
+                    <ActivityIndicator color={colors.ink} />
                 </View>
-            ))}
+            ) : visiveis.length === 0 ? (
+                <View style={styles.centro}>
+                    <Text style={[type.nomeCard, styles.vazioTitulo]}>
+                        {termo ? "Nada com esse nome" : "Nenhuma quadra com movimento"}
+                    </Text>
+                    <Text style={[type.corpo, styles.vazioTexto]}>
+                        {termo
+                            ? "Tente outro pedaço do nome."
+                            : "Os locais aparecem aqui quando alguém marca um jogo por perto."}
+                    </Text>
+                </View>
+            ) : (
+                <ScrollView contentContainerStyle={styles.conteudo}>
+                    {visiveis.map((place) => (
+                        <View key={place.id} style={styles.card}>
+                            <View style={styles.topo}>
+                                <View style={styles.identidade}>
+                                    <Text style={[type.nomeCard, styles.nome]}>
+                                        {place.name}
+                                    </Text>
+                                    <Text
+                                        style={[type.metadado, styles.resumo]}
+                                    >
+                                        {place.games.length === 1
+                                            ? "1 jogo marcado"
+                                            : `${place.games.length} jogos marcados`}{" "}
+                                        · {place.confirmed} confirmados
+                                    </Text>
+                                </View>
 
-            <Text style={[type.caption, styles.rodape]}>
-                Locais são agrupados por proximidade — jogos a menos de 80 m
-                contam como a mesma quadra.
-            </Text>
-        </ScrollView>
+                                <View style={styles.distancia}>
+                                    <Text
+                                        style={[type.statCard, styles.distanciaNumero]}
+                                    >
+                                        {distanceFor(place.games[0], center)
+                                            .toFixed(1)
+                                            .replace(".", ",")}
+                                    </Text>
+                                    <Text
+                                        style={[type.labelTab, styles.distanciaUnidade]}
+                                    >
+                                        km
+                                    </Text>
+                                </View>
+                            </View>
+
+                            {place.liveGames > 0 ? (
+                                <View style={styles.aoVivo}>
+                                    <View style={styles.ponto} />
+                                    <Text
+                                        style={[type.eyebrow, styles.aoVivoTexto]}
+                                    >
+                                        {place.liveGames === 1
+                                            ? "1 jogo rolando"
+                                            : `${place.liveGames} jogos rolando`}
+                                        {place.onCourt > 0
+                                            ? ` · ${place.onCourt} na quadra`
+                                            : ""}
+                                    </Text>
+                                </View>
+                            ) : null}
+
+                            <View style={styles.jogos}>
+                                {place.games.map((game) => (
+                                    <LinhaJogo
+                                        key={game.id}
+                                        game={game}
+                                        onPress={() =>
+                                            router.push(`/jogo/${game.id}`)
+                                        }
+                                    />
+                                ))}
+                            </View>
+                        </View>
+                    ))}
+
+                    <Text style={[type.metadado, styles.rodape]}>
+                        Locais são agrupados por proximidade — jogos a menos de
+                        80 m contam como a mesma quadra.
+                    </Text>
+                </ScrollView>
+            )}
+        </View>
     );
 }
 
@@ -151,18 +198,18 @@ function LinhaJogo({ game, onPress }: { game: Game; onPress: () => void }) {
     return (
         <Pressable style={styles.linha} onPress={onPress}>
             <View style={styles.linhaTexto}>
-                <Text style={[type.bodySmStrong, styles.linhaTitulo]}>
+                <Text style={[type.nomeLista, styles.linhaTitulo]}>
                     {game.sport} {game.modality}
                 </Text>
-                <Text style={[type.caption, styles.linhaDetalhe]}>
+                <Text style={[type.metadado, styles.linhaDetalhe]}>
                     {horaFormatter.format(new Date(game.startsAt))} ·{" "}
                     {game.attendees.length}/{game.spots}
                 </Text>
             </View>
 
             {vivo ? (
-                <Text style={[type.label, styles.linhaVivo]}>
-                    {game.score.home}x{game.score.away}
+                <Text style={[type.pontos, styles.linhaPlacar]}>
+                    {game.score.home}–{game.score.away}
                 </Text>
             ) : null}
         </Pressable>
@@ -170,9 +217,26 @@ function LinhaJogo({ game, onPress }: { game: Game; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+    tela: {
+        flex: 1,
+        backgroundColor: colors.canvas,
+    },
+    busca: {
+        height: 44,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.md,
+        paddingHorizontal: spacing.lg,
+        borderRadius: radius.sm,
+        backgroundColor: "rgba(255,254,251,0.1)",
+    },
+    buscaInput: {
+        flex: 1,
+        color: colors.onHeader,
+    },
     conteudo: {
-        padding: spacing.lg,
-        paddingBottom: 96,
+        padding: spacing.xl,
+        paddingBottom: spacing.xxxl,
         gap: spacing.md,
     },
     centro: {
@@ -190,9 +254,9 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     card: {
-        gap: spacing.sm,
-        padding: spacing.lg,
-        borderRadius: radius.md,
+        gap: spacing.md,
+        padding: 18,
+        borderRadius: radius.lg,
         backgroundColor: colors.canvasSoft,
     },
     topo: {
@@ -201,9 +265,15 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         gap: spacing.md,
     },
-    nome: {
+    identidade: {
         flex: 1,
+        gap: spacing.xxs,
+    },
+    nome: {
         color: colors.ink,
+    },
+    resumo: {
+        color: colors.body,
     },
     distancia: {
         alignItems: "flex-end",
@@ -212,24 +282,29 @@ const styles = StyleSheet.create({
         color: colors.ink,
     },
     distanciaUnidade: {
-        color: colors.bodyMid,
+        color: colors.mute,
     },
-    agora: {
+    aoVivo: {
         alignSelf: "flex-start",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: spacing.sm,
         paddingVertical: spacing.xs,
         paddingHorizontal: spacing.md,
         borderRadius: radius.pill,
         backgroundColor: colors.ink,
     },
-    agoraTexto: {
+    ponto: {
+        width: 7,
+        height: 7,
+        borderRadius: 4,
+        backgroundColor: colors.primary,
+    },
+    aoVivoTexto: {
         color: colors.primary,
     },
-    resumo: {
-        color: colors.body,
-    },
     jogos: {
-        gap: spacing.xs,
-        marginTop: spacing.xs,
+        gap: spacing.sm,
     },
     linha: {
         flexDirection: "row",
@@ -237,7 +312,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         gap: spacing.md,
         padding: spacing.md,
-        borderRadius: radius.sm,
+        borderRadius: 12,
         backgroundColor: colors.canvas,
     },
     linhaTexto: {
@@ -248,13 +323,13 @@ const styles = StyleSheet.create({
         color: colors.ink,
     },
     linhaDetalhe: {
-        color: colors.body,
+        color: colors.mute,
     },
-    linhaVivo: {
+    linhaPlacar: {
         color: colors.primary,
     },
     rodape: {
-        color: colors.bodyMid,
+        color: colors.mute,
         marginTop: spacing.sm,
     },
 });

@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
-import { MaterialIcons } from "@expo/vector-icons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import MockNotice from "../../src/components/MockNotice";
-import {
-    enablePush,
-    pushStatus,
-    type PushState,
-} from "../../src/push/register";
-import { shareInvite } from "../../src/share/share";
+import { DarkHeader } from "../../src/design/header";
+import { Icon, type IconName } from "../../src/design/icons";
 import { colors, radius, spacing, type } from "../../src/design/tokens";
 import {
     NOTIFICATION_GROUPS,
@@ -16,54 +11,19 @@ import {
     type NotificationItem,
     type NotificationKind,
 } from "../../src/mock/notifications";
-
-type IconName = keyof typeof MaterialIcons.glyphMap;
+import {
+    enablePush,
+    pushStatus,
+    type PushState,
+} from "../../src/push/register";
+import { shareInvite } from "../../src/share/share";
 
 const ICONS: Record<NotificationKind, IconName> = {
-    desafio: "sports-score",
-    lembrete: "event",
-    convite: "group-add",
-    aviso: "medical-services",
+    desafio: "desafio",
+    lembrete: "lembrete",
+    convite: "convite",
+    aviso: "aviso",
 };
-
-export default function NotificacoesScreen() {
-    return (
-        <ScrollView contentContainerStyle={styles.conteudo}>
-            <PushCard />
-
-            <View style={styles.alerta}>
-                <MaterialIcons
-                    name="warning-amber"
-                    size={22}
-                    color={colors.onPrimary}
-                />
-
-                <View style={styles.alertaTexto}>
-                    <Text style={[type.headlineSm, styles.alertaTitulo]}>
-                        {WEATHER_ALERT.title}
-                    </Text>
-                    <Text style={[type.caption, styles.alertaCorpo]}>
-                        {WEATHER_ALERT.body}
-                    </Text>
-                </View>
-            </View>
-
-            {NOTIFICATION_GROUPS.map((grupo) => (
-                <View key={grupo.label} style={styles.grupo}>
-                    <Text style={[type.label, styles.grupoRotulo]}>
-                        {grupo.label}
-                    </Text>
-
-                    {grupo.items.map((item) => (
-                        <Cartao key={item.id} item={item} />
-                    ))}
-                </View>
-            ))}
-
-            <MockNotice texto="Notificações são dados de exemplo — ainda não existe endpoint para elas." />
-        </ScrollView>
-    );
-}
 
 const ESTADO_TEXTO: Record<PushState, string> = {
     "sem-config": "Falta a configuração do Firebase para ligar o push.",
@@ -74,6 +34,71 @@ const ESTADO_TEXTO: Record<PushState, string> = {
     desativado: "Receba aviso quando seu jogo estiver perto de começar.",
     ativado: "Notificações ligadas neste aparelho.",
 };
+
+export default function NotificacoesScreen() {
+    const [resolvidas, setResolvidas] = useState<Record<string, string>>({});
+    const [lidas, setLidas] = useState(false);
+
+    const marcarLidas = () => setLidas(true);
+
+    return (
+        <View style={styles.tela}>
+            <DarkHeader
+                title="Alertas"
+                withLogo={false}
+                right={
+                    <Pressable onPress={marcarLidas} hitSlop={8}>
+                        <Text style={[type.labelCampo, styles.marcarLidas]}>
+                            Marcar lidas
+                        </Text>
+                    </Pressable>
+                }
+            >
+                <View style={styles.alerta}>
+                    <Icon name="aviso" size={22} color={colors.primary} />
+
+                    <View style={styles.alertaTexto}>
+                        <Text style={[type.nomeLista, styles.alertaTitulo]}>
+                            {WEATHER_ALERT.title}
+                        </Text>
+                        <Text style={[type.metadado, styles.alertaCorpo]}>
+                            {WEATHER_ALERT.body}
+                        </Text>
+                    </View>
+                </View>
+            </DarkHeader>
+
+            <ScrollView contentContainerStyle={styles.conteudo}>
+                <PushCard />
+
+                {NOTIFICATION_GROUPS.map((grupo) => (
+                    <View key={grupo.label} style={styles.grupo}>
+                        <Text style={[type.eyebrow, styles.grupoRotulo]}>
+                            {grupo.label}
+                        </Text>
+
+                        {grupo.items.map((item) => (
+                            <Cartao
+                                key={item.id}
+                                item={item}
+                                lida={lidas}
+                                resolvida={resolvidas[item.id]}
+                                onAcao={(acao) =>
+                                    setResolvidas((atual) => ({
+                                        ...atual,
+                                        [item.id]: acao,
+                                    }))
+                                }
+                            />
+                        ))}
+                    </View>
+                ))}
+
+                <MockNotice texto="Notificações são dados de exemplo — ainda não existe endpoint para elas." />
+            </ScrollView>
+        </View>
+    );
+}
 
 function PushCard() {
     const [estado, setEstado] = useState<PushState | null>(null);
@@ -98,14 +123,14 @@ function PushCard() {
 
     return (
         <View style={styles.push}>
-            <Text style={[type.label, styles.pushRotulo]}>Notificações</Text>
-            <Text style={[type.caption, styles.pushTexto]}>
+            <Text style={[type.eyebrow, styles.pushRotulo]}>Notificações</Text>
+            <Text style={[type.metadado, styles.pushTexto]}>
                 {recado ?? ESTADO_TEXTO[estado]}
             </Text>
 
             {estado === "desativado" ? (
                 <Pressable style={styles.pushBotao} onPress={ligar}>
-                    <Text style={[type.label, styles.pushBotaoTexto]}>
+                    <Text style={[type.labelCampo, styles.pushBotaoTexto]}>
                         Ativar notificações
                     </Text>
                 </Pressable>
@@ -116,7 +141,7 @@ function PushCard() {
                     style={styles.pushToken}
                     onPress={() => shareInvite(token)}
                 >
-                    <Text style={[type.caption, styles.pushTokenTexto]}>
+                    <Text style={[type.metadado, styles.pushTokenTexto]}>
                         {token.slice(0, 24)}… — toque para copiar o token
                     </Text>
                 </Pressable>
@@ -125,40 +150,64 @@ function PushCard() {
     );
 }
 
-function Cartao({ item }: { item: NotificationItem }) {
+interface CartaoProps {
+    item: NotificationItem;
+    lida: boolean;
+    resolvida?: string;
+    onAcao: (acao: string) => void;
+}
+
+function Cartao({ item, lida, resolvida, onAcao }: CartaoProps) {
+    const destaque = item.kind === "desafio" && !lida && !resolvida;
+
     return (
-        <View style={styles.cartao}>
-            <View style={styles.selo}>
-                <MaterialIcons
+        <View style={[styles.cartao, destaque && styles.cartaoDestaque]}>
+            <View
+                style={[styles.selo, destaque && styles.seloDestaque]}
+            >
+                <Icon
                     name={ICONS[item.kind]}
                     size={20}
-                    color={colors.ink}
+                    color={destaque ? colors.primary : colors.body}
                 />
             </View>
 
             <View style={styles.miolo}>
                 <View style={styles.cabecalho}>
-                    <Text style={[type.bodySmStrong, styles.titulo]}>
+                    <Text style={[type.nomeLista, styles.titulo]}>
                         {item.title}
                     </Text>
-                    <Text style={[type.label, styles.hora]}>{item.at}</Text>
+                    <Text style={[type.metadado, styles.hora]}>{item.at}</Text>
                 </View>
 
-                <Text style={[type.caption, styles.corpo]}>{item.body}</Text>
+                <Text style={[type.corpoSm, styles.corpo]}>{item.body}</Text>
 
-                {item.actions ? (
+                {resolvida ? (
+                    <Text style={[type.labelCampo, styles.resolvida]}>
+                        {resolvida}
+                    </Text>
+                ) : item.actions ? (
                     <View style={styles.acoes}>
                         {item.actions.map((acao, indice) => (
-                            <View
+                            <Pressable
                                 key={acao}
                                 style={[
                                     styles.acao,
                                     indice === 0 && styles.acaoPrincipal,
                                 ]}
+                                onPress={() =>
+                                    onAcao(
+                                        acao === "Aceitar"
+                                            ? "Desafio aceito"
+                                            : acao === "Recusar"
+                                              ? "Desafio recusado"
+                                              : "Visto",
+                                    )
+                                }
                             >
                                 <Text
                                     style={[
-                                        type.label,
+                                        type.labelCampo,
                                         indice === 0
                                             ? styles.acaoPrincipalTexto
                                             : styles.acaoTexto,
@@ -166,7 +215,7 @@ function Cartao({ item }: { item: NotificationItem }) {
                                 >
                                     {acao}
                                 </Text>
-                            </View>
+                            </Pressable>
                         ))}
                     </View>
                 ) : null}
@@ -176,20 +225,46 @@ function Cartao({ item }: { item: NotificationItem }) {
 }
 
 const styles = StyleSheet.create({
-    conteudo: {
+    tela: {
+        flex: 1,
+        backgroundColor: colors.canvas,
+    },
+    marcarLidas: {
+        color: colors.primary,
+    },
+    alerta: {
+        flexDirection: "row",
+        gap: spacing.md,
         padding: spacing.lg,
-        paddingBottom: 96,
-        gap: spacing.lg,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "rgba(218,104,13,0.4)",
+        backgroundColor: "rgba(218,104,13,0.16)",
+    },
+    alertaTexto: {
+        flex: 1,
+        gap: spacing.xxs,
+    },
+    alertaTitulo: {
+        color: colors.onHeader,
+    },
+    alertaCorpo: {
+        color: "#D8D0C4",
+    },
+    conteudo: {
+        padding: spacing.xl,
+        paddingBottom: spacing.xxxl,
+        gap: spacing.xxl,
     },
     push: {
         gap: spacing.sm,
         padding: spacing.lg,
         borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: colors.mute,
+        borderColor: colors.line,
     },
     pushRotulo: {
-        color: colors.bodyMid,
+        color: colors.mute,
     },
     pushTexto: {
         color: colors.body,
@@ -198,7 +273,7 @@ const styles = StyleSheet.create({
         alignSelf: "flex-start",
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,
-        borderRadius: radius.sm,
+        borderRadius: 10,
         backgroundColor: colors.primary,
     },
     pushBotaoTexto: {
@@ -206,51 +281,40 @@ const styles = StyleSheet.create({
     },
     pushToken: {
         padding: spacing.sm,
-        borderRadius: radius.sm,
+        borderRadius: 10,
         backgroundColor: colors.canvasSoft,
     },
     pushTokenTexto: {
-        color: colors.bodyMid,
-    },
-    alerta: {
-        flexDirection: "row",
-        gap: spacing.md,
-        padding: spacing.lg,
-        borderRadius: radius.md,
-        backgroundColor: colors.primary,
-    },
-    alertaTexto: {
-        flex: 1,
-        gap: spacing.xxs,
-    },
-    alertaTitulo: {
-        color: colors.onPrimary,
-    },
-    alertaCorpo: {
-        color: colors.onPrimary,
+        color: colors.mute,
     },
     grupo: {
-        gap: spacing.sm,
+        gap: spacing.md,
     },
     grupoRotulo: {
-        color: colors.bodyMid,
+        color: colors.mute,
     },
     cartao: {
         flexDirection: "row",
         gap: spacing.md,
         padding: spacing.lg,
-        borderRadius: radius.md,
+        borderRadius: 18,
         backgroundColor: colors.canvasSoft,
-        borderLeftWidth: 3,
-        borderLeftColor: colors.primary,
+    },
+    cartaoDestaque: {
+        borderWidth: 1,
+        borderColor: colors.primary,
+        backgroundColor: colors.canvas,
     },
     selo: {
-        width: 40,
-        height: 40,
+        width: 38,
+        height: 38,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: radius.pill,
+        borderRadius: 12,
         backgroundColor: colors.canvas,
+    },
+    seloDestaque: {
+        backgroundColor: "rgba(218,104,13,0.14)",
     },
     miolo: {
         flex: 1,
@@ -267,10 +331,14 @@ const styles = StyleSheet.create({
         color: colors.ink,
     },
     hora: {
-        color: colors.bodyMid,
+        color: colors.mute,
     },
     corpo: {
         color: colors.body,
+    },
+    resolvida: {
+        color: colors.primary,
+        marginTop: spacing.xs,
     },
     acoes: {
         flexDirection: "row",
@@ -278,18 +346,19 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
     },
     acao: {
-        paddingVertical: spacing.sm,
+        height: 38,
+        justifyContent: "center",
         paddingHorizontal: spacing.lg,
-        borderRadius: radius.sm,
+        borderRadius: 10,
         borderWidth: 1,
-        borderColor: colors.mute,
+        borderColor: colors.chipBorder,
     },
     acaoPrincipal: {
         borderColor: "transparent",
-        backgroundColor: colors.ink,
+        backgroundColor: colors.primary,
     },
     acaoTexto: {
-        color: colors.body,
+        color: colors.ink,
     },
     acaoPrincipalTexto: {
         color: colors.onPrimary,

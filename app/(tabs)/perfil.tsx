@@ -9,15 +9,15 @@ import {
     Text,
     View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { signOut } from "../../src/auth/account";
 import { useSession } from "../../src/auth/useSession";
 import MockNotice from "../../src/components/MockNotice";
+import { Stripes, initials } from "../../src/design/pieces";
 import { colors, radius, spacing, type } from "../../src/design/tokens";
 import {
     ATHLETE_BADGES,
-    ATHLETE_FORM,
-    ATHLETE_NOTE,
     ATHLETE_RANKINGS,
     ATHLETE_SEASON,
     ATHLETE_STATS,
@@ -27,13 +27,14 @@ import { profileText } from "../../src/share/invite";
 import { shareInvite } from "../../src/share/share";
 
 const TREND_LABEL = {
-    up: "↑",
-    down: "↓",
-    flat: "–",
+    up: "▲",
+    down: "▼",
+    flat: "—",
 };
 
 export default function PerfilScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const { account, loading, reload } = useSession();
     const [perfil, setPerfil] = useState<Profile | null>(null);
 
@@ -42,12 +43,6 @@ export default function PerfilScreen() {
             getMyProfile().then(setPerfil);
         }
     }, [account?.id]);
-
-    const sair = async () => {
-        await signOut();
-        reload();
-        router.replace("/entrar");
-    };
 
     if (loading) {
         return (
@@ -61,87 +56,83 @@ export default function PerfilScreen() {
         return <Redirect href="/entrar" />;
     }
 
+    const sair = async () => {
+        await signOut();
+        reload();
+        router.replace("/entrar");
+    };
+
     const nome = perfil?.name || account.name;
 
-    const iniciais = nome
-        .split(" ")
-        .slice(0, 2)
-        .map((parte) => parte.slice(0, 1))
-        .join("");
-
-    const etiquetas = [
+    const linha = [
         perfil?.mainSport,
         perfil?.city,
-        perfil?.height
-            ? `${(perfil.height / 100).toFixed(2).replace(".", ",")} m`
-            : null,
-        perfil?.weight ? `${perfil.weight} kg` : null,
-    ].filter((item): item is string => Boolean(item));
+        ATHLETE_SEASON,
+    ]
+        .filter(Boolean)
+        .join(" · ");
 
     return (
         <ScrollView contentContainerStyle={styles.conteudo}>
-            <View style={styles.capa}>
+            <View style={[styles.header, { paddingTop: insets.top + spacing.xl }]}>
+                <View style={styles.brilho} />
+
                 {perfil?.avatarUrl ? (
                     <Image
                         source={{ uri: perfil.avatarUrl }}
-                        style={styles.avatarFoto}
+                        style={styles.avatar}
                     />
                 ) : (
-                    <View style={styles.avatar}>
-                        <Text style={[type.statLg, styles.avatarTexto]}>
-                            {iniciais.toUpperCase()}
-                        </Text>
-                    </View>
+                    <Stripes
+                        caption={initials(nome) || "sem foto"}
+                        style={styles.avatar}
+                        rounded={42}
+                    />
                 )}
 
-                <Text style={[type.headlineMd, styles.nome]}>{nome}</Text>
-                <Text style={[type.caption, styles.email]}>
-                    {account.email}
+                <Text style={[type.tituloTela, styles.nome]}>{nome}</Text>
+                <Text style={[type.metadado, styles.linha]}>
+                    {linha || account.email}
                 </Text>
 
-                {perfil?.bio ? (
-                    <Text style={[type.caption, styles.bio]}>{perfil.bio}</Text>
-                ) : null}
-
-                {etiquetas.length > 0 ? (
-                    <View style={styles.etiquetas}>
-                        {etiquetas.map((tag) => (
-                            <View key={tag} style={styles.etiqueta}>
-                                <Text style={[type.label, styles.etiquetaTexto]}>
-                                    {tag}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
-                ) : (
-                    <Text style={[type.caption, styles.vazio]}>
-                        Esporte, altura e cidade ainda não preenchidos.
-                    </Text>
-                )}
+                <View style={styles.rankings}>
+                    {ATHLETE_RANKINGS.map((item, indice) => (
+                        <View key={item.scope} style={styles.rankingCard}>
+                            <Text
+                                style={[
+                                    type.statCard,
+                                    indice === 0
+                                        ? styles.rankingBranco
+                                        : styles.rankingLaranja,
+                                ]}
+                            >
+                                #{item.position} {TREND_LABEL[item.trend]}
+                            </Text>
+                            <Text style={[type.labelTab, styles.rankingEscopo]}>
+                                {item.scope}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
 
                 <View style={styles.acoes}>
                     <Pressable
-                        style={styles.editar}
+                        style={styles.acao}
                         onPress={() => router.push("/onboarding")}
                     >
-                        <Text style={[type.label, styles.editarTexto]}>
+                        <Text style={[type.labelCampo, styles.acaoTexto]}>
                             Editar perfil
                         </Text>
                     </Pressable>
 
                     {perfil ? (
                         <Pressable
-                            style={styles.editar}
+                            style={styles.acao}
                             onPress={() =>
-                                shareInvite(
-                                    profileText(
-                                        perfil.name || nome,
-                                        perfil.id,
-                                    ),
-                                )
+                                shareInvite(profileText(nome, perfil.id))
                             }
                         >
-                            <Text style={[type.label, styles.editarTexto]}>
+                            <Text style={[type.labelCampo, styles.acaoTexto]}>
                                 Compartilhar
                             </Text>
                         </Pressable>
@@ -149,45 +140,36 @@ export default function PerfilScreen() {
                 </View>
 
                 <Pressable
-                    style={styles.previa}
                     onPress={() => router.push("/onboarding?novo=1")}
+                    hitSlop={8}
                 >
-                    <Text style={[type.label, styles.previaTexto]}>
+                    <Text style={[type.labelTab, styles.previa]}>
                         Ver onboarding de boas-vindas
                     </Text>
                 </Pressable>
             </View>
 
-            <Secao titulo="Rankings">
-                <View style={styles.rankings}>
-                    {ATHLETE_RANKINGS.map((item) => (
-                        <View key={item.scope} style={styles.rankingCard}>
-                            <Text style={[type.label, styles.rankingRotulo]}>
-                                {item.scope}
-                            </Text>
-                            <Text style={[type.statMd, styles.rankingValor]}>
-                                #{item.position} {TREND_LABEL[item.trend]}
-                            </Text>
-                        </View>
-                    ))}
-                </View>
-            </Secao>
+            <View style={styles.corpo}>
+                <View style={styles.secao}>
+                    <Text style={[type.labelCampo, styles.secaoTitulo]}>
+                        Temporada
+                    </Text>
 
-            <Secao titulo="Estatísticas" detalhe={ATHLETE_SEASON}>
-                <View style={styles.stats}>
                     {ATHLETE_STATS.map((item) => (
-                        <View key={item.label} style={styles.statCard}>
-                            <Text style={[type.statLg, styles.statValor]}>
-                                {item.value}
-                            </Text>
-                            <Text style={[type.label, styles.statRotulo]}>
-                                {item.label}
-                            </Text>
+                        <View key={item.label} style={styles.stat}>
+                            <View style={styles.statTopo}>
+                                <Text style={[type.metadado, styles.statRotulo]}>
+                                    {item.label}
+                                </Text>
+                                <Text style={[type.statMd, styles.statValor]}>
+                                    {item.value}
+                                </Text>
+                            </View>
 
-                            <View style={styles.barra}>
+                            <View style={styles.trilha}>
                                 <View
                                     style={[
-                                        styles.barraCheia,
+                                        styles.trilhaFill,
                                         { width: `${item.fill * 100}%` },
                                     ]}
                                 />
@@ -195,272 +177,166 @@ export default function PerfilScreen() {
                         </View>
                     ))}
                 </View>
-            </Secao>
 
-            <Secao titulo="Evolução recente">
-                <View style={styles.evolucao}>
-                    <Text style={[type.caption, styles.nota]}>
-                        {ATHLETE_NOTE}
+                <View style={styles.secao}>
+                    <Text style={[type.labelCampo, styles.secaoTitulo]}>
+                        Conquistas
                     </Text>
 
-                    <View style={styles.grafico}>
-                        {ATHLETE_FORM.map((valor, indice) => (
-                            <View key={indice} style={styles.coluna}>
-                                <View
+                    <View style={styles.conquistas}>
+                        {ATHLETE_BADGES.map((badge) => (
+                            <View key={badge.title} style={styles.conquista}>
+                                <Text
+                                    style={[type.statMd, styles.conquistaTitulo]}
+                                >
+                                    {badge.title}
+                                </Text>
+                                <Text
                                     style={[
-                                        styles.colunaCheia,
-                                        { height: Math.round(valor * 96) },
+                                        type.labelTab,
+                                        styles.conquistaDetalhe,
                                     ]}
-                                />
-                                <Text style={[type.label, styles.colunaRotulo]}>
-                                    J{indice + 1}
+                                >
+                                    {badge.detail}
                                 </Text>
                             </View>
                         ))}
                     </View>
                 </View>
-            </Secao>
 
-            <Secao titulo="Conquistas">
-                <View style={styles.conquistas}>
-                    {ATHLETE_BADGES.map((badge) => (
-                        <View key={badge.title} style={styles.conquista}>
-                            <Text
-                                style={[
-                                    type.headlineSm,
-                                    styles.conquistaTitulo,
-                                ]}
-                            >
-                                {badge.title}
-                            </Text>
-                            <Text style={[type.label, styles.conquistaDetalhe]}>
-                                {badge.detail}
-                            </Text>
-                        </View>
-                    ))}
-                </View>
-            </Secao>
+                <MockNotice texto="Estatísticas, conquistas e rankings ainda são de exemplo — nome, foto, esporte, altura e bio já vêm da API." />
 
-            <MockNotice texto="Estatísticas, conquistas e rankings ainda são de exemplo — nome, foto, esporte, altura e bio já vêm da API." />
-
-            <Pressable style={styles.sair} onPress={sair}>
-                <Text style={[type.label, styles.sairTexto]}>Sair da conta</Text>
-            </Pressable>
+                <Pressable style={styles.sair} onPress={sair}>
+                    <Text style={[type.botao, styles.sairTexto]}>
+                        Sair da conta
+                    </Text>
+                </Pressable>
+            </View>
         </ScrollView>
     );
 }
 
-function Secao({
-    titulo,
-    detalhe,
-    children,
-}: {
-    titulo: string;
-    detalhe?: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <View style={styles.secao}>
-            <View style={styles.secaoTopo}>
-                <Text style={[type.headlineSm, styles.secaoTitulo]}>
-                    {titulo}
-                </Text>
-                {detalhe ? (
-                    <Text style={[type.label, styles.secaoDetalhe]}>
-                        {detalhe}
-                    </Text>
-                ) : null}
-            </View>
-
-            {children}
-        </View>
-    );
-}
-
 const styles = StyleSheet.create({
+    conteudo: {
+        paddingBottom: spacing.xxxl,
+    },
     centro: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
         padding: spacing.xl,
+        backgroundColor: colors.canvas,
     },
-    conteudo: {
-        padding: spacing.lg,
-        paddingBottom: 96,
-        gap: spacing.xl,
-    },
-    capa: {
+    header: {
         alignItems: "center",
-        gap: spacing.xs,
-        padding: spacing.xl,
-        borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
+        gap: spacing.sm,
+        paddingHorizontal: spacing.xl,
+        paddingBottom: spacing.xl,
+        backgroundColor: colors.header,
+        overflow: "hidden",
+    },
+    brilho: {
+        position: "absolute",
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        top: -70,
+        right: -70,
+        opacity: 0.18,
+        backgroundColor: colors.primary,
     },
     avatar: {
-        width: 88,
-        height: 88,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: radius.pill,
-        borderWidth: 2,
+        width: 84,
+        height: 84,
+        borderRadius: 42,
+        borderWidth: 3,
         borderColor: colors.primary,
-        backgroundColor: colors.canvas,
-    },
-    avatarFoto: {
-        width: 88,
-        height: 88,
-        borderRadius: radius.pill,
-        borderWidth: 2,
-        borderColor: colors.primary,
-    },
-    avatarTexto: {
-        color: colors.primary,
-    },
-    bio: {
-        color: colors.body,
-        textAlign: "center",
-    },
-    acoes: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        gap: spacing.sm,
-    },
-    editar: {
-        marginTop: spacing.md,
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.lg,
-        borderRadius: radius.sm,
-        borderWidth: 1,
-        borderColor: colors.ink,
-    },
-    editarTexto: {
-        color: colors.ink,
-    },
-    previa: {
-        marginTop: spacing.sm,
-        paddingVertical: spacing.xs,
-    },
-    previaTexto: {
-        color: colors.bodyMid,
-    },
-    vazio: {
-        color: colors.bodyMid,
-        textAlign: "center",
     },
     nome: {
-        color: colors.ink,
+        color: colors.onHeader,
         marginTop: spacing.sm,
     },
-    email: {
-        color: colors.body,
-    },
-    etiquetas: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        gap: spacing.sm,
-        marginTop: spacing.sm,
-    },
-    etiqueta: {
-        paddingVertical: spacing.xs,
-        paddingHorizontal: spacing.md,
-        borderRadius: radius.pill,
-        backgroundColor: colors.canvas,
-    },
-    etiquetaTexto: {
-        color: colors.body,
-    },
-    secao: {
-        gap: spacing.md,
-    },
-    secaoTopo: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: spacing.md,
-    },
-    secaoTitulo: {
-        color: colors.ink,
-    },
-    secaoDetalhe: {
-        color: colors.bodyMid,
+    linha: {
+        color: colors.onHeaderSoft,
+        textAlign: "center",
     },
     rankings: {
         flexDirection: "row",
         gap: spacing.sm,
+        marginTop: spacing.md,
+        alignSelf: "stretch",
     },
     rankingCard: {
         flex: 1,
+        alignItems: "center",
         gap: spacing.xxs,
-        padding: spacing.md,
-        borderRadius: radius.sm,
-        backgroundColor: colors.canvasSoft,
+        paddingVertical: spacing.md,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "rgba(255,254,251,0.16)",
     },
-    rankingRotulo: {
-        color: colors.bodyMid,
+    rankingBranco: {
+        color: colors.onHeader,
     },
-    rankingValor: {
-        color: colors.ink,
+    rankingLaranja: {
+        color: colors.primary,
     },
-    stats: {
+    rankingEscopo: {
+        color: "#A29A8E",
+    },
+    acoes: {
         flexDirection: "row",
-        flexWrap: "wrap",
+        gap: spacing.sm,
+        marginTop: spacing.md,
+    },
+    acao: {
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.xl,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: "rgba(255,254,251,0.3)",
+    },
+    acaoTexto: {
+        color: colors.onHeader,
+    },
+    previa: {
+        color: colors.onHeaderSoft,
+        marginTop: spacing.md,
+    },
+    corpo: {
+        padding: spacing.xl,
+        gap: spacing.xxl,
+    },
+    secao: {
+        gap: spacing.md,
+    },
+    secaoTitulo: {
+        color: colors.mute,
+    },
+    stat: {
         gap: spacing.sm,
     },
-    statCard: {
-        flexGrow: 1,
-        flexBasis: "45%",
-        gap: spacing.xxs,
-        padding: spacing.lg,
-        borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
+    statTopo: {
+        flexDirection: "row",
+        alignItems: "baseline",
+        justifyContent: "space-between",
+    },
+    statRotulo: {
+        color: colors.body,
     },
     statValor: {
         color: colors.ink,
     },
-    statRotulo: {
-        color: colors.bodyMid,
-    },
-    barra: {
-        height: 4,
-        marginTop: spacing.sm,
-        borderRadius: radius.pill,
-        backgroundColor: colors.mute,
+    trilha: {
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: colors.line,
         overflow: "hidden",
     },
-    barraCheia: {
-        height: 4,
-        borderRadius: radius.pill,
+    trilhaFill: {
+        height: 6,
+        borderRadius: 3,
         backgroundColor: colors.primary,
-    },
-    evolucao: {
-        gap: spacing.lg,
-        padding: spacing.lg,
-        borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
-    },
-    nota: {
-        color: colors.body,
-    },
-    grafico: {
-        flexDirection: "row",
-        alignItems: "flex-end",
-        gap: spacing.md,
-    },
-    coluna: {
-        flex: 1,
-        justifyContent: "flex-end",
-        alignItems: "center",
-        gap: spacing.xs,
-    },
-    colunaCheia: {
-        width: "100%",
-        borderRadius: radius.sm,
-        backgroundColor: colors.primary,
-    },
-    colunaRotulo: {
-        color: colors.bodyMid,
     },
     conquistas: {
         flexDirection: "row",
@@ -478,15 +354,16 @@ const styles = StyleSheet.create({
         color: colors.ink,
     },
     conquistaDetalhe: {
-        color: colors.bodyMid,
+        color: colors.mute,
         textAlign: "center",
     },
     sair: {
+        height: 52,
         alignItems: "center",
-        paddingVertical: spacing.md,
+        justifyContent: "center",
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.mute,
+        borderColor: colors.chipBorder,
     },
     sairTexto: {
         color: colors.ink,

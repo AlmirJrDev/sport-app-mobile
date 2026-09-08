@@ -44,7 +44,7 @@ export default function TabsLayout() {
                     name={aba.name}
                     options={{
                         title: aba.title,
-                        headerShown: aba.name !== "index",
+                        headerShown: false,
                         tabBarIcon: ({ color }) => (
                             <Icon
                                 name={aba.icon}

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import MockNotice from "../../src/components/MockNotice";
+import { DarkHeader } from "../../src/design/header";
+import { Avatar } from "../../src/design/pieces";
 import { colors, radius, spacing, type } from "../../src/design/tokens";
 import {
     RANKING_BOARDS,
@@ -12,9 +14,15 @@ import {
 } from "../../src/mock/rankings";
 
 const TREND_LABEL: Record<Trend, string> = {
-    up: "↑",
-    down: "↓",
-    flat: "–",
+    up: "▲",
+    down: "▼",
+    flat: "—",
+};
+
+const TITULO_LISTA: Record<string, string> = {
+    Nacional: "Top do país",
+    Estadual: "Top de São Paulo",
+    Municipal: "Top de Campinas",
 };
 
 export default function RankingsScreen() {
@@ -24,90 +32,127 @@ export default function RankingsScreen() {
     const board = RANKING_BOARDS[esporte];
 
     return (
-        <ScrollView contentContainerStyle={styles.conteudo}>
-            <View style={styles.filtros}>
-                {RANKING_SPORTS.map((item) => (
-                    <Chip
-                        key={item}
-                        texto={item}
-                        ativo={item === esporte}
-                        onPress={() => setEsporte(item)}
-                    />
-                ))}
-            </View>
-
-            <View style={styles.filtros}>
-                {RANKING_SCOPES.map((item) => (
-                    <Chip
-                        key={item}
-                        texto={item}
-                        ativo={item === abrangencia}
-                        onPress={() => setAbrangencia(item)}
-                    />
-                ))}
-            </View>
-
-            <View style={styles.seuCard}>
-                <View style={styles.seuTexto}>
-                    <Text style={[type.headlineSm, styles.seuTitulo]}>
-                        Seu ranking
-                    </Text>
-                    <Text style={[type.caption, styles.seuDetalhe]}>
-                        {abrangencia} · {esporte} · #{board.you.position}
-                    </Text>
+        <View style={styles.tela}>
+            <DarkHeader title="Rankings">
+                <View style={styles.chips}>
+                    {RANKING_SPORTS.map((item) => (
+                        <Pressable
+                            key={item}
+                            style={[
+                                styles.chip,
+                                item === esporte && styles.chipAtivo,
+                            ]}
+                            onPress={() => setEsporte(item)}
+                        >
+                            <Text
+                                style={[
+                                    type.labelCampo,
+                                    item === esporte
+                                        ? styles.chipTextoAtivo
+                                        : styles.chipTexto,
+                                ]}
+                            >
+                                {item}
+                            </Text>
+                        </Pressable>
+                    ))}
                 </View>
 
-                <View style={styles.seuPontos}>
-                    <Text style={[type.statLg, styles.seuNumero]}>
-                        {board.you.points.toLocaleString("pt-BR")}
-                    </Text>
-                    <Text style={[type.label, styles.seuUnidade]}>
-                        pts {TREND_LABEL[board.you.trend]} {board.you.delta}
-                    </Text>
+                <View style={styles.abas}>
+                    {RANKING_SCOPES.map((item) => (
+                        <Pressable
+                            key={item}
+                            style={[
+                                styles.aba,
+                                item === abrangencia && styles.abaAtiva,
+                            ]}
+                            onPress={() => setAbrangencia(item)}
+                        >
+                            <Text
+                                style={[
+                                    type.labelCampo,
+                                    item === abrangencia
+                                        ? styles.abaTextoAtivo
+                                        : styles.abaTexto,
+                                ]}
+                            >
+                                {item}
+                            </Text>
+                        </Pressable>
+                    ))}
                 </View>
-            </View>
+            </DarkHeader>
 
-            {board.rows.map((linha) => (
-                <Linha key={linha.position} linha={linha} />
-            ))}
+            <ScrollView contentContainerStyle={styles.conteudo}>
+                <View style={styles.cardVoce}>
+                    <Text style={[type.posicaoDestaque, styles.vocePosicao]}>
+                        {board.you.position}º
+                    </Text>
 
-            <MockNotice texto="Pontuação e posições são dados de exemplo — o ranking ainda não existe na API." />
-        </ScrollView>
+                    <View style={styles.voceTexto}>
+                        <Text style={[type.nomeLista, styles.voceNome]}>
+                            Você
+                        </Text>
+                        <Text style={[type.metadado, styles.voceEscopo]}>
+                            {abrangencia} · {esporte}
+                        </Text>
+                    </View>
+
+                    <View style={styles.vocePontos}>
+                        <Text style={[type.placar, styles.voceNome]}>
+                            {board.you.points.toLocaleString("pt-BR")}
+                        </Text>
+                        <Text style={[type.eyebrow, styles.voceEscopo]}>
+                            {TREND_LABEL[board.you.trend]} {board.you.delta} pts
+                        </Text>
+                    </View>
+                </View>
+
+                <Text style={[type.labelCampo, styles.tituloLista]}>
+                    {TITULO_LISTA[abrangencia] ?? abrangencia}
+                </Text>
+
+                <View style={styles.lista}>
+                    {board.rows.map((linha) => (
+                        <Linha key={linha.position} linha={linha} />
+                    ))}
+                </View>
+
+                <MockNotice texto="Pontuação e posições são dados de exemplo — o ranking ainda não existe na API." />
+            </ScrollView>
+        </View>
     );
 }
 
 function Linha({ linha }: { linha: RankingRow }) {
-    const lider = linha.position === 1;
+    const topo = linha.position <= 3;
 
     return (
-        <View style={[styles.linha, lider && styles.linhaLider]}>
+        <View style={styles.linha}>
             <Text
                 style={[
-                    type.statMd,
-                    styles.posicao,
-                    lider && styles.posicaoLider,
+                    type.posicaoLista,
+                    topo ? styles.posicaoTopo : styles.posicao,
                 ]}
             >
-                #{linha.position}
+                {linha.position}
             </Text>
 
+            <Avatar name={linha.name} size={38} />
+
             <View style={styles.linhaTexto}>
-                <Text style={[type.headlineSm, styles.nome]}>{linha.name}</Text>
-                <Text style={[type.label, styles.cidade]}>{linha.city}</Text>
+                <Text style={[type.nomeLista, styles.nome]}>{linha.name}</Text>
+                <Text style={[type.metadado, styles.cidade]}>{linha.city}</Text>
             </View>
 
             <View style={styles.pontos}>
-                <Text style={[type.statMd, styles.pontosNumero]}>
+                <Text style={[type.pontos, styles.pontosNumero]}>
                     {linha.points.toLocaleString("pt-BR")}
                 </Text>
                 <Text
                     style={[
-                        type.label,
-                        linha.trend === "down"
-                            ? styles.queda
-                            : linha.trend === "up"
-                              ? styles.alta
-                              : styles.estavel,
+                        type.eyebrow,
+                        linha.trend === "up" ? styles.alta : styles.neutro,
                     ]}
                 >
                     {TREND_LABEL[linha.trend]}
@@ -118,116 +163,112 @@ function Linha({ linha }: { linha: RankingRow }) {
     );
 }
 
-function Chip({
-    texto,
-    ativo,
-    onPress,
-}: {
-    texto: string;
-    ativo: boolean;
-    onPress: () => void;
-}) {
-    return (
-        <Pressable
-            style={[styles.chip, ativo && styles.chipAtivo]}
-            onPress={onPress}
-        >
-            <Text
-                style={[
-                    type.label,
-                    ativo ? styles.chipTextoAtivo : styles.chipTexto,
-                ]}
-            >
-                {texto}
-            </Text>
-        </Pressable>
-    );
-}
-
 const styles = StyleSheet.create({
-    conteudo: {
-        padding: spacing.lg,
-        paddingBottom: 96,
-        gap: spacing.sm,
+    tela: {
+        flex: 1,
+        backgroundColor: colors.canvas,
     },
-    filtros: {
+    chips: {
         flexDirection: "row",
         flexWrap: "wrap",
         gap: spacing.sm,
     },
     chip: {
-        paddingVertical: spacing.sm,
+        height: 32,
+        justifyContent: "center",
         paddingHorizontal: spacing.lg,
-        borderRadius: radius.pill,
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: colors.mute,
+        borderColor: "rgba(255,254,251,0.22)",
     },
     chipAtivo: {
         borderColor: "transparent",
-        backgroundColor: colors.ink,
+        backgroundColor: colors.primary,
     },
     chipTexto: {
-        color: colors.body,
+        color: colors.onHeaderSoft,
     },
     chipTextoAtivo: {
         color: colors.onPrimary,
     },
-    seuCard: {
+    abas: {
+        flexDirection: "row",
+        gap: spacing.lg,
+    },
+    aba: {
+        paddingBottom: spacing.sm,
+        borderBottomWidth: 2,
+        borderBottomColor: "transparent",
+    },
+    abaAtiva: {
+        borderBottomColor: colors.primary,
+    },
+    abaTexto: {
+        color: "#8A8378",
+    },
+    abaTextoAtivo: {
+        color: colors.onHeader,
+    },
+    conteudo: {
+        paddingHorizontal: spacing.xl,
+        paddingBottom: spacing.xxxl,
+        gap: spacing.lg,
+    },
+    cardVoce: {
+        marginTop: -12,
         flexDirection: "row",
         alignItems: "center",
         gap: spacing.md,
-        marginTop: spacing.sm,
-        padding: spacing.lg,
-        borderRadius: radius.md,
-        backgroundColor: colors.ink,
+        padding: spacing.xl,
+        borderRadius: radius.lg,
+        backgroundColor: colors.primary,
     },
-    seuTexto: {
-        flex: 1,
-        gap: spacing.xxs,
-    },
-    seuTitulo: {
+    vocePosicao: {
         color: colors.onPrimary,
     },
-    seuDetalhe: {
-        color: colors.mute,
+    voceTexto: {
+        flex: 1,
     },
-    seuPontos: {
+    voceNome: {
+        color: colors.onPrimary,
+    },
+    voceEscopo: {
+        color: colors.onPrimary,
+        opacity: 0.85,
+    },
+    vocePontos: {
         alignItems: "flex-end",
     },
-    seuNumero: {
-        color: colors.primary,
-    },
-    seuUnidade: {
+    tituloLista: {
         color: colors.mute,
+    },
+    lista: {
+        gap: 0,
     },
     linha: {
         flexDirection: "row",
         alignItems: "center",
         gap: spacing.md,
-        padding: spacing.lg,
-        borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
-    },
-    linhaLider: {
-        borderWidth: 1,
-        borderColor: colors.primary,
+        paddingVertical: spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.line,
     },
     posicao: {
-        color: colors.bodyMid,
-        minWidth: 40,
+        minWidth: 34,
+        color: colors.mute,
     },
-    posicaoLider: {
+    posicaoTopo: {
+        minWidth: 34,
         color: colors.primary,
     },
     linhaTexto: {
         flex: 1,
-        gap: spacing.xxs,
     },
     nome: {
         color: colors.ink,
     },
     cidade: {
-        color: colors.bodyMid,
+        color: colors.mute,
     },
     pontos: {
         alignItems: "flex-end",
@@ -238,10 +279,7 @@ const styles = StyleSheet.create({
     alta: {
         color: colors.primary,
     },
-    queda: {
-        color: colors.bodyMid,
-    },
-    estavel: {
+    neutro: {
         color: colors.mute,
     },
 });
