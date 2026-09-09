@@ -47,14 +47,20 @@ export default function GameMap({
             zoom: 12,
         });
 
-        /** Se a base vetorial não vier, o mapa não fica em branco. */
-        map.once("error", () => {
-            try {
-                map.setStyle(OSM_STYLE);
-            } catch {
-                // sem base: o mapa segue vazio, mas os pinos continuam
+        let baseTrocada = false;
+
+        /** Só cai no raster se o estilo vetorial não carregar. Ladrilho solto que falha não conta. */
+        const aoFalhar = () => {
+            if (baseTrocada || map.isStyleLoaded()) {
+                return;
             }
-        });
+
+            baseTrocada = true;
+            map.setStyle(OSM_STYLE);
+        };
+
+        map.on("error", aoFalhar);
+        map.once("style.load", () => map.off("error", aoFalhar));
 
         map.on("click", () => onClearSelection());
         map.on("moveend", () => {

@@ -9,6 +9,7 @@ import {
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { applyBrowserChrome } from "./chrome";
 import { colors as claro, darkColors as escuro, type Palette } from "./tokens";
 
 export type ThemeMode = "sistema" | "claro" | "escuro";
@@ -61,6 +62,10 @@ export function ThemeProvider({ children }: PropsWithChildren) {
             setMode,
         };
     }, [mode, sistema]);
+
+    useEffect(() => {
+        applyBrowserChrome(valor.colors, valor.isDark);
+    }, [valor.colors, valor.isDark]);
 
     return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

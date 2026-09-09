@@ -1,4 +1,4 @@
-const CACHE = "projetoh-v1";
+const CACHE = "projetoh-v2";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
