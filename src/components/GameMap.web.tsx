@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Map as MapLibreMap,
     Marker,
@@ -39,6 +39,7 @@ export default function GameMap({
     const mapRef = useRef<MapLibreMap | null>(null);
     const markersRef = useRef<Marker[]>([]);
     const baseRef = useRef<BaseAtual>(isDark ? "escuro" : "claro");
+    const [semMapa, setSemMapa] = useState(false);
 
     useEffect(() => {
         if (!containerRef.current || mapRef.current) {
@@ -52,6 +53,8 @@ export default function GameMap({
             zoom: 12,
         });
 
+        let ultimaChance: ReturnType<typeof setTimeout> | null = null;
+
         const cairNoRaster = () => {
             if (baseRef.current === "raster") {
                 return;
@@ -59,6 +62,12 @@ export default function GameMap({
 
             baseRef.current = "raster";
             map.setStyle(OSM_STYLE);
+
+            ultimaChance = setTimeout(() => {
+                if (!map.loaded()) {
+                    setSemMapa(true);
+                }
+            }, ESPERA_BASE);
         };
 
         /** Erro enquanto o estilo nem existe: a base vetorial quebrou. */
@@ -79,6 +88,7 @@ export default function GameMap({
         map.once("idle", () => {
             clearTimeout(prazo);
             map.off("error", aoErro);
+            setSemMapa(false);
         });
 
         map.on("click", () => onClearSelection());
@@ -91,6 +101,11 @@ export default function GameMap({
 
         return () => {
             clearTimeout(prazo);
+
+            if (ultimaChance) {
+                clearTimeout(ultimaChance);
+            }
+
             map.remove();
             mapRef.current = null;
         };
@@ -163,5 +178,30 @@ export default function GameMap({
         });
     }, [games, selectedGameId, onSelectGame]);
 
-    return <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />;
+    return (
+        <>
+            <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+
+            {semMapa ? (
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 24,
+                        textAlign: "center",
+                        pointerEvents: "none",
+                        color: colors.body,
+                        fontFamily: "Inter_400Regular, sans-serif",
+                        fontSize: 14,
+                    }}
+                >
+                    Não deu para carregar o mapa. Confira a conexão e abra de
+                    novo.
+                </div>
+            ) : null}
+        </>
+    );
 }
