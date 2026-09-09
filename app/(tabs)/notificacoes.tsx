@@ -1,7 +1,14 @@
-import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import {
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 
-import MockNotice from "../../src/components/MockNotice";
 import { DarkHeader } from "../../src/design/header";
 import { Icon, type IconName } from "../../src/design/icons";
 import { useTheme, useThemedStyles } from "../../src/design/theme";
@@ -12,11 +19,11 @@ import {
     type Palette,
 } from "../../src/design/tokens";
 import {
-    NOTIFICATION_GROUPS,
-    WEATHER_ALERT,
-    type NotificationItem,
-    type NotificationKind,
-} from "../../src/mock/notifications";
+    listNotifications,
+    markNotificationRead,
+    registerDevice,
+    type AppNotification,
+} from "../../src/notifications/remote";
 import {
     enablePush,
     pushStatus,
@@ -24,11 +31,12 @@ import {
 } from "../../src/push/register";
 import { shareInvite } from "../../src/share/share";
 
-const ICONS: Record<NotificationKind, IconName> = {
-    desafio: "desafio",
-    lembrete: "lembrete",
-    convite: "convite",
-    aviso: "aviso",
+const ICONS: Record<string, IconName> = {
+    game_joined: "convite",
+    game_left: "aviso",
+    game_arrival_confirmed: "lembrete",
+    game_finished: "desafio",
+    game_cancelled: "aviso",
 };
 
 const ESTADO_TEXTO: Record<PushState, string> = {
@@ -41,13 +49,138 @@ const ESTADO_TEXTO: Record<PushState, string> = {
     ativado: "Notificações ligadas neste aparelho.",
 };
 
+interface Grupo {
+    label: string;
+    items: AppNotification[];
+}
+
+function mesmoDia(a: Date, b: Date): boolean {
+    return (
+        a.getDate() === b.getDate() &&
+        a.getMonth() === b.getMonth() &&
+        a.getFullYear() === b.getFullYear()
+    );
+}
+
+function rotuloDoDia(iso: string): string {
+    const data = new Date(iso);
+
+    if (Number.isNaN(data.getTime())) {
+        return "Antes";
+    }
+
+    const hoje = new Date();
+    const ontem = new Date(hoje);
+    ontem.setDate(hoje.getDate() - 1);
+
+    if (mesmoDia(data, hoje)) {
+        return "Hoje";
+    }
+
+    if (mesmoDia(data, ontem)) {
+        return "Ontem";
+    }
+
+    return data.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+    });
+}
+
+function hora(iso: string): string {
+    const data = new Date(iso);
+
+    if (Number.isNaN(data.getTime())) {
+        return "";
+    }
+
+    return data.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function agrupar(itens: AppNotification[]): Grupo[] {
+    const grupos: Grupo[] = [];
+
+    for (const item of itens) {
+        const label = rotuloDoDia(item.createdAt);
+        const atual = grupos[grupos.length - 1];
+
+        if (atual && atual.label === label) {
+            atual.items.push(item);
+        } else {
+            grupos.push({ label, items: [item] });
+        }
+    }
+
+    return grupos;
+}
+
 export default function NotificacoesScreen() {
     const { colors } = useTheme();
     const styles = useThemedStyles(criarEstilos);
-    const [resolvidas, setResolvidas] = useState<Record<string, string>>({});
-    const [lidas, setLidas] = useState(false);
+    const router = useRouter();
 
-    const marcarLidas = () => setLidas(true);
+    const [itens, setItens] = useState<AppNotification[]>([]);
+    const [carregando, setCarregando] = useState(true);
+    const [erro, setErro] = useState<string | null>(null);
+
+    const carregar = useCallback(() => {
+        listNotifications()
+            .then((lista) => {
+                setItens(lista);
+                setErro(null);
+            })
+            .catch(() => setErro("Não deu para carregar seus avisos agora."))
+            .finally(() => setCarregando(false));
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            carregar();
+        }, [carregar]),
+    );
+
+    const naoLidas = itens.filter((item) => !item.readAt);
+
+    const abrir = (item: AppNotification) => {
+        if (!item.readAt) {
+            const agora = new Date().toISOString();
+
+            setItens((atual) =>
+                atual.map((outro) =>
+                    outro.id === item.id ? { ...outro, readAt: agora } : outro,
+                ),
+            );
+
+            markNotificationRead(item.id).catch(() => {});
+        }
+
+        if (item.gameId) {
+            router.push(`/jogo/${item.gameId}`);
+        }
+    };
+
+    const marcarTodas = () => {
+        if (naoLidas.length === 0) {
+            return;
+        }
+
+        const agora = new Date().toISOString();
+
+        setItens((atual) =>
+            atual.map((item) =>
+                item.readAt ? item : { ...item, readAt: agora },
+            ),
+        );
+
+        for (const item of naoLidas) {
+            markNotificationRead(item.id).catch(() => {});
+        }
+    };
+
+    const grupos = agrupar(itens);
 
     return (
         <View style={styles.tela}>
@@ -55,54 +188,76 @@ export default function NotificacoesScreen() {
                 title="Alertas"
                 withLogo={false}
                 right={
-                    <Pressable onPress={marcarLidas} hitSlop={8}>
-                        <Text style={[type.labelCampo, styles.marcarLidas]}>
-                            Marcar lidas
-                        </Text>
-                    </Pressable>
+                    naoLidas.length > 0 ? (
+                        <Pressable onPress={marcarTodas} hitSlop={8}>
+                            <Text style={[type.labelCampo, styles.marcarLidas]}>
+                                Marcar lidas
+                            </Text>
+                        </Pressable>
+                    ) : null
                 }
             >
-                <View style={styles.alerta}>
-                    <Icon name="aviso" size={22} color={colors.primary} />
-
-                    <View style={styles.alertaTexto}>
-                        <Text style={[type.nomeLista, styles.alertaTitulo]}>
-                            {WEATHER_ALERT.title}
-                        </Text>
-                        <Text style={[type.metadado, styles.alertaCorpo]}>
-                            {WEATHER_ALERT.body}
-                        </Text>
-                    </View>
-                </View>
+                <Text style={[type.metadado, styles.resumo]}>
+                    {naoLidas.length > 0
+                        ? `${naoLidas.length} ${naoLidas.length === 1 ? "aviso novo" : "avisos novos"}`
+                        : "Tudo em dia por aqui."}
+                </Text>
             </DarkHeader>
 
             <ScrollView contentContainerStyle={styles.conteudo}>
                 <PushCard />
 
-                {NOTIFICATION_GROUPS.map((grupo) => (
-                    <View key={grupo.label} style={styles.grupo}>
-                        <Text style={[type.eyebrow, styles.grupoRotulo]}>
-                            {grupo.label}
+                {carregando ? (
+                    <ActivityIndicator color={colors.ink} />
+                ) : erro ? (
+                    <View style={styles.aviso}>
+                        <Text style={[type.corpoSm, styles.avisoTexto]}>
+                            {erro}
                         </Text>
 
-                        {grupo.items.map((item) => (
-                            <Cartao
-                                key={item.id}
-                                item={item}
-                                lida={lidas}
-                                resolvida={resolvidas[item.id]}
-                                onAcao={(acao) =>
-                                    setResolvidas((atual) => ({
-                                        ...atual,
-                                        [item.id]: acao,
-                                    }))
-                                }
-                            />
-                        ))}
+                        <Pressable
+                            style={styles.avisoBotao}
+                            onPress={() => {
+                                setCarregando(true);
+                                carregar();
+                            }}
+                        >
+                            <Text
+                                style={[type.labelCampo, styles.avisoBotaoTexto]}
+                            >
+                                Tentar de novo
+                            </Text>
+                        </Pressable>
                     </View>
-                ))}
+                ) : itens.length === 0 ? (
+                    <View style={styles.vazio}>
+                        <Icon name="alertas" size={28} color={colors.mute} />
+                        <Text style={[type.nomeLista, styles.vazioTitulo]}>
+                            Nenhum aviso ainda
+                        </Text>
+                        <Text style={[type.corpoSm, styles.vazioCorpo]}>
+                            Você recebe aviso quando alguém entra ou sai do seu
+                            jogo, confirma chegada, e quando um jogo é
+                            finalizado ou cancelado.
+                        </Text>
+                    </View>
+                ) : (
+                    grupos.map((grupo) => (
+                        <View key={grupo.label} style={styles.grupo}>
+                            <Text style={[type.eyebrow, styles.grupoRotulo]}>
+                                {grupo.label}
+                            </Text>
 
-                <MockNotice texto="Notificações são dados de exemplo — ainda não existe endpoint para elas." />
+                            {grupo.items.map((item) => (
+                                <Cartao
+                                    key={item.id}
+                                    item={item}
+                                    onAbrir={() => abrir(item)}
+                                />
+                            ))}
+                        </View>
+                    ))
+                )}
             </ScrollView>
         </View>
     );
@@ -127,7 +282,18 @@ function PushCard() {
 
         setEstado(resultado.state);
         setToken(resultado.token ?? null);
-        setRecado(resultado.message ?? null);
+
+        if (!resultado.token) {
+            setRecado(resultado.message ?? null);
+            return;
+        }
+
+        try {
+            await registerDevice(resultado.token);
+            setRecado("Aparelho registrado para receber avisos.");
+        } catch {
+            setRecado("Peguei o token, mas a API não registrou o aparelho.");
+        }
     };
 
     return (
@@ -160,26 +326,25 @@ function PushCard() {
 }
 
 interface CartaoProps {
-    item: NotificationItem;
-    lida: boolean;
-    resolvida?: string;
-    onAcao: (acao: string) => void;
+    item: AppNotification;
+    onAbrir: () => void;
 }
 
-function Cartao({ item, lida, resolvida, onAcao }: CartaoProps) {
+function Cartao({ item, onAbrir }: CartaoProps) {
     const { colors } = useTheme();
     const styles = useThemedStyles(criarEstilos);
-    const destaque = item.kind === "desafio" && !lida && !resolvida;
+    const novo = !item.readAt;
 
     return (
-        <View style={[styles.cartao, destaque && styles.cartaoDestaque]}>
-            <View
-                style={[styles.selo, destaque && styles.seloDestaque]}
-            >
+        <Pressable
+            style={[styles.cartao, novo && styles.cartaoDestaque]}
+            onPress={onAbrir}
+        >
+            <View style={[styles.selo, novo && styles.seloDestaque]}>
                 <Icon
-                    name={ICONS[item.kind]}
+                    name={ICONS[item.type] ?? "alertas"}
                     size={20}
-                    color={destaque ? colors.primary : colors.body}
+                    color={novo ? colors.primary : colors.body}
                 />
             </View>
 
@@ -188,191 +353,155 @@ function Cartao({ item, lida, resolvida, onAcao }: CartaoProps) {
                     <Text style={[type.nomeLista, styles.titulo]}>
                         {item.title}
                     </Text>
-                    <Text style={[type.metadado, styles.hora]}>{item.at}</Text>
+                    <Text style={[type.metadado, styles.hora]}>
+                        {hora(item.createdAt)}
+                    </Text>
                 </View>
 
                 <Text style={[type.corpoSm, styles.corpo]}>{item.body}</Text>
 
-                {resolvida ? (
-                    <Text style={[type.labelCampo, styles.resolvida]}>
-                        {resolvida}
+                {item.gameId ? (
+                    <Text style={[type.labelCampo, styles.link]}>
+                        Ver o jogo
                     </Text>
-                ) : item.actions ? (
-                    <View style={styles.acoes}>
-                        {item.actions.map((acao, indice) => (
-                            <Pressable
-                                key={acao}
-                                style={[
-                                    styles.acao,
-                                    indice === 0 && styles.acaoPrincipal,
-                                ]}
-                                onPress={() =>
-                                    onAcao(
-                                        acao === "Aceitar"
-                                            ? "Desafio aceito"
-                                            : acao === "Recusar"
-                                              ? "Desafio recusado"
-                                              : "Visto",
-                                    )
-                                }
-                            >
-                                <Text
-                                    style={[
-                                        type.labelCampo,
-                                        indice === 0
-                                            ? styles.acaoPrincipalTexto
-                                            : styles.acaoTexto,
-                                    ]}
-                                >
-                                    {acao}
-                                </Text>
-                            </Pressable>
-                        ))}
-                    </View>
                 ) : null}
             </View>
-        </View>
+        </Pressable>
     );
 }
 
 const criarEstilos = (c: Palette) =>
     StyleSheet.create({
-    tela: {
-        flex: 1,
-        backgroundColor: c.canvas,
-    },
-    marcarLidas: {
-        color: c.primary,
-    },
-    alerta: {
-        flexDirection: "row",
-        gap: spacing.md,
-        padding: spacing.lg,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: "rgba(218,104,13,0.4)",
-        backgroundColor: "rgba(218,104,13,0.16)",
-    },
-    alertaTexto: {
-        flex: 1,
-        gap: spacing.xxs,
-    },
-    alertaTitulo: {
-        color: c.onHeader,
-    },
-    alertaCorpo: {
-        color: "#D8D0C4",
-    },
-    conteudo: {
-        padding: spacing.xl,
-        paddingBottom: spacing.xxxl,
-        gap: spacing.xxl,
-    },
-    push: {
-        gap: spacing.sm,
-        padding: spacing.lg,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: c.line,
-    },
-    pushRotulo: {
-        color: c.mute,
-    },
-    pushTexto: {
-        color: c.body,
-    },
-    pushBotao: {
-        alignSelf: "flex-start",
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.lg,
-        borderRadius: 10,
-        backgroundColor: c.primary,
-    },
-    pushBotaoTexto: {
-        color: c.onPrimary,
-    },
-    pushToken: {
-        padding: spacing.sm,
-        borderRadius: 10,
-        backgroundColor: c.canvasSoft,
-    },
-    pushTokenTexto: {
-        color: c.mute,
-    },
-    grupo: {
-        gap: spacing.md,
-    },
-    grupoRotulo: {
-        color: c.mute,
-    },
-    cartao: {
-        flexDirection: "row",
-        gap: spacing.md,
-        padding: spacing.lg,
-        borderRadius: 18,
-        backgroundColor: c.canvasSoft,
-    },
-    cartaoDestaque: {
-        borderWidth: 1,
-        borderColor: c.primary,
-        backgroundColor: c.canvas,
-    },
-    selo: {
-        width: 38,
-        height: 38,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 12,
-        backgroundColor: c.canvas,
-    },
-    seloDestaque: {
-        backgroundColor: "rgba(218,104,13,0.14)",
-    },
-    miolo: {
-        flex: 1,
-        gap: spacing.xs,
-    },
-    cabecalho: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: spacing.md,
-    },
-    titulo: {
-        flex: 1,
-        color: c.ink,
-    },
-    hora: {
-        color: c.mute,
-    },
-    corpo: {
-        color: c.body,
-    },
-    resolvida: {
-        color: c.primary,
-        marginTop: spacing.xs,
-    },
-    acoes: {
-        flexDirection: "row",
-        gap: spacing.sm,
-        marginTop: spacing.xs,
-    },
-    acao: {
-        height: 38,
-        justifyContent: "center",
-        paddingHorizontal: spacing.lg,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: c.chipBorder,
-    },
-    acaoPrincipal: {
-        borderColor: "transparent",
-        backgroundColor: c.primary,
-    },
-    acaoTexto: {
-        color: c.ink,
-    },
-    acaoPrincipalTexto: {
-        color: c.onPrimary,
-    },
-});
+        tela: {
+            flex: 1,
+            backgroundColor: c.canvas,
+        },
+        marcarLidas: {
+            color: c.primary,
+        },
+        resumo: {
+            color: c.onHeaderSoft,
+        },
+        conteudo: {
+            padding: spacing.xl,
+            paddingBottom: spacing.xxxl,
+            gap: spacing.xxl,
+        },
+        push: {
+            gap: spacing.sm,
+            padding: spacing.lg,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: c.line,
+        },
+        pushRotulo: {
+            color: c.mute,
+        },
+        pushTexto: {
+            color: c.body,
+        },
+        pushBotao: {
+            alignSelf: "flex-start",
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.lg,
+            borderRadius: 10,
+            backgroundColor: c.primary,
+        },
+        pushBotaoTexto: {
+            color: c.onPrimary,
+        },
+        pushToken: {
+            padding: spacing.sm,
+            borderRadius: 10,
+            backgroundColor: c.canvasSoft,
+        },
+        pushTokenTexto: {
+            color: c.mute,
+        },
+        aviso: {
+            gap: spacing.md,
+            padding: spacing.lg,
+            borderRadius: radius.md,
+            backgroundColor: c.canvasSoft,
+        },
+        avisoTexto: {
+            color: c.body,
+        },
+        avisoBotao: {
+            alignSelf: "flex-start",
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.lg,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: c.chipBorder,
+        },
+        avisoBotaoTexto: {
+            color: c.ink,
+        },
+        vazio: {
+            alignItems: "center",
+            gap: spacing.sm,
+            paddingVertical: spacing.xxl,
+            paddingHorizontal: spacing.lg,
+        },
+        vazioTitulo: {
+            color: c.ink,
+        },
+        vazioCorpo: {
+            color: c.body,
+            textAlign: "center",
+        },
+        grupo: {
+            gap: spacing.md,
+        },
+        grupoRotulo: {
+            color: c.mute,
+        },
+        cartao: {
+            flexDirection: "row",
+            gap: spacing.md,
+            padding: spacing.lg,
+            borderRadius: 18,
+            backgroundColor: c.canvasSoft,
+        },
+        cartaoDestaque: {
+            borderWidth: 1,
+            borderColor: c.primary,
+            backgroundColor: c.canvas,
+        },
+        selo: {
+            width: 38,
+            height: 38,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 12,
+            backgroundColor: c.canvas,
+        },
+        seloDestaque: {
+            backgroundColor: "rgba(218,104,13,0.14)",
+        },
+        miolo: {
+            flex: 1,
+            gap: spacing.xs,
+        },
+        cabecalho: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: spacing.md,
+        },
+        titulo: {
+            flex: 1,
+            color: c.ink,
+        },
+        hora: {
+            color: c.mute,
+        },
+        corpo: {
+            color: c.body,
+        },
+        link: {
+            color: c.primary,
+            marginTop: spacing.xxs,
+        },
+    });
