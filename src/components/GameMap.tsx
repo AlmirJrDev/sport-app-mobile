@@ -2,7 +2,8 @@ import { StyleSheet, View } from "react-native";
 
 import { Map, MapLocationPuck, MapMarker } from "@/components/ui/mapcn";
 import type { Coordinates, Game } from "../games/types";
-import { OSM_STYLE } from "../map/basemap";
+import { useTheme } from "../design/theme";
+import { CARTO_DARK, CARTO_LIGHT } from "../map/basemap";
 import { colors } from "../design/tokens";
 
 interface GameMapProps {
@@ -22,9 +23,12 @@ export default function GameMap({
     onClearSelection,
     onCenterChange,
 }: GameMapProps) {
+    const { isDark } = useTheme();
+
     return (
         <Map
-            style={OSM_STYLE}
+            style={{ light: CARTO_LIGHT, dark: CARTO_DARK }}
+            colorScheme={isDark ? "dark" : "light"}
             defaultViewport={{
                 center: [center.longitude, center.latitude],
                 zoom: 12,

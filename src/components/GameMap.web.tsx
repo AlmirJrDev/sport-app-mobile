@@ -8,7 +8,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { Coordinates, Game } from "../games/types";
-import { OSM_STYLE } from "../map/basemap";
+import { OSM_STYLE, baseMapStyle } from "../map/basemap";
 import { useTheme } from "../design/theme";
 
 setWorkerUrl("/maplibre-gl-worker.mjs");
@@ -30,7 +30,7 @@ export default function GameMap({
     onClearSelection,
     onCenterChange,
 }: GameMapProps) {
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<MapLibreMap | null>(null);
     const markersRef = useRef<Marker[]>([]);
@@ -42,9 +42,18 @@ export default function GameMap({
 
         const map = new MapLibreMap({
             container: containerRef.current,
-            style: OSM_STYLE,
+            style: baseMapStyle(isDark),
             center: [center.longitude, center.latitude],
             zoom: 12,
+        });
+
+        /** Se a base vetorial não vier, o mapa não fica em branco. */
+        map.once("error", () => {
+            try {
+                map.setStyle(OSM_STYLE);
+            } catch {
+                // sem base: o mapa segue vazio, mas os pinos continuam
+            }
         });
 
         map.on("click", () => onClearSelection());
@@ -60,6 +69,14 @@ export default function GameMap({
             mapRef.current = null;
         };
     }, []);
+
+    useEffect(() => {
+        const map = mapRef.current;
+
+        if (map) {
+            map.setStyle(baseMapStyle(isDark));
+        }
+    }, [isDark]);
 
     useEffect(() => {
         const map = mapRef.current;
