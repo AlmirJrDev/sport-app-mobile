@@ -12,7 +12,8 @@ import {
 
 import { listSports, prettify, type Sport } from "../src/api/catalog";
 import { useSession } from "../src/auth/useSession";
-import { colors, radius, spacing, type } from "../src/design/tokens";
+import { Stripes } from "../src/design/pieces";
+import { colors, radius, size, spacing, type } from "../src/design/tokens";
 import { Button, Field } from "../src/design/ui";
 import { AvatarCropper, HAS_CROPPER } from "../src/profile/cropper";
 import { pickImage, type PickedImage } from "../src/profile/pickImage";
@@ -201,13 +202,13 @@ export default function OnboardingScreen() {
     return (
         <ScrollView contentContainerStyle={styles.conteudo}>
             <View style={styles.cabecalho}>
-                <Text style={[type.label, styles.contador]}>
+                <Text style={[type.eyebrow, styles.contador]}>
                     Passo {passo} de {TOTAL}
                 </Text>
-                <Text style={[type.headlineMd, styles.titulo]}>
+                <Text style={[type.tituloPasso, styles.titulo]}>
                     {titulos[passo - 1]}
                 </Text>
-                <Text style={[type.bodySm, styles.legenda]}>
+                <Text style={[type.corpo, styles.legenda]}>
                     {legendas[passo - 1]}
                 </Text>
 
@@ -229,11 +230,11 @@ export default function OnboardingScreen() {
                     {previa ? (
                         <Image source={{ uri: previa }} style={styles.foto} />
                     ) : (
-                        <View style={[styles.foto, styles.fotoVazia]}>
-                            <Text style={[type.label, styles.fotoVaziaTexto]}>
-                                sem foto
-                            </Text>
-                        </View>
+                        <Stripes
+                            caption="sem foto"
+                            style={styles.foto}
+                            rounded={75}
+                        />
                     )}
 
                     <Pressable style={styles.contorno} onPress={escolherFoto}>
@@ -400,14 +401,14 @@ const styles = StyleSheet.create({
     },
     trilha: {
         flexDirection: "row",
-        gap: spacing.xs,
+        gap: 6,
         marginTop: spacing.md,
     },
     marca: {
         flex: 1,
         height: 4,
         borderRadius: radius.pill,
-        backgroundColor: colors.mute,
+        backgroundColor: colors.line,
     },
     marcaAtiva: {
         backgroundColor: colors.primary,
@@ -417,23 +418,15 @@ const styles = StyleSheet.create({
         gap: spacing.lg,
     },
     foto: {
-        width: 140,
-        height: 140,
-        borderRadius: radius.pill,
+        width: 150,
+        height: 150,
+        borderRadius: 75,
         borderWidth: 2,
         borderColor: colors.primary,
     },
-    fotoVazia: {
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: colors.canvasSoft,
-        borderColor: colors.mute,
-    },
-    fotoVaziaTexto: {
-        color: colors.bodyMid,
-    },
     contorno: {
-        paddingVertical: spacing.md,
+        height: 50,
+        justifyContent: "center",
         paddingHorizontal: spacing.xl,
         borderRadius: radius.sm,
         borderWidth: 1,
@@ -448,15 +441,16 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     chip: {
-        paddingVertical: spacing.md,
+        height: size.onboardingChip,
+        justifyContent: "center",
         paddingHorizontal: spacing.xl,
-        borderRadius: radius.pill,
+        borderRadius: 23,
         borderWidth: 1,
-        borderColor: colors.mute,
+        borderColor: colors.line,
     },
     chipAtivo: {
         borderColor: "transparent",
-        backgroundColor: colors.ink,
+        backgroundColor: colors.primary,
     },
     chipTexto: {
         color: colors.body,

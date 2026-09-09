@@ -1,11 +1,25 @@
 import { useState } from "react";
 import { Link, Redirect, useRouter } from "expo-router";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+    ActivityIndicator,
+    Image,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
 
 import { AuthError, signIn } from "../src/auth/account";
 import { useSession } from "../src/auth/useSession";
-import { colors, spacing, type } from "../src/design/tokens";
-import { Button, Card, Eyebrow, Field } from "../src/design/ui";
+import { colors, radius, size, spacing, type } from "../src/design/tokens";
+
+/** A entrada é sempre escura, mesmo quando o app tiver tema claro/escuro. */
+const FUNDO = "#1C1614";
+const TEXTO_SUAVE = "#C9C3B6";
+const NOTA = "#7C766B";
+const CONTORNO = "#4A423C";
 
 export default function SignInScreen() {
     const router = useRouter();
@@ -18,8 +32,8 @@ export default function SignInScreen() {
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator color={colors.ink} />
+            <View style={styles.centro}>
+                <ActivityIndicator color={colors.primary} />
             </View>
         );
     }
@@ -27,6 +41,8 @@ export default function SignInScreen() {
     if (account) {
         return <Redirect href="/" />;
     }
+
+    const bloqueado = busy || !email || !password;
 
     const handleSubmit = async () => {
         setBusy(true);
@@ -48,94 +64,188 @@ export default function SignInScreen() {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.header}>
-                <Eyebrow>Projeto H</Eyebrow>
-                <Text style={[type.displayMd, styles.title]}>
-                    Entrar na sua conta
-                </Text>
-                <Text style={[type.bodyMd, styles.lead]}>
-                    Para marcar jogo, confirmar presença e aparecer na lista.
-                </Text>
-            </View>
+        <View style={styles.tela}>
+            <View style={styles.brilho} />
 
-            <Card style={styles.card}>
-                <Field
-                    label="E-mail"
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="voce@email.com"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    autoComplete="email"
-                />
+            <ScrollView contentContainerStyle={styles.conteudo}>
+                <View style={styles.marca}>
+                    <Image
+                        source={require("../assets/logo.png")}
+                        style={styles.logo}
+                    />
 
-                <Field
-                    label="Senha"
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="••••••"
-                    secureTextEntry
-                />
+                    <Text style={[type.displayEntrada, styles.display]}>
+                        {"Jogo perto\nde você,\nagora"}
+                    </Text>
 
-                {error ? (
-                    <Text style={[type.bodySm, styles.error]}>{error}</Text>
-                ) : null}
+                    <Text style={[type.corpoLg, styles.subtitulo]}>
+                        Ache quem está jogando na sua rua, confirme presença e
+                        acompanhe o placar.
+                    </Text>
+                </View>
 
-                <Button
-                    label={busy ? "Entrando…" : "Entrar"}
-                    onPress={handleSubmit}
-                    disabled={busy || !email || !password}
-                />
-            </Card>
+                <View style={styles.formulario}>
+                    <View style={styles.campo}>
+                        <Text style={[type.labelCampo, styles.rotulo]}>
+                            E-mail
+                        </Text>
+                        <TextInput
+                            style={[type.valorCampo, styles.input]}
+                            value={email}
+                            onChangeText={setEmail}
+                            placeholder="voce@email.com"
+                            placeholderTextColor={NOTA}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            autoComplete="email"
+                        />
+                    </View>
 
-            <View style={styles.footer}>
-                <Text style={[type.bodySm, styles.lead]}>
-                    Ainda não tem conta?
-                </Text>
-                <Link href="/criar-conta" style={[type.bodySmStrong, styles.link]}>
-                    Criar conta
-                </Link>
-            </View>
-        </ScrollView>
+                    <View style={styles.campo}>
+                        <Text style={[type.labelCampo, styles.rotulo]}>
+                            Senha
+                        </Text>
+                        <TextInput
+                            style={[type.valorCampo, styles.input]}
+                            value={password}
+                            onChangeText={setPassword}
+                            placeholder="••••••"
+                            placeholderTextColor={NOTA}
+                            secureTextEntry
+                        />
+                    </View>
+
+                    {error ? (
+                        <Text style={[type.corpoSm, styles.erro]}>{error}</Text>
+                    ) : null}
+
+                    <Pressable
+                        style={[styles.cta, bloqueado && styles.ctaBloqueado]}
+                        disabled={bloqueado}
+                        onPress={handleSubmit}
+                    >
+                        <Text
+                            style={[
+                                type.botao,
+                                bloqueado ? styles.ctaTextoFraco : styles.ctaTexto,
+                            ]}
+                        >
+                            {busy ? "Entrando…" : "Entrar"}
+                        </Text>
+                    </Pressable>
+
+                    <Link href="/criar-conta" asChild>
+                        <View style={styles.secundario}>
+                            <Text style={[type.botao, styles.secundarioTexto]}>
+                                Criar conta
+                            </Text>
+                        </View>
+                    </Link>
+
+                    <Text style={[type.metadado, styles.nota]}>
+                        Ao entrar você concorda em aparecer na lista de presença
+                        dos jogos que confirmar.
+                    </Text>
+                </View>
+            </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    content: {
-        padding: spacing.xl,
-        gap: spacing.xl,
-        backgroundColor: colors.canvas,
-        flexGrow: 1,
-        justifyContent: "center",
+    tela: {
+        flex: 1,
+        backgroundColor: FUNDO,
+        overflow: "hidden",
     },
-    centered: {
+    centro: {
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: colors.canvas,
+        backgroundColor: FUNDO,
     },
-    header: {
-        gap: spacing.sm,
+    brilho: {
+        position: "absolute",
+        width: 460,
+        height: 460,
+        borderRadius: 230,
+        left: -130,
+        top: 60,
+        opacity: 0.16,
+        backgroundColor: colors.primary,
     },
-    title: {
-        color: colors.ink,
+    conteudo: {
+        flexGrow: 1,
+        justifyContent: "flex-end",
+        paddingHorizontal: 28,
+        paddingBottom: 40,
+        paddingTop: 80,
+        gap: 28,
     },
-    lead: {
-        color: colors.body,
-    },
-    card: {
+    marca: {
         gap: spacing.lg,
     },
-    error: {
-        color: colors.primary,
+    logo: {
+        width: 92,
+        height: 92,
     },
-    footer: {
-        flexDirection: "row",
-        alignItems: "center",
+    display: {
+        color: colors.onPrimary,
+    },
+    subtitulo: {
+        maxWidth: 300,
+        color: TEXTO_SUAVE,
+    },
+    formulario: {
+        gap: spacing.md,
+    },
+    campo: {
         gap: spacing.sm,
     },
-    link: {
+    rotulo: {
+        color: TEXTO_SUAVE,
+    },
+    input: {
+        minHeight: size.input,
+        paddingHorizontal: spacing.lg,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: CONTORNO,
+        color: colors.onPrimary,
+    },
+    erro: {
         color: colors.primary,
+    },
+    cta: {
+        minHeight: size.cta,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        backgroundColor: colors.primary,
+    },
+    ctaBloqueado: {
+        backgroundColor: "rgba(218,104,13,0.35)",
+    },
+    ctaTexto: {
+        color: colors.onPrimary,
+    },
+    ctaTextoFraco: {
+        color: "rgba(255,254,251,0.6)",
+    },
+    secundario: {
+        minHeight: size.cta,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: CONTORNO,
+    },
+    secundarioTexto: {
+        color: colors.onPrimary,
+    },
+    nota: {
+        marginTop: spacing.sm,
+        textAlign: "center",
+        color: NOTA,
     },
 });

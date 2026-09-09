@@ -17,7 +17,7 @@ import {
     type Modality,
     type Sport,
 } from "../src/api/catalog";
-import { colors, font, radius, spacing, type } from "../src/design/tokens";
+import { colors, font, radius, size, spacing, type } from "../src/design/tokens";
 import { createGame } from "../src/games/service";
 import {
     DURATIONS,
@@ -441,24 +441,24 @@ export default function NewGameScreen() {
 
 const styles = StyleSheet.create({
     content: {
-        padding: 16,
-        gap: 18,
+        padding: spacing.xl,
+        paddingBottom: spacing.xxxl,
+        gap: spacing.xxl,
     },
     field: {
         gap: 8,
     },
     label: {
-        fontSize: 14,
-        fontFamily: font.semibold,
-        color: colors.ink,
+        ...type.labelCampo,
+        color: colors.mute,
     },
     hint: {
-        fontSize: 13,
-        color: colors.body,
+        ...type.metadado,
+        color: colors.mute,
     },
     mapBox: {
-        height: 220,
-        borderRadius: 8,
+        height: 180,
+        borderRadius: radius.md,
         overflow: "hidden",
         backgroundColor: colors.canvasSoft,
     },
@@ -472,12 +472,12 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     crosshairPin: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
         borderWidth: 3,
-        borderColor: "#fff",
-        backgroundColor: "#1d4ed8",
+        borderColor: colors.canvas,
+        backgroundColor: colors.primary,
     },
     options: {
         flexDirection: "row",
@@ -485,31 +485,33 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     option: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
+        height: size.formChip,
+        justifyContent: "center",
+        paddingHorizontal: spacing.lg,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: colors.mute,
+        borderColor: colors.line,
     },
     optionSelected: {
         borderColor: "transparent",
-        backgroundColor: colors.ink,
+        backgroundColor: colors.primary,
     },
     optionLabel: {
-        ...type.bodySm,
+        ...type.labelCampo,
         color: colors.body,
     },
     optionLabelSelected: {
+        ...type.labelCampo,
         color: colors.onPrimary,
-        fontFamily: font.semibold,
     },
     input: {
-        ...type.bodyMd,
-        paddingVertical: spacing.md,
+        ...type.valorCampo,
+        minHeight: size.input,
         paddingHorizontal: spacing.lg,
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.ink,
+        borderColor: colors.line,
+        backgroundColor: colors.canvasSoft,
         color: colors.ink,
     },
     timeRow: {
@@ -518,24 +520,29 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     timeInput: {
-        width: 90,
+        ...type.statCard,
+        width: 104,
         textAlign: "center",
+        borderWidth: 1.5,
+        borderColor: colors.primary,
+        backgroundColor: colors.canvas,
     },
     notice: {
         ...type.bodySm,
         color: colors.primary,
     },
     save: {
+        minHeight: size.cta,
         alignItems: "center",
-        paddingVertical: spacing.md,
-        borderRadius: radius.md,
+        justifyContent: "center",
+        borderRadius: radius.sm,
         backgroundColor: colors.primary,
     },
     saveDisabled: {
-        backgroundColor: colors.mute,
+        backgroundColor: colors.canvasSoft,
     },
     saveLabel: {
-        ...type.buttonMd,
+        ...type.botao,
         color: colors.onPrimary,
     },
 });

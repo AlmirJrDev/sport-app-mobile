@@ -70,6 +70,24 @@ interface MeResponse {
     data?: MeResponse;
 }
 
+/** Só é sessão se vier objeto com id — resposta em texto é HTML, não perfil. */
+function isMeResponse(payload: unknown): payload is MeResponse {
+    if (typeof payload !== "object" || payload === null) {
+        return false;
+    }
+
+    const body =
+        (payload as MeResponse).data ?? (payload as MeResponse);
+
+    return (
+        typeof body === "object" &&
+        body !== null &&
+        (typeof body.id === "string" ||
+            typeof body.id === "number" ||
+            typeof body._id === "string")
+    );
+}
+
 function toAccount(payload: MeResponse): Account {
     const body = payload.data ?? payload;
 
@@ -202,10 +220,9 @@ async function loadMe(): Promise<Account | null> {
         const { raw } = await apiFetch<MeResponse>("/users/full/me", {
             auth: true,
         });
-        const completo = toAccount(raw as MeResponse);
 
-        if (completo.id !== "sem-id") {
-            cached = completo;
+        if (isMeResponse(raw)) {
+            cached = toAccount(raw);
 
             return cached;
         }
@@ -215,9 +232,14 @@ async function loadMe(): Promise<Account | null> {
 
     try {
         const { raw } = await apiFetch<MeResponse>("/users/me", { auth: true });
-        cached = toAccount(raw as MeResponse);
 
-        return cached;
+        if (isMeResponse(raw)) {
+            cached = toAccount(raw);
+
+            return cached;
+        }
+
+        return null;
     } catch {
         return null;
     }

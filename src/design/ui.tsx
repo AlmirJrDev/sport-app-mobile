@@ -10,7 +10,7 @@ import {
     type ViewStyle,
 } from "react-native";
 
-import { colors, radius, spacing, type } from "./tokens";
+import { colors, radius, size, spacing, type } from "./tokens";
 
 type ButtonVariant = "primary" | "secondary" | "tertiary" | "text";
 
@@ -45,7 +45,7 @@ export function Button({
         >
             <Text
                 style={[
-                    variant === "text" ? type.buttonSm : type.buttonMd,
+                    variant === "text" ? type.labelCampo : type.botao,
                     variant === "primary" || variant === "secondary"
                         ? styles.labelOnDark
                         : styles.labelOnLight,
@@ -65,10 +65,10 @@ interface FieldProps extends TextInputProps {
 export function Field({ label, error, ...rest }: FieldProps) {
     return (
         <View style={styles.field}>
-            <Text style={[type.bodySmStrong, styles.fieldLabel]}>{label}</Text>
+            <Text style={[type.labelCampo, styles.fieldLabel]}>{label}</Text>
 
             <TextInput
-                style={[type.bodyMd, styles.input]}
+                style={[type.valorCampo, styles.input]}
                 placeholderTextColor={colors.mute}
                 {...rest}
             />
@@ -93,11 +93,11 @@ export function Eyebrow({ children }: PropsWithChildren) {
 
 const styles = StyleSheet.create({
     button: {
+        minHeight: size.cta,
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: spacing.md,
         paddingHorizontal: spacing.xl,
-        borderRadius: radius.md,
+        borderRadius: radius.sm,
         borderWidth: 1,
         borderColor: "transparent",
     },
@@ -108,8 +108,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.ink,
     },
     buttonTertiary: {
-        backgroundColor: colors.canvas,
-        borderColor: colors.ink,
+        backgroundColor: "transparent",
+        borderColor: colors.chipBorder,
     },
     buttonText: {
         backgroundColor: "transparent",
@@ -117,8 +117,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
     },
     buttonDisabled: {
-        backgroundColor: colors.mute,
-        borderColor: "transparent",
+        backgroundColor: colors.canvasSoft,
+        borderColor: colors.line,
     },
     labelOnDark: {
         color: colors.onPrimary,
@@ -130,15 +130,16 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     fieldLabel: {
-        color: colors.ink,
+        color: colors.mute,
     },
     input: {
+        minHeight: size.input,
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.lg,
         borderWidth: 1,
-        borderColor: colors.ink,
+        borderColor: colors.line,
         borderRadius: radius.sm,
-        backgroundColor: colors.canvas,
+        backgroundColor: colors.canvasSoft,
         color: colors.ink,
     },
     error: {
@@ -150,6 +151,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.canvasSoft,
     },
     eyebrow: {
-        color: colors.body,
+        color: colors.primary,
     },
 });

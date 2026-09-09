@@ -156,10 +156,10 @@ export default function SignUpScreen() {
         <ScrollView contentContainerStyle={styles.content}>
             <View style={styles.header}>
                 <Eyebrow>{step === 1 ? "Passo 1 de 2" : "Passo 2 de 2"}</Eyebrow>
-                <Text style={[type.displayMd, styles.title]}>
+                <Text style={[type.tituloPasso, styles.title]}>
                     {step === 1 ? "Criar conta" : "Seus dados"}
                 </Text>
-                <Text style={[type.bodyMd, styles.lead]}>
+                <Text style={[type.corpo, styles.lead]}>
                     {step === 1
                         ? "Comece com e-mail e senha."
                         : "Seu nome é o que os outros jogadores veem na lista de presença."}
@@ -303,13 +303,14 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
     content: {
         padding: spacing.xl,
-        gap: spacing.xl,
+        paddingBottom: spacing.xxxl,
+        gap: spacing.xxl,
         backgroundColor: colors.canvas,
         flexGrow: 1,
         justifyContent: "center",
     },
     header: {
-        gap: spacing.sm,
+        gap: spacing.xs,
     },
     title: {
         color: colors.ink,
@@ -319,6 +320,8 @@ const styles = StyleSheet.create({
     },
     card: {
         gap: spacing.lg,
+        padding: 0,
+        backgroundColor: "transparent",
     },
     error: {
         color: colors.primary,
