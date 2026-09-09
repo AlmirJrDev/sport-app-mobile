@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { colors, radius, spacing, type } from "../design/tokens";
+import { useThemedStyles } from "../design/theme";
+import { radius, spacing, type, type Palette } from "../design/tokens";
 import { distanceFor } from "../games/service";
 import {
     SKILL_LABEL,
@@ -25,6 +26,8 @@ interface GameListProps {
 }
 
 export default function GameList({ games, center, onOpen }: GameListProps) {
+    const styles = useThemedStyles(criarEstilos);
+
     if (games.length === 0) {
         return (
             <View style={styles.vazio}>
@@ -108,7 +111,8 @@ export default function GameList({ games, center, onOpen }: GameListProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     lista: {
         padding: spacing.lg,
         paddingTop: 104,
@@ -119,7 +123,7 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
         padding: spacing.lg,
         borderRadius: 18,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     linhaTopo: {
         flexDirection: "row",
@@ -127,16 +131,16 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     status: {
-        color: colors.primary,
+        color: c.primary,
     },
     distancia: {
-        color: colors.mute,
+        color: c.mute,
     },
     nome: {
-        color: colors.ink,
+        color: c.ink,
     },
     meta: {
-        color: colors.body,
+        color: c.body,
     },
     rodape: {
         flexDirection: "row",
@@ -145,14 +149,14 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
     },
     vagas: {
-        color: colors.ink,
+        color: c.ink,
     },
     vagasEsgotadas: {
-        color: colors.mute,
+        color: c.mute,
     },
     demo: {
         marginLeft: "auto",
-        color: colors.mute,
+        color: c.mute,
     },
     vazio: {
         flex: 1,
@@ -162,10 +166,10 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     vazioTitulo: {
-        color: colors.ink,
+        color: c.ink,
     },
     vazioTexto: {
-        color: colors.body,
+        color: c.body,
         textAlign: "center",
     },
 });

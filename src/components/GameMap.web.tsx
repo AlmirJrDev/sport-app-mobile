@@ -9,7 +9,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { Coordinates, Game } from "../games/types";
 import { OSM_STYLE } from "../map/basemap";
-import { colors } from "../design/tokens";
+import { useTheme } from "../design/theme";
 
 setWorkerUrl("/maplibre-gl-worker.mjs");
 
@@ -30,6 +30,7 @@ export default function GameMap({
     onClearSelection,
     onCenterChange,
 }: GameMapProps) {
+    const { colors } = useTheme();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<MapLibreMap | null>(null);
     const markersRef = useRef<Marker[]>([]);

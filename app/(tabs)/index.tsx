@@ -18,13 +18,14 @@ import GameMap from "../../src/components/GameMap";
 import GameSheet from "../../src/components/GameSheet";
 import { Icon } from "../../src/design/icons";
 import { Avatar } from "../../src/design/pieces";
+import { useTheme, useThemedStyles } from "../../src/design/theme";
 import {
-    colors,
     radius,
     shadow,
     size,
     spacing,
     type,
+    type Palette,
 } from "../../src/design/tokens";
 import { FALLBACK_CENTER } from "../../src/games/mock";
 import {
@@ -37,6 +38,8 @@ import type { Coordinates, Game } from "../../src/games/types";
 const RADIUS_KM = 10;
 
 export default function MapScreen() {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { account, loading } = useSession();
@@ -246,10 +249,11 @@ export default function MapScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     centro: {
         flex: 1,
@@ -257,10 +261,10 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         padding: spacing.xl,
         gap: spacing.md,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     centroTexto: {
-        color: colors.body,
+        color: c.body,
         textAlign: "center",
     },
     topo: {
@@ -285,7 +289,7 @@ const styles = StyleSheet.create({
         gap: spacing.md,
         paddingHorizontal: spacing.md,
         borderRadius: radius.chip,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
         ...shadow.pill,
     },
     logo: {
@@ -296,10 +300,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     pillRotulo: {
-        color: colors.mute,
+        color: c.mute,
     },
     pillLugar: {
-        color: colors.ink,
+        color: c.ink,
     },
     chips: {
         flexDirection: "row",
@@ -312,33 +316,33 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
         borderRadius: 17,
         borderWidth: 1,
-        borderColor: colors.line,
-        backgroundColor: colors.canvas,
+        borderColor: c.line,
+        backgroundColor: c.canvas,
     },
     chipAtivo: {
         borderColor: "transparent",
-        backgroundColor: colors.ink,
+        backgroundColor: c.ink,
     },
     chipTexto: {
-        color: colors.body,
+        color: c.body,
     },
     chipTextoAtivo: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     chipTextoAcao: {
-        color: colors.primary,
+        color: c.primary,
     },
     falha: {
         gap: spacing.xxs,
         padding: spacing.md,
         borderRadius: radius.sm,
-        backgroundColor: colors.ink,
+        backgroundColor: c.ink,
     },
     falhaRotulo: {
-        color: colors.primary,
+        color: c.primary,
     },
     falhaTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     rodape: {
         position: "absolute",
@@ -354,11 +358,11 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,
         borderRadius: radius.pill,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
         ...shadow.pill,
     },
     contadorTexto: {
-        color: colors.body,
+        color: c.body,
     },
     fab: {
         width: size.fab,
@@ -366,7 +370,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: size.fab / 2,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
         ...shadow.fab,
     },
 });

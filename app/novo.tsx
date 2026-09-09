@@ -17,7 +17,15 @@ import {
     type Modality,
     type Sport,
 } from "../src/api/catalog";
-import { colors, font, radius, size, spacing, type } from "../src/design/tokens";
+import { useTheme, useThemedStyles } from "../src/design/theme";
+import {
+    font,
+    radius,
+    size,
+    spacing,
+    type,
+    type Palette,
+} from "../src/design/tokens";
 import { createGame } from "../src/games/service";
 import {
     DURATIONS,
@@ -87,6 +95,8 @@ interface OptionRowProps {
 }
 
 function OptionRow({ label, options, selected, onSelect }: OptionRowProps) {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     return (
         <View style={styles.field}>
             <Text style={styles.label}>{label}</Text>
@@ -117,6 +127,8 @@ function OptionRow({ label, options, selected, onSelect }: OptionRowProps) {
 }
 
 export default function NewGameScreen() {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
     const { lat, lng } = useLocalSearchParams<{ lat: string; lng: string }>();
 
@@ -439,7 +451,8 @@ export default function NewGameScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     content: {
         padding: spacing.xl,
         paddingBottom: spacing.xxxl,
@@ -450,17 +463,17 @@ const styles = StyleSheet.create({
     },
     label: {
         ...type.labelCampo,
-        color: colors.mute,
+        color: c.mute,
     },
     hint: {
         ...type.metadado,
-        color: colors.mute,
+        color: c.mute,
     },
     mapBox: {
         height: 180,
         borderRadius: radius.md,
         overflow: "hidden",
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     crosshair: {
         position: "absolute",
@@ -476,8 +489,8 @@ const styles = StyleSheet.create({
         height: 26,
         borderRadius: 13,
         borderWidth: 3,
-        borderColor: colors.canvas,
-        backgroundColor: colors.primary,
+        borderColor: c.canvas,
+        backgroundColor: c.primary,
     },
     options: {
         flexDirection: "row",
@@ -490,19 +503,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: colors.line,
+        borderColor: c.line,
     },
     optionSelected: {
         borderColor: "transparent",
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     optionLabel: {
         ...type.labelCampo,
-        color: colors.body,
+        color: c.body,
     },
     optionLabelSelected: {
         ...type.labelCampo,
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     input: {
         ...type.valorCampo,
@@ -510,9 +523,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.line,
-        backgroundColor: colors.canvasSoft,
-        color: colors.ink,
+        borderColor: c.line,
+        backgroundColor: c.canvasSoft,
+        color: c.ink,
     },
     timeRow: {
         flexDirection: "row",
@@ -524,25 +537,25 @@ const styles = StyleSheet.create({
         width: 104,
         textAlign: "center",
         borderWidth: 1.5,
-        borderColor: colors.primary,
-        backgroundColor: colors.canvas,
+        borderColor: c.primary,
+        backgroundColor: c.canvas,
     },
     notice: {
         ...type.bodySm,
-        color: colors.primary,
+        color: c.primary,
     },
     save: {
         minHeight: size.cta,
         alignItems: "center",
         justifyContent: "center",
         borderRadius: radius.sm,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     saveDisabled: {
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     saveLabel: {
         ...type.botao,
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
 });

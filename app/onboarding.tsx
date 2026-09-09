@@ -13,7 +13,14 @@ import {
 import { listSports, prettify, type Sport } from "../src/api/catalog";
 import { useSession } from "../src/auth/useSession";
 import { Stripes } from "../src/design/pieces";
-import { colors, radius, size, spacing, type } from "../src/design/tokens";
+import { useTheme, useThemedStyles } from "../src/design/theme";
+import {
+    radius,
+    size,
+    spacing,
+    type,
+    type Palette,
+} from "../src/design/tokens";
 import { Button, Field } from "../src/design/ui";
 import { AvatarCropper, HAS_CROPPER } from "../src/profile/cropper";
 import { pickImage, type PickedImage } from "../src/profile/pickImage";
@@ -22,6 +29,8 @@ import { getMyProfile, updateProfile } from "../src/profile/remote";
 const TOTAL = 3;
 
 export default function OnboardingScreen() {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
     const { novo } = useLocalSearchParams<{ novo?: string }>();
     const { account, loading, reload } = useSession();
@@ -375,7 +384,8 @@ export default function OnboardingScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     conteudo: {
         padding: spacing.lg,
         paddingBottom: spacing.xxxl,
@@ -391,13 +401,13 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     contador: {
-        color: colors.primary,
+        color: c.primary,
     },
     titulo: {
-        color: colors.ink,
+        color: c.ink,
     },
     legenda: {
-        color: colors.body,
+        color: c.body,
     },
     trilha: {
         flexDirection: "row",
@@ -408,10 +418,10 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 4,
         borderRadius: radius.pill,
-        backgroundColor: colors.line,
+        backgroundColor: c.line,
     },
     marcaAtiva: {
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     fotoBloco: {
         alignItems: "center",
@@ -422,7 +432,7 @@ const styles = StyleSheet.create({
         height: 150,
         borderRadius: 75,
         borderWidth: 2,
-        borderColor: colors.primary,
+        borderColor: c.primary,
     },
     contorno: {
         height: 50,
@@ -430,10 +440,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.xl,
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.ink,
+        borderColor: c.ink,
     },
     contornoTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
     chips: {
         flexDirection: "row",
@@ -446,20 +456,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.xl,
         borderRadius: 23,
         borderWidth: 1,
-        borderColor: colors.line,
+        borderColor: c.line,
     },
     chipAtivo: {
         borderColor: "transparent",
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     chipTexto: {
-        color: colors.body,
+        color: c.body,
     },
     chipTextoAtivo: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     aviso: {
-        color: colors.body,
+        color: c.body,
     },
     campos: {
         gap: spacing.md,
@@ -472,7 +482,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     erro: {
-        color: colors.primary,
+        color: c.primary,
     },
     rodape: {
         gap: spacing.lg,
@@ -483,9 +493,9 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     link: {
-        color: colors.bodyMid,
+        color: c.bodyMid,
     },
     linkForte: {
-        color: colors.ink,
+        color: c.ink,
     },
 });

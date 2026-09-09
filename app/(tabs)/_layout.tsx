@@ -1,7 +1,8 @@
 import { Tabs } from "expo-router";
 
 import { Icon, type IconName } from "../../src/design/icons";
-import { colors, font, size, type } from "../../src/design/tokens";
+import { useTheme } from "../../src/design/theme";
+import { font, size, type } from "../../src/design/tokens";
 
 const ABAS: { name: string; title: string; icon: IconName }[] = [
     { name: "index", title: "Mapa", icon: "mapa" },
@@ -12,6 +13,8 @@ const ABAS: { name: string; title: string; icon: IconName }[] = [
 ];
 
 export default function TabsLayout() {
+    const { colors } = useTheme();
+
     return (
         <Tabs
             screenOptions={{

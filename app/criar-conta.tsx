@@ -17,10 +17,16 @@ import {
 } from "../src/auth/pending";
 import { toIsoDate, ufToCode } from "../src/auth/uf";
 import { useSession } from "../src/auth/useSession";
-import { colors, spacing, type } from "../src/design/tokens";
+import { useThemedStyles } from "../src/design/theme";
+import {
+    spacing,
+    type,
+    type Palette,
+} from "../src/design/tokens";
 import { Button, Card, Eyebrow, Field } from "../src/design/ui";
 
 export default function SignUpScreen() {
+    const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
     const { reload } = useSession();
     const { token: tokenFromLink } = useLocalSearchParams<{ token?: string }>();
@@ -300,12 +306,13 @@ export default function SignUpScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     content: {
         padding: spacing.xl,
         paddingBottom: spacing.xxxl,
         gap: spacing.xxl,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
         flexGrow: 1,
         justifyContent: "center",
     },
@@ -313,10 +320,10 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     title: {
-        color: colors.ink,
+        color: c.ink,
     },
     lead: {
-        color: colors.body,
+        color: c.body,
     },
     card: {
         gap: spacing.lg,
@@ -324,10 +331,10 @@ const styles = StyleSheet.create({
         backgroundColor: "transparent",
     },
     error: {
-        color: colors.primary,
+        color: c.primary,
     },
     notice: {
-        color: colors.ink,
+        color: c.ink,
     },
     footer: {
         flexDirection: "row",
@@ -335,6 +342,6 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     link: {
-        color: colors.primary,
+        color: c.primary,
     },
 });

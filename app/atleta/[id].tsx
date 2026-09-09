@@ -10,12 +10,20 @@ import {
     View,
 } from "react-native";
 
-import { colors, radius, spacing, type } from "../../src/design/tokens";
+import { useTheme, useThemedStyles } from "../../src/design/theme";
+import {
+    radius,
+    spacing,
+    type,
+    type Palette,
+} from "../../src/design/tokens";
 import { getProfile, type Profile } from "../../src/profile/remote";
 import { profileText } from "../../src/share/invite";
 import { shareInvite } from "../../src/share/share";
 
 export default function AtletaScreen() {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const { id } = useLocalSearchParams<{ id: string }>();
 
     const [perfil, setPerfil] = useState<Profile | null>(null);
@@ -116,7 +124,8 @@ export default function AtletaScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     conteudo: {
         padding: spacing.lg,
         gap: spacing.lg,
@@ -129,10 +138,10 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     titulo: {
-        color: colors.ink,
+        color: c.ink,
     },
     texto: {
-        color: colors.body,
+        color: c.body,
         textAlign: "center",
     },
     capa: {
@@ -140,29 +149,29 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
         padding: spacing.xl,
         borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     foto: {
         width: 112,
         height: 112,
         borderRadius: radius.pill,
         borderWidth: 2,
-        borderColor: colors.primary,
+        borderColor: c.primary,
     },
     fotoVazia: {
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     iniciais: {
-        color: colors.primary,
+        color: c.primary,
     },
     nome: {
-        color: colors.ink,
+        color: c.ink,
         marginTop: spacing.xs,
     },
     bio: {
-        color: colors.body,
+        color: c.body,
         textAlign: "center",
     },
     etiquetas: {
@@ -176,19 +185,19 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.xs,
         paddingHorizontal: spacing.md,
         borderRadius: radius.pill,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     etiquetaTexto: {
-        color: colors.body,
+        color: c.body,
     },
     compartilhar: {
         alignItems: "center",
         paddingVertical: spacing.md,
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.ink,
+        borderColor: c.ink,
     },
     compartilharTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
 });

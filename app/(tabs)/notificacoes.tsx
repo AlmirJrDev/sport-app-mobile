@@ -4,7 +4,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import MockNotice from "../../src/components/MockNotice";
 import { DarkHeader } from "../../src/design/header";
 import { Icon, type IconName } from "../../src/design/icons";
-import { colors, radius, spacing, type } from "../../src/design/tokens";
+import { useTheme, useThemedStyles } from "../../src/design/theme";
+import {
+    radius,
+    spacing,
+    type,
+    type Palette,
+} from "../../src/design/tokens";
 import {
     NOTIFICATION_GROUPS,
     WEATHER_ALERT,
@@ -36,6 +42,8 @@ const ESTADO_TEXTO: Record<PushState, string> = {
 };
 
 export default function NotificacoesScreen() {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const [resolvidas, setResolvidas] = useState<Record<string, string>>({});
     const [lidas, setLidas] = useState(false);
 
@@ -101,6 +109,7 @@ export default function NotificacoesScreen() {
 }
 
 function PushCard() {
+    const styles = useThemedStyles(criarEstilos);
     const [estado, setEstado] = useState<PushState | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [recado, setRecado] = useState<string | null>(null);
@@ -158,6 +167,8 @@ interface CartaoProps {
 }
 
 function Cartao({ item, lida, resolvida, onAcao }: CartaoProps) {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const destaque = item.kind === "desafio" && !lida && !resolvida;
 
     return (
@@ -224,13 +235,14 @@ function Cartao({ item, lida, resolvida, onAcao }: CartaoProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     tela: {
         flex: 1,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     marcarLidas: {
-        color: colors.primary,
+        color: c.primary,
     },
     alerta: {
         flexDirection: "row",
@@ -246,7 +258,7 @@ const styles = StyleSheet.create({
         gap: spacing.xxs,
     },
     alertaTitulo: {
-        color: colors.onHeader,
+        color: c.onHeader,
     },
     alertaCorpo: {
         color: "#D8D0C4",
@@ -261,49 +273,49 @@ const styles = StyleSheet.create({
         padding: spacing.lg,
         borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: colors.line,
+        borderColor: c.line,
     },
     pushRotulo: {
-        color: colors.mute,
+        color: c.mute,
     },
     pushTexto: {
-        color: colors.body,
+        color: c.body,
     },
     pushBotao: {
         alignSelf: "flex-start",
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.lg,
         borderRadius: 10,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     pushBotaoTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     pushToken: {
         padding: spacing.sm,
         borderRadius: 10,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     pushTokenTexto: {
-        color: colors.mute,
+        color: c.mute,
     },
     grupo: {
         gap: spacing.md,
     },
     grupoRotulo: {
-        color: colors.mute,
+        color: c.mute,
     },
     cartao: {
         flexDirection: "row",
         gap: spacing.md,
         padding: spacing.lg,
         borderRadius: 18,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     cartaoDestaque: {
         borderWidth: 1,
-        borderColor: colors.primary,
-        backgroundColor: colors.canvas,
+        borderColor: c.primary,
+        backgroundColor: c.canvas,
     },
     selo: {
         width: 38,
@@ -311,7 +323,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: 12,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     seloDestaque: {
         backgroundColor: "rgba(218,104,13,0.14)",
@@ -328,16 +340,16 @@ const styles = StyleSheet.create({
     },
     titulo: {
         flex: 1,
-        color: colors.ink,
+        color: c.ink,
     },
     hora: {
-        color: colors.mute,
+        color: c.mute,
     },
     corpo: {
-        color: colors.body,
+        color: c.body,
     },
     resolvida: {
-        color: colors.primary,
+        color: c.primary,
         marginTop: spacing.xs,
     },
     acoes: {
@@ -351,16 +363,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: colors.chipBorder,
+        borderColor: c.chipBorder,
     },
     acaoPrincipal: {
         borderColor: "transparent",
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     acaoTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
     acaoPrincipalTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
 });

@@ -4,7 +4,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import MockNotice from "../../src/components/MockNotice";
 import { DarkHeader } from "../../src/design/header";
 import { Avatar } from "../../src/design/pieces";
-import { colors, radius, spacing, type } from "../../src/design/tokens";
+import { useThemedStyles } from "../../src/design/theme";
+import {
+    radius,
+    spacing,
+    type,
+    type Palette,
+} from "../../src/design/tokens";
 import {
     RANKING_BOARDS,
     RANKING_SCOPES,
@@ -26,6 +32,7 @@ const TITULO_LISTA: Record<string, string> = {
 };
 
 export default function RankingsScreen() {
+    const styles = useThemedStyles(criarEstilos);
     const [esporte, setEsporte] = useState(RANKING_SPORTS[0]);
     const [abrangencia, setAbrangencia] = useState(RANKING_SCOPES[0]);
 
@@ -125,6 +132,7 @@ export default function RankingsScreen() {
 }
 
 function Linha({ linha }: { linha: RankingRow }) {
+    const styles = useThemedStyles(criarEstilos);
     const topo = linha.position <= 3;
 
     return (
@@ -163,10 +171,11 @@ function Linha({ linha }: { linha: RankingRow }) {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     tela: {
         flex: 1,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     chips: {
         flexDirection: "row",
@@ -183,13 +192,13 @@ const styles = StyleSheet.create({
     },
     chipAtivo: {
         borderColor: "transparent",
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     chipTexto: {
-        color: colors.onHeaderSoft,
+        color: c.onHeaderSoft,
     },
     chipTextoAtivo: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     abas: {
         flexDirection: "row",
@@ -201,13 +210,13 @@ const styles = StyleSheet.create({
         borderBottomColor: "transparent",
     },
     abaAtiva: {
-        borderBottomColor: colors.primary,
+        borderBottomColor: c.primary,
     },
     abaTexto: {
         color: "#8A8378",
     },
     abaTextoAtivo: {
-        color: colors.onHeader,
+        color: c.onHeader,
     },
     conteudo: {
         paddingHorizontal: spacing.xl,
@@ -221,26 +230,26 @@ const styles = StyleSheet.create({
         gap: spacing.md,
         padding: spacing.xl,
         borderRadius: radius.lg,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     vocePosicao: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     voceTexto: {
         flex: 1,
     },
     voceNome: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     voceEscopo: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
         opacity: 0.85,
     },
     vocePontos: {
         alignItems: "flex-end",
     },
     tituloLista: {
-        color: colors.mute,
+        color: c.mute,
     },
     lista: {
         gap: 0,
@@ -251,35 +260,35 @@ const styles = StyleSheet.create({
         gap: spacing.md,
         paddingVertical: spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: colors.line,
+        borderBottomColor: c.line,
     },
     posicao: {
         minWidth: 34,
-        color: colors.mute,
+        color: c.mute,
     },
     posicaoTopo: {
         minWidth: 34,
-        color: colors.primary,
+        color: c.primary,
     },
     linhaTexto: {
         flex: 1,
     },
     nome: {
-        color: colors.ink,
+        color: c.ink,
     },
     cidade: {
-        color: colors.mute,
+        color: c.mute,
     },
     pontos: {
         alignItems: "flex-end",
     },
     pontosNumero: {
-        color: colors.ink,
+        color: c.ink,
     },
     alta: {
-        color: colors.primary,
+        color: c.primary,
     },
     neutro: {
-        color: colors.mute,
+        color: c.mute,
     },
 });

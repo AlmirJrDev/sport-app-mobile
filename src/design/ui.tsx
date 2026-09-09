@@ -10,7 +10,14 @@ import {
     type ViewStyle,
 } from "react-native";
 
-import { colors, radius, size, spacing, type } from "./tokens";
+import { useTheme, useThemedStyles } from "./theme";
+import {
+    radius,
+    size,
+    spacing,
+    type,
+    type Palette,
+} from "./tokens";
 
 type ButtonVariant = "primary" | "secondary" | "tertiary" | "text";
 
@@ -29,6 +36,8 @@ export function Button({
     disabled = false,
     style,
 }: ButtonProps) {
+    const styles = useThemedStyles(criarEstilos);
+
     return (
         <Pressable
             style={[
@@ -63,6 +72,8 @@ interface FieldProps extends TextInputProps {
 }
 
 export function Field({ label, error, ...rest }: FieldProps) {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     return (
         <View style={styles.field}>
             <Text style={[type.labelCampo, styles.fieldLabel]}>{label}</Text>
@@ -84,14 +95,18 @@ export function Card({
     children,
     style,
 }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
+    const styles = useThemedStyles(criarEstilos);
+
     return <View style={[styles.card, style]}>{children}</View>;
 }
 
 export function Eyebrow({ children }: PropsWithChildren) {
+    const styles = useThemedStyles(criarEstilos);
     return <Text style={[type.eyebrow, styles.eyebrow]}>{children}</Text>;
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     button: {
         minHeight: size.cta,
         alignItems: "center",
@@ -102,14 +117,14 @@ const styles = StyleSheet.create({
         borderColor: "transparent",
     },
     buttonPrimary: {
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     buttonSecondary: {
-        backgroundColor: colors.ink,
+        backgroundColor: c.ink,
     },
     buttonTertiary: {
         backgroundColor: "transparent",
-        borderColor: colors.chipBorder,
+        borderColor: c.chipBorder,
     },
     buttonText: {
         backgroundColor: "transparent",
@@ -117,40 +132,40 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
     },
     buttonDisabled: {
-        backgroundColor: colors.canvasSoft,
-        borderColor: colors.line,
+        backgroundColor: c.canvasSoft,
+        borderColor: c.line,
     },
     labelOnDark: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     labelOnLight: {
-        color: colors.ink,
+        color: c.ink,
     },
     field: {
         gap: spacing.sm,
     },
     fieldLabel: {
-        color: colors.mute,
+        color: c.mute,
     },
     input: {
         minHeight: size.input,
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.lg,
         borderWidth: 1,
-        borderColor: colors.line,
+        borderColor: c.line,
         borderRadius: radius.sm,
-        backgroundColor: colors.canvasSoft,
-        color: colors.ink,
+        backgroundColor: c.canvasSoft,
+        color: c.ink,
     },
     error: {
-        color: colors.primary,
+        color: c.primary,
     },
     card: {
         padding: spacing.xl,
         borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     eyebrow: {
-        color: colors.primary,
+        color: c.primary,
     },
 });

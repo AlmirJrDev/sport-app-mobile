@@ -7,7 +7,8 @@ import {
 } from "react-native";
 import Svg, { Defs, Pattern, Path, Rect } from "react-native-svg";
 
-import { colors, font, radius, type } from "./tokens";
+import { useTheme, useThemedStyles } from "./theme";
+import { font, radius, type, type Palette } from "./tokens";
 
 export function initials(nome: string): string {
     return nome
@@ -26,6 +27,8 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, size = 40, style }: AvatarProps) {
+    const { colors } = useTheme();
+
     return (
         <View
             style={[
@@ -61,6 +64,9 @@ interface StripesProps {
 
 /** Placeholder listrado a 45°, o estado vazio de foto que o handoff pede. */
 export function Stripes({ caption, style, rounded }: StripesProps) {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
+
     return (
         <View
             style={[
@@ -95,15 +101,16 @@ export function Stripes({ caption, style, rounded }: StripesProps) {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     stripes: {
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
         borderRadius: radius.md,
-        backgroundColor: colors.stripeB,
+        backgroundColor: c.stripeB,
     },
     caption: {
-        color: colors.mute,
+        color: c.mute,
     },
 });

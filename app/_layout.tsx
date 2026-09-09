@@ -13,7 +13,8 @@ import {
 import { ActivityIndicator, View } from "react-native";
 
 import InstallPrompt from "../src/components/InstallPrompt";
-import { colors, font, type } from "../src/design/tokens";
+import { ThemeProvider, useTheme } from "../src/design/theme";
+import { font, type } from "../src/design/tokens";
 import { registerPwa } from "../src/pwa/register";
 
 export default function RootLayout() {
@@ -29,9 +30,26 @@ export default function RootLayout() {
         registerPwa();
     }, []);
 
-    if (!fontsLoaded) {
+    return (
+        <ThemeProvider>
+            <Raiz pronto={fontsLoaded} />
+        </ThemeProvider>
+    );
+}
+
+function Raiz({ pronto }: { pronto: boolean }) {
+    const { colors, isDark } = useTheme();
+
+    if (!pronto) {
         return (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas }}>
+            <View
+                style={{
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: colors.canvas,
+                }}
+            >
                 <ActivityIndicator color={colors.ink} />
             </View>
         );
@@ -47,16 +65,14 @@ export default function RootLayout() {
                     headerTintColor: colors.ink,
                     headerTitleStyle: {
                         fontFamily: font.semibold,
-                        fontSize: type.bodyMd.fontSize,
+                        fontSize: type.corpo.fontSize,
+                        color: colors.ink,
                     },
                     headerShadowVisible: false,
                     contentStyle: { backgroundColor: colors.canvas },
                 }}
             >
-                <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="novo" options={{ title: "Marcar jogo" }} />
                 <Stack.Screen
                     name="jogo/[id]"
@@ -66,10 +82,7 @@ export default function RootLayout() {
                     name="onboarding"
                     options={{ title: "Seu perfil" }}
                 />
-                <Stack.Screen
-                    name="atleta/[id]"
-                    options={{ title: "Atleta" }}
-                />
+                <Stack.Screen name="atleta/[id]" options={{ title: "Atleta" }} />
                 <Stack.Screen
                     name="entrar"
                     options={{ title: "Entrar", headerShown: false }}
@@ -80,7 +93,7 @@ export default function RootLayout() {
                 />
             </Stack>
 
-            <StatusBar style="dark" />
+            <StatusBar style={isDark ? "light" : "dark"} />
         </SafeAreaProvider>
     );
 }

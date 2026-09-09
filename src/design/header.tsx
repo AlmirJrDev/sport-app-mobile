@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, spacing, type } from "./tokens";
+import { useThemedStyles } from "./theme";
+import { spacing, type, type Palette } from "./tokens";
 
 interface DarkHeaderProps {
     title: string;
@@ -19,6 +20,7 @@ export function DarkHeader({
     withLogo = true,
 }: DarkHeaderProps) {
     const insets = useSafeAreaInsets();
+    const styles = useThemedStyles(criarEstilos);
 
     return (
         <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
@@ -40,12 +42,13 @@ export function DarkHeader({
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     header: {
         paddingHorizontal: spacing.xl,
         paddingBottom: spacing.lg,
         gap: spacing.md,
-        backgroundColor: colors.header,
+        backgroundColor: c.header,
     },
     linha: {
         flexDirection: "row",
@@ -58,7 +61,7 @@ const styles = StyleSheet.create({
     },
     titulo: {
         flex: 1,
-        color: colors.onHeader,
+        color: c.onHeader,
     },
     direita: {
         marginLeft: "auto",

@@ -14,7 +14,13 @@ import { useLocationTracking } from "@/hooks/use-location-tracking";
 import { useSession } from "../../src/auth/useSession";
 import { DarkHeader } from "../../src/design/header";
 import { Icon } from "../../src/design/icons";
-import { colors, radius, spacing, type } from "../../src/design/tokens";
+import { useTheme, useThemedStyles } from "../../src/design/theme";
+import {
+    radius,
+    spacing,
+    type,
+    type Palette,
+} from "../../src/design/tokens";
 import { FALLBACK_CENTER } from "../../src/games/mock";
 import { distanceFor, listNearbyGames } from "../../src/games/service";
 import {
@@ -33,6 +39,8 @@ const horaFormatter = new Intl.DateTimeFormat("pt-BR", {
 });
 
 export default function LocaisScreen() {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
     const { account, loading } = useSession();
     const { coordinate, status } = useLocationTracking({
@@ -193,6 +201,7 @@ export default function LocaisScreen() {
 }
 
 function LinhaJogo({ game, onPress }: { game: Game; onPress: () => void }) {
+    const styles = useThemedStyles(criarEstilos);
     const vivo = currentStatus(game) === "em-andamento";
 
     return (
@@ -216,10 +225,11 @@ function LinhaJogo({ game, onPress }: { game: Game; onPress: () => void }) {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     tela: {
         flex: 1,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     busca: {
         height: 44,
@@ -232,7 +242,7 @@ const styles = StyleSheet.create({
     },
     buscaInput: {
         flex: 1,
-        color: colors.onHeader,
+        color: c.onHeader,
     },
     conteudo: {
         padding: spacing.xl,
@@ -247,17 +257,17 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     vazioTitulo: {
-        color: colors.ink,
+        color: c.ink,
     },
     vazioTexto: {
-        color: colors.body,
+        color: c.body,
         textAlign: "center",
     },
     card: {
         gap: spacing.md,
         padding: 18,
         borderRadius: radius.lg,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     topo: {
         flexDirection: "row",
@@ -270,19 +280,19 @@ const styles = StyleSheet.create({
         gap: spacing.xxs,
     },
     nome: {
-        color: colors.ink,
+        color: c.ink,
     },
     resumo: {
-        color: colors.body,
+        color: c.body,
     },
     distancia: {
         alignItems: "flex-end",
     },
     distanciaNumero: {
-        color: colors.ink,
+        color: c.ink,
     },
     distanciaUnidade: {
-        color: colors.mute,
+        color: c.mute,
     },
     aoVivo: {
         alignSelf: "flex-start",
@@ -292,16 +302,16 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.xs,
         paddingHorizontal: spacing.md,
         borderRadius: radius.pill,
-        backgroundColor: colors.ink,
+        backgroundColor: c.ink,
     },
     ponto: {
         width: 7,
         height: 7,
         borderRadius: 4,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     aoVivoTexto: {
-        color: colors.primary,
+        color: c.primary,
     },
     jogos: {
         gap: spacing.sm,
@@ -313,23 +323,23 @@ const styles = StyleSheet.create({
         gap: spacing.md,
         padding: spacing.md,
         borderRadius: 12,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     linhaTexto: {
         flex: 1,
         gap: spacing.xxs,
     },
     linhaTitulo: {
-        color: colors.ink,
+        color: c.ink,
     },
     linhaDetalhe: {
-        color: colors.mute,
+        color: c.mute,
     },
     linhaPlacar: {
-        color: colors.primary,
+        color: c.primary,
     },
     rodape: {
-        color: colors.mute,
+        color: c.mute,
         marginTop: spacing.sm,
     },
 });

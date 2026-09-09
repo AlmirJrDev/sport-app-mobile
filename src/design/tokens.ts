@@ -346,3 +346,5 @@ export const type: Record<string, TextStyle> = {
         textTransform: "uppercase",
     },
 };
+
+export type Palette = typeof colors;

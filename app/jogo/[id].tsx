@@ -21,7 +21,14 @@ import {
 } from "../../src/games/service";
 import { Icon } from "../../src/design/icons";
 import { Avatar, Stripes } from "../../src/design/pieces";
-import { colors, radius, size, spacing, type } from "../../src/design/tokens";
+import { useTheme, useThemedStyles } from "../../src/design/theme";
+import {
+    radius,
+    size,
+    spacing,
+    type,
+    type Palette,
+} from "../../src/design/tokens";
 import {
     SKILL_LABEL,
     currentStatus,
@@ -47,6 +54,8 @@ const hora = new Intl.DateTimeFormat("pt-BR", {
 const POINT_STEPS = [1, 2, 3];
 
 export default function GameScreen() {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const insets = useSafeAreaInsets();
@@ -464,10 +473,11 @@ export default function GameScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     tela: {
         flex: 1,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     conteudo: {
         paddingBottom: spacing.xl,
@@ -477,10 +487,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         padding: spacing.xl,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     centroTexto: {
-        color: colors.body,
+        color: c.body,
     },
     hero: {
         height: 250,
@@ -511,7 +521,7 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,254,251,0.92)",
     },
     conviteTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
     heroRodape: {
         gap: spacing.sm,
@@ -524,10 +534,10 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.xs,
         paddingHorizontal: spacing.md,
         borderRadius: radius.pill,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     chipStatusTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     chipEsporte: {
         paddingVertical: spacing.xs,
@@ -536,10 +546,10 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,254,251,0.22)",
     },
     chipEsporteTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     heroTitulo: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     corpo: {
         padding: spacing.xl,
@@ -554,7 +564,7 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
         padding: spacing.lg,
         borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     bloco: {
         gap: spacing.md,
@@ -565,24 +575,24 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     rotulo: {
-        color: colors.mute,
+        color: c.mute,
     },
     valor: {
-        color: colors.ink,
+        color: c.ink,
     },
     nota: {
-        color: colors.body,
+        color: c.body,
     },
     trilha: {
         height: 8,
         borderRadius: 4,
-        backgroundColor: colors.line,
+        backgroundColor: c.line,
         overflow: "hidden",
     },
     trilhaFill: {
         height: 8,
         borderRadius: 4,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     placar: {
         flexDirection: "row",
@@ -594,13 +604,13 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
         paddingVertical: spacing.lg,
         borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     timeNome: {
-        color: colors.mute,
+        color: c.mute,
     },
     timePlacar: {
-        color: colors.ink,
+        color: c.ink,
     },
     pontos: {
         flexDirection: "row",
@@ -610,26 +620,26 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.md,
         borderRadius: 10,
-        backgroundColor: colors.ink,
+        backgroundColor: c.ink,
     },
     pontoTravado: {
-        backgroundColor: colors.chipBorder,
+        backgroundColor: c.chipBorder,
     },
     pontoTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     desfazer: {
-        color: colors.mute,
+        color: c.mute,
     },
     encerrar: {
         alignItems: "center",
         paddingVertical: spacing.md,
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.chipBorder,
+        borderColor: c.chipBorder,
     },
     encerrarTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
     pessoa: {
         flexDirection: "row",
@@ -641,30 +651,30 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     chegou: {
-        color: colors.primary,
+        color: c.primary,
     },
     aCaminho: {
-        color: colors.mute,
+        color: c.mute,
     },
     chegada: {
         alignItems: "center",
         paddingVertical: spacing.md,
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.ink,
+        borderColor: c.ink,
     },
     chegadaTravada: {
-        borderColor: colors.chipBorder,
+        borderColor: c.chipBorder,
     },
     chegadaTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
     apagar: {
         alignItems: "center",
         paddingVertical: spacing.md,
     },
     apagarTexto: {
-        color: colors.primary,
+        color: c.primary,
     },
     rodape: {
         flexDirection: "row",
@@ -672,8 +682,8 @@ const styles = StyleSheet.create({
         padding: spacing.lg,
         paddingBottom: spacing.lg,
         borderTopWidth: 1,
-        borderTopColor: colors.line,
-        backgroundColor: colors.canvas,
+        borderTopColor: c.line,
+        backgroundColor: c.canvas,
     },
     cta: {
         flex: 1,
@@ -681,18 +691,18 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: radius.sm,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     ctaNeutro: {
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
         borderWidth: 1,
-        borderColor: colors.line,
+        borderColor: c.line,
     },
     ctaTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     ctaNeutroTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
     calendario: {
         width: size.cta,
@@ -701,6 +711,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.chipBorder,
+        borderColor: c.chipBorder,
     },
 });

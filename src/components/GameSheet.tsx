@@ -3,7 +3,15 @@ import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "../design/icons";
 import { Avatar } from "../design/pieces";
-import { colors, radius, shadow, size, spacing, type } from "../design/tokens";
+import { useTheme, useThemedStyles } from "../design/theme";
+import {
+    radius,
+    shadow,
+    size,
+    spacing,
+    type,
+    type Palette,
+} from "../design/tokens";
 import { SKILL_LABEL, currentStatus, type Game } from "../games/types";
 import { inviteText } from "../share/invite";
 import { shareInvite } from "../share/share";
@@ -28,6 +36,7 @@ interface GameSheetProps {
 
 /** Ponto do "ao vivo": opacidade 1 → .3 → 1, 1,6s, infinito. */
 function PontoVivo() {
+    const styles = useThemedStyles(criarEstilos);
     const pulso = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
@@ -62,6 +71,8 @@ export default function GameSheet({
     onOpen,
     onClose,
 }: GameSheetProps) {
+    const { colors } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const inicio = new Date(game.startsAt);
     const situacao = currentStatus(game);
     const aoVivo = situacao === "em-andamento";
@@ -184,7 +195,8 @@ export default function GameSheet({
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     sheet: {
         position: "absolute",
         left: 0,
@@ -195,7 +207,7 @@ const styles = StyleSheet.create({
         gap: spacing.lg,
         borderTopLeftRadius: radius.sheet,
         borderTopRightRadius: radius.sheet,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
         ...shadow.sheet,
     },
     topo: {
@@ -216,25 +228,25 @@ const styles = StyleSheet.create({
         width: 7,
         height: 7,
         borderRadius: 4,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     statusTexto: {
-        color: colors.primary,
+        color: c.primary,
     },
     nome: {
-        color: colors.ink,
+        color: c.ink,
     },
     meta: {
-        color: colors.body,
+        color: c.body,
     },
     placarBloco: {
         alignItems: "flex-end",
     },
     placar: {
-        color: colors.ink,
+        color: c.ink,
     },
     placarRotulo: {
-        color: colors.mute,
+        color: c.mute,
     },
     presenca: {
         gap: spacing.sm,
@@ -249,13 +261,13 @@ const styles = StyleSheet.create({
         marginLeft: -10,
         borderRadius: 15,
         borderWidth: 2,
-        borderColor: colors.canvas,
-        backgroundColor: colors.ink,
+        borderColor: c.canvas,
+        backgroundColor: c.ink,
         alignItems: "center",
         justifyContent: "center",
     },
     extrasTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     acoes: {
         flexDirection: "row",
@@ -267,16 +279,16 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: radius.sm,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     ctaNeutro: {
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     ctaTexto: {
-        color: colors.onPrimary,
+        color: c.onPrimary,
     },
     ctaNeutroTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
     quadrado: {
         width: size.sheetButton,
@@ -285,7 +297,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.chipBorder,
+        borderColor: c.chipBorder,
     },
     chevron: {
         transform: [{ rotate: "180deg" }],
@@ -295,6 +307,6 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.xs,
     },
     fecharTexto: {
-        color: colors.mute,
+        color: c.mute,
     },
 });

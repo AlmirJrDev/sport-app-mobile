@@ -15,7 +15,14 @@ import { signOut } from "../../src/auth/account";
 import { useSession } from "../../src/auth/useSession";
 import MockNotice from "../../src/components/MockNotice";
 import { Stripes, initials } from "../../src/design/pieces";
-import { colors, radius, spacing, type } from "../../src/design/tokens";
+import { useTheme, useThemedStyles } from "../../src/design/theme";
+import {
+    radius,
+    size,
+    spacing,
+    type,
+    type Palette,
+} from "../../src/design/tokens";
 import {
     ATHLETE_BADGES,
     ATHLETE_RANKINGS,
@@ -33,6 +40,8 @@ const TREND_LABEL = {
 };
 
 export default function PerfilScreen() {
+    const { colors, mode, setMode } = useTheme();
+    const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { account, loading, reload } = useSession();
@@ -204,6 +213,42 @@ export default function PerfilScreen() {
                     </View>
                 </View>
 
+                <View style={styles.secao}>
+                    <Text style={[type.labelCampo, styles.secaoTitulo]}>
+                        Tema
+                    </Text>
+
+                    <View style={styles.temas}>
+                        {(["sistema", "claro", "escuro"] as const).map(
+                            (opcao) => (
+                                <Pressable
+                                    key={opcao}
+                                    style={[
+                                        styles.tema,
+                                        mode === opcao && styles.temaAtivo,
+                                    ]}
+                                    onPress={() => setMode(opcao)}
+                                >
+                                    <Text
+                                        style={[
+                                            type.labelCampo,
+                                            mode === opcao
+                                                ? styles.temaTextoAtivo
+                                                : styles.temaTexto,
+                                        ]}
+                                    >
+                                        {opcao === "sistema"
+                                            ? "Do sistema"
+                                            : opcao === "claro"
+                                              ? "Claro"
+                                              : "Escuro"}
+                                    </Text>
+                                </Pressable>
+                            ),
+                        )}
+                    </View>
+                </View>
+
                 <MockNotice texto="Estatísticas, conquistas e rankings ainda são de exemplo — nome, foto, esporte, altura e bio já vêm da API." />
 
                 <Pressable style={styles.sair} onPress={sair}>
@@ -216,7 +261,8 @@ export default function PerfilScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
     conteudo: {
         paddingBottom: spacing.xxxl,
     },
@@ -225,14 +271,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         padding: spacing.xl,
-        backgroundColor: colors.canvas,
+        backgroundColor: c.canvas,
     },
     header: {
         alignItems: "center",
         gap: spacing.sm,
         paddingHorizontal: spacing.xl,
         paddingBottom: spacing.xl,
-        backgroundColor: colors.header,
+        backgroundColor: c.header,
         overflow: "hidden",
     },
     brilho: {
@@ -243,21 +289,21 @@ const styles = StyleSheet.create({
         top: -70,
         right: -70,
         opacity: 0.18,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     avatar: {
         width: 84,
         height: 84,
         borderRadius: 42,
         borderWidth: 3,
-        borderColor: colors.primary,
+        borderColor: c.primary,
     },
     nome: {
-        color: colors.onHeader,
+        color: c.onHeader,
         marginTop: spacing.sm,
     },
     linha: {
-        color: colors.onHeaderSoft,
+        color: c.onHeaderSoft,
         textAlign: "center",
     },
     rankings: {
@@ -276,10 +322,10 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255,254,251,0.16)",
     },
     rankingBranco: {
-        color: colors.onHeader,
+        color: c.onHeader,
     },
     rankingLaranja: {
-        color: colors.primary,
+        color: c.primary,
     },
     rankingEscopo: {
         color: "#A29A8E",
@@ -297,10 +343,10 @@ const styles = StyleSheet.create({
         borderColor: "rgba(255,254,251,0.3)",
     },
     acaoTexto: {
-        color: colors.onHeader,
+        color: c.onHeader,
     },
     previa: {
-        color: colors.onHeaderSoft,
+        color: c.onHeaderSoft,
         marginTop: spacing.md,
     },
     corpo: {
@@ -311,7 +357,7 @@ const styles = StyleSheet.create({
         gap: spacing.md,
     },
     secaoTitulo: {
-        color: colors.mute,
+        color: c.mute,
     },
     stat: {
         gap: spacing.sm,
@@ -322,21 +368,21 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
     statRotulo: {
-        color: colors.body,
+        color: c.body,
     },
     statValor: {
-        color: colors.ink,
+        color: c.ink,
     },
     trilha: {
         height: 6,
         borderRadius: 3,
-        backgroundColor: colors.line,
+        backgroundColor: c.line,
         overflow: "hidden",
     },
     trilhaFill: {
         height: 6,
         borderRadius: 3,
-        backgroundColor: colors.primary,
+        backgroundColor: c.primary,
     },
     conquistas: {
         flexDirection: "row",
@@ -348,14 +394,37 @@ const styles = StyleSheet.create({
         gap: spacing.xxs,
         padding: spacing.md,
         borderRadius: radius.md,
-        backgroundColor: colors.canvasSoft,
+        backgroundColor: c.canvasSoft,
     },
     conquistaTitulo: {
-        color: colors.ink,
+        color: c.ink,
     },
     conquistaDetalhe: {
-        color: colors.mute,
+        color: c.mute,
         textAlign: "center",
+    },
+    temas: {
+        flexDirection: "row",
+        gap: spacing.sm,
+    },
+    tema: {
+        flex: 1,
+        height: size.formChip,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: c.line,
+    },
+    temaAtivo: {
+        borderColor: "transparent",
+        backgroundColor: c.ink,
+    },
+    temaTexto: {
+        color: c.body,
+    },
+    temaTextoAtivo: {
+        color: c.canvas,
     },
     sair: {
         height: 52,
@@ -363,9 +432,9 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: colors.chipBorder,
+        borderColor: c.chipBorder,
     },
     sairTexto: {
-        color: colors.ink,
+        color: c.ink,
     },
 });
