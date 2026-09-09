@@ -54,7 +54,6 @@ export interface ProfileEdit {
 }
 
 export async function updateProfile(
-    userId: string,
     dados: ProfileEdit,
     avatar?: { uri: string; name: string; type: string; file?: unknown } | null,
 ): Promise<void> {
@@ -87,7 +86,7 @@ export async function updateProfile(
         }
     }
 
-    await apiFetch(`/users/${userId}`, {
+    await apiFetch("/users/me", {
         method: "PATCH",
         body: form,
         auth: true,

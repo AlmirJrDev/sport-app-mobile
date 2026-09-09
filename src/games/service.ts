@@ -2,6 +2,7 @@ import { getPlayer } from "../player/identity";
 import { readOverlay, writeOverlay } from "./overlay";
 import {
     arriveRemoteGame,
+    cancelRemoteGame,
     createRemoteGame,
     finishRemoteGame,
     getRemoteGame,
@@ -40,7 +41,7 @@ export function distanceFor(game: Game, from: Coordinates): number {
 }
 
 export function isVisible(game: Game, now = Date.now()): boolean {
-    if (game.status === "encerrado") {
+    if (game.status === "encerrado" || game.status === "cancelado") {
         return false;
     }
 
@@ -135,6 +136,8 @@ export async function createGame(
             spots: input.spots,
             latitude: input.coordinates.latitude,
             longitude: input.coordinates.longitude,
+            is_public: input.isPublic,
+            allow_join_after_start: input.allowJoinAfterStart,
         });
 
         return { game, fallbackReason: null };
@@ -269,6 +272,19 @@ export async function addPoints(
     }));
 
     return getRemoteGame(gameId);
+}
+
+export async function cancelGame(gameId: string): Promise<Game | null> {
+    if (await isLocal(gameId)) {
+        return updateGame(gameId, (game) => ({
+            ...game,
+            status: "cancelado",
+        }));
+    }
+
+    await cancelRemoteGame(gameId);
+
+    return null;
 }
 
 export async function finishGame(gameId: string): Promise<Game | null> {

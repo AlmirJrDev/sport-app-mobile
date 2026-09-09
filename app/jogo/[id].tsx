@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
     addPoints,
+    cancelGame,
     deleteGame,
     finishGame,
     getGame,
@@ -99,6 +100,7 @@ export default function GameScreen() {
     const isFull = game.attendees.length >= game.spots && !me;
     const situacao = currentStatus(game);
     const isFinished = situacao === "encerrado";
+    const isCancelled = situacao === "cancelado";
     const aoVivo = situacao === "em-andamento";
     const isOwner = game.ownerId === playerId;
     const chegadaTravada = game.source === "api" && Boolean(me?.arrived);
@@ -167,11 +169,13 @@ export default function GameScreen() {
                                 <Text
                                     style={[type.eyebrow, styles.chipStatusTexto]}
                                 >
-                                    {isFinished
-                                        ? "Encerrado"
-                                        : aoVivo
-                                          ? "Ao vivo"
-                                          : "Aberto"}
+                                    {isCancelled
+                                        ? "Cancelado"
+                                        : isFinished
+                                          ? "Encerrado"
+                                          : aoVivo
+                                            ? "Ao vivo"
+                                            : "Aberto"}
                                 </Text>
                             </View>
 
@@ -320,16 +324,20 @@ export default function GameScreen() {
                             ))}
                         </View>
 
-                        {!aoVivo && !isFinished ? (
+                        {!aoVivo && !isFinished && !isCancelled ? (
                             <Text style={[type.metadado, styles.nota]}>
                                 O placar abre {hora.format(new Date(game.startsAt))},
                                 quando o jogo começa.
                             </Text>
                         ) : null}
 
-                        {isFinished ? (
+                        {isCancelled ? (
                             <Text style={[type.metadado, styles.nota]}>
-                                Jogo encerrado — já saiu do mapa.
+                                Jogo cancelado por quem marcou.
+                            </Text>
+                        ) : isFinished ? (
+                            <Text style={[type.metadado, styles.nota]}>
+                                Jogo encerrado, já saiu do mapa.
                             </Text>
                         ) : game.source === "local" || isOwner ? (
                             <Pressable
@@ -348,6 +356,27 @@ export default function GameScreen() {
                                     style={[type.labelCampo, styles.encerrarTexto]}
                                 >
                                     Encerrar jogo
+                                </Text>
+                            </Pressable>
+                        ) : null}
+
+                        {isOwner && situacao === "aberto" ? (
+                            <Pressable
+                                style={styles.cancelar}
+                                onPress={async () => {
+                                    const atualizado = await cancelGame(game.id);
+
+                                    if (atualizado) {
+                                        setGame(atualizado);
+                                    } else {
+                                        router.back();
+                                    }
+                                }}
+                            >
+                                <Text
+                                    style={[type.labelCampo, styles.cancelarTexto]}
+                                >
+                                    Cancelar jogo
                                 </Text>
                             </Pressable>
                         ) : null}
@@ -443,22 +472,27 @@ export default function GameScreen() {
                 <Pressable
                     style={[
                         styles.cta,
-                        (isFull || Boolean(me)) && styles.ctaNeutro,
+                        (isFull || isCancelled || Boolean(me)) &&
+                            styles.ctaNeutro,
                     ]}
-                    disabled={isFull}
+                    disabled={isFull || isCancelled}
                     onPress={() => run(toggleAttendance(game.id))}
                 >
                     <Text
                         style={[
                             type.botao,
-                            isFull || me ? styles.ctaNeutroTexto : styles.ctaTexto,
+                            isFull || isCancelled || me
+                                ? styles.ctaNeutroTexto
+                                : styles.ctaTexto,
                         ]}
                     >
-                        {isFull
-                            ? "Sem vagas"
-                            : me
-                              ? "Cancelar presença"
-                              : "Confirmar presença"}
+                        {isCancelled
+                            ? "Jogo cancelado"
+                            : isFull
+                              ? "Sem vagas"
+                              : me
+                                ? "Cancelar presença"
+                                : "Confirmar presença"}
                     </Text>
                 </Pressable>
 
@@ -640,6 +674,16 @@ const criarEstilos = (c: Palette) =>
     },
     encerrarTexto: {
         color: c.ink,
+    },
+    cancelar: {
+        alignItems: "center",
+        paddingVertical: spacing.md,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: "rgba(218,104,13,0.5)",
+    },
+    cancelarTexto: {
+        color: c.primary,
     },
     pessoa: {
         flexDirection: "row",

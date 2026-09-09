@@ -19,10 +19,14 @@ import {
     type Palette,
 } from "../../src/design/tokens";
 import {
+    dropDevice,
+    getPreferences,
     listNotifications,
     markNotificationRead,
     registerDevice,
+    updatePreferences,
     type AppNotification,
+    type NotificationPrefs,
 } from "../../src/notifications/remote";
 import {
     enablePush,
@@ -48,6 +52,14 @@ const ESTADO_TEXTO: Record<PushState, string> = {
     desativado: "Receba aviso quando seu jogo estiver perto de começar.",
     ativado: "Notificações ligadas neste aparelho.",
 };
+
+const PREFERENCIAS: [keyof NotificationPrefs, string][] = [
+    ["push", "Push neste aparelho"],
+    ["noApp", "Avisos dentro do app"],
+    ["jogos", "Movimento nos meus jogos"],
+    ["social", "Quando alguém interage comigo"],
+    ["novidades", "Novidades do Projeto H"],
+];
 
 interface Grupo {
     label: string;
@@ -207,6 +219,8 @@ export default function NotificacoesScreen() {
             <ScrollView contentContainerStyle={styles.conteudo}>
                 <PushCard />
 
+                <PrefsCard />
+
                 {carregando ? (
                     <ActivityIndicator color={colors.ink} />
                 ) : erro ? (
@@ -325,6 +339,69 @@ function PushCard() {
     );
 }
 
+function Chave({ ligado, onPress }: { ligado: boolean; onPress: () => void }) {
+    const styles = useThemedStyles(criarEstilos);
+
+    return (
+        <Pressable
+            style={[styles.chave, ligado && styles.chaveLigada]}
+            onPress={onPress}
+            hitSlop={6}
+        >
+            <View style={[styles.bola, ligado && styles.bolaLigada]} />
+        </Pressable>
+    );
+}
+
+function PrefsCard() {
+    const styles = useThemedStyles(criarEstilos);
+    const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+
+    useEffect(() => {
+        getPreferences()
+            .then(setPrefs)
+            .catch(() => setPrefs(null));
+    }, []);
+
+    if (!prefs) {
+        return null;
+    }
+
+    const alternar = (chave: keyof NotificationPrefs) => {
+        const anterior = prefs;
+        const novo: NotificationPrefs = { ...prefs, [chave]: !prefs[chave] };
+        const mudanca: Partial<NotificationPrefs> = { [chave]: novo[chave] };
+
+        setPrefs(novo);
+        updatePreferences(mudanca).catch(() => setPrefs(anterior));
+
+        if (chave === "push" && !novo.push) {
+            dropDevice().catch(() => {});
+        }
+    };
+
+    return (
+        <View style={styles.push}>
+            <Text style={[type.eyebrow, styles.pushRotulo]}>
+                O que você quer receber
+            </Text>
+
+            {PREFERENCIAS.map(([chave, rotulo]) => (
+                <View key={chave} style={styles.pref}>
+                    <Text style={[type.corpoSm, styles.prefTexto]}>
+                        {rotulo}
+                    </Text>
+
+                    <Chave
+                        ligado={prefs[chave]}
+                        onPress={() => alternar(chave)}
+                    />
+                </View>
+            ))}
+        </View>
+    );
+}
+
 interface CartaoProps {
     item: AppNotification;
     onAbrir: () => void;
@@ -417,6 +494,37 @@ const criarEstilos = (c: Palette) =>
         },
         pushTokenTexto: {
             color: c.mute,
+        },
+        pref: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: spacing.md,
+        },
+        prefTexto: {
+            flex: 1,
+            color: c.body,
+        },
+        chave: {
+            width: 46,
+            height: 28,
+            borderRadius: 14,
+            padding: 3,
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: c.line,
+        },
+        chaveLigada: {
+            backgroundColor: c.primary,
+        },
+        bola: {
+            width: 22,
+            height: 22,
+            borderRadius: 11,
+            backgroundColor: c.canvas,
+        },
+        bolaLigada: {
+            marginLeft: "auto",
         },
         aviso: {
             gap: spacing.md,

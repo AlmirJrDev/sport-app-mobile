@@ -47,7 +47,6 @@ export default function OnboardingScreen() {
     const [foto, setFoto] = useState<PickedImage | null>(null);
     const [fotoAtual, setFotoAtual] = useState<string | null>(null);
     const [recortando, setRecortando] = useState<PickedImage | null>(null);
-    const [perfilId, setPerfilId] = useState<string | null>(null);
     const [nome, setNome] = useState("");
     const [sobrenome, setSobrenome] = useState("");
     const [bio, setBio] = useState("");
@@ -64,10 +63,6 @@ export default function OnboardingScreen() {
         Promise.all([getMyProfile(), listSports().catch(() => [])])
             .then(([perfil, lista]) => {
                 setEsportes(lista);
-
-                if (perfil) {
-                    setPerfilId(perfil.id);
-                }
 
                 if (perfil && !simulandoNovo) {
                     const partes = perfil.name.split(" ");
@@ -155,22 +150,11 @@ export default function OnboardingScreen() {
     };
 
     const salvar = async () => {
-        const alvo = perfilId ?? account.id;
-
-        if (!alvo || alvo === "sem-id") {
-            setErro(
-                "A API não informou o seu id nesta sessão. Saia e entre de novo.",
-            );
-
-            return;
-        }
-
         setSalvando(true);
         setErro(null);
 
         try {
             await updateProfile(
-                alvo,
                 {
                     firstName: nome.trim() || undefined,
                     lastName: sobrenome.trim() || undefined,

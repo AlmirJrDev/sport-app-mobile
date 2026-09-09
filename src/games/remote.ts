@@ -1,7 +1,13 @@
 import { apiFetch } from "../api/client";
 import { prettify } from "../api/catalog";
 import { EMPTY_OVERLAY, readOverlay, writeOverlay } from "./overlay";
-import type { Attendee, Coordinates, Game, SkillLevel } from "./types";
+import type {
+    Attendee,
+    Coordinates,
+    Game,
+    GameStatus,
+    SkillLevel,
+} from "./types";
 
 interface ApiNamed {
     id: string;
@@ -28,6 +34,8 @@ export interface ApiGame {
     latitude: number;
     longitude: number;
     allow_join_after_start?: boolean;
+    is_public?: boolean;
+    status?: "agendado" | "finalizado" | "cancelado";
     sport?: ApiNamed;
     modality?: ApiNamed;
     creator?: ApiPerson;
@@ -45,12 +53,26 @@ export interface CreateGamePayload {
     spots: number;
     latitude: number;
     longitude: number;
+    is_public: boolean;
+    allow_join_after_start: boolean;
 }
 
 function fullName(person: ApiPerson): string {
     const nome = `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim();
 
     return nome || "Atleta";
+}
+
+function situacaoDaApi(api: ApiGame, encerradoLocal: boolean): GameStatus {
+    if (api.status === "cancelado") {
+        return "cancelado";
+    }
+
+    if (api.status === "finalizado" || encerradoLocal) {
+        return "encerrado";
+    }
+
+    return "aberto";
 }
 
 async function toGame(api: ApiGame): Promise<Game> {
@@ -82,7 +104,7 @@ async function toGame(api: ApiGame): Promise<Game> {
         durationMinutes: api.duration_minutes,
         level: api.level,
         spots: api.spots,
-        status: overlay.finished ? "encerrado" : "aberto",
+        status: situacaoDaApi(api, overlay.finished),
         coordinates: {
             latitude: Number(api.latitude),
             longitude: Number(api.longitude),
@@ -173,6 +195,13 @@ export async function arriveRemoteGame(id: string): Promise<Game> {
     });
 
     return toGame(data);
+}
+
+export async function cancelRemoteGame(id: string): Promise<void> {
+    await apiFetch<void>(`/games/${id}/cancel`, {
+        method: "POST",
+        auth: true,
+    });
 }
 
 export async function finishRemoteGame(id: string): Promise<void> {

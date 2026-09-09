@@ -26,6 +26,7 @@ import {
     type,
     type Palette,
 } from "../src/design/tokens";
+import { FALLBACK_CENTER } from "../src/games/mock";
 import { createGame } from "../src/games/service";
 import {
     DURATIONS,
@@ -133,8 +134,8 @@ export default function NewGameScreen() {
     const { lat, lng } = useLocalSearchParams<{ lat: string; lng: string }>();
 
     const initialPoint: Coordinates = {
-        latitude: Number(lat),
-        longitude: Number(lng),
+        latitude: Number(lat) || FALLBACK_CENTER.latitude,
+        longitude: Number(lng) || FALLBACK_CENTER.longitude,
     };
 
     const [point, setPoint] = useState<Coordinates>(initialPoint);
@@ -151,6 +152,8 @@ export default function NewGameScreen() {
     const [durationMinutes, setDurationMinutes] = useState(90);
     const [level, setLevel] = useState<SkillLevel>("intermediario");
     const [spots, setSpots] = useState("10");
+    const [visibilidade, setVisibilidade] = useState("Todo mundo");
+    const [atrasado, setAtrasado] = useState("Não pode");
     const [saving, setSaving] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
 
@@ -256,6 +259,8 @@ export default function NewGameScreen() {
                 level,
                 spots: Math.max(2, Number(spots) || 10),
                 coordinates: point,
+                isPublic: visibilidade === "Todo mundo",
+                allowJoinAfterStart: atrasado === "Pode",
             },
             { sportId, modalityId },
         );
@@ -435,6 +440,29 @@ export default function NewGameScreen() {
                     keyboardType="number-pad"
                 />
             </View>
+
+            <OptionRow
+                label="Quem vê"
+                options={["Todo mundo", "Só com o link"]}
+                selected={visibilidade}
+                onSelect={setVisibilidade}
+            />
+
+            <Text style={styles.hint}>
+                Só com o link, o jogo some das listas e do mapa dos outros.
+            </Text>
+
+            <OptionRow
+                label="Entrar atrasado"
+                options={["Não pode", "Pode"]}
+                selected={atrasado}
+                onSelect={setAtrasado}
+            />
+
+            <Text style={styles.hint}>
+                Se puder, alguém ainda consegue confirmar presença depois do
+                horário de início.
+            </Text>
 
             {notice ? <Text style={styles.notice}>{notice}</Text> : null}
 

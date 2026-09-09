@@ -1,6 +1,10 @@
 export type SkillLevel = "iniciante" | "intermediario" | "avancado";
 
-export type GameStatus = "aberto" | "em-andamento" | "encerrado";
+export type GameStatus =
+    | "aberto"
+    | "em-andamento"
+    | "encerrado"
+    | "cancelado";
 
 export interface Coordinates {
     latitude: number;
@@ -50,6 +54,8 @@ export interface NewGame {
     level: SkillLevel;
     spots: number;
     coordinates: Coordinates;
+    isPublic: boolean;
+    allowJoinAfterStart: boolean;
 }
 
 export const SKILL_LABEL: Record<SkillLevel, string> = {
@@ -81,6 +87,9 @@ export function endsAt(game: Game): Date {
 }
 
 export function currentStatus(game: Game, now = Date.now()): GameStatus {
+    if (game.status === "cancelado") {
+        return "cancelado";
+    }
     if (game.status === "encerrado" || endsAt(game).getTime() <= now) {
         return "encerrado";
     }
