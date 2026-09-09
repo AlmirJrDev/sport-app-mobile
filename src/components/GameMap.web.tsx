@@ -13,6 +13,10 @@ import { useTheme } from "../design/theme";
 
 setWorkerUrl("/maplibre-gl-worker.mjs");
 
+type BaseAtual = "claro" | "escuro" | "raster";
+
+const ESPERA_BASE = 10000;
+
 interface GameMapProps {
     center: Coordinates;
     games: Game[];
@@ -34,6 +38,7 @@ export default function GameMap({
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<MapLibreMap | null>(null);
     const markersRef = useRef<Marker[]>([]);
+    const baseRef = useRef<BaseAtual>(isDark ? "escuro" : "claro");
 
     useEffect(() => {
         if (!containerRef.current || mapRef.current) {
@@ -47,20 +52,34 @@ export default function GameMap({
             zoom: 12,
         });
 
-        let baseTrocada = false;
-
-        /** Só cai no raster se o estilo vetorial não carregar. Ladrilho solto que falha não conta. */
-        const aoFalhar = () => {
-            if (baseTrocada || map.isStyleLoaded()) {
+        const cairNoRaster = () => {
+            if (baseRef.current === "raster") {
                 return;
             }
 
-            baseTrocada = true;
+            baseRef.current = "raster";
             map.setStyle(OSM_STYLE);
         };
 
-        map.on("error", aoFalhar);
-        map.once("style.load", () => map.off("error", aoFalhar));
+        /** Erro enquanto o estilo nem existe: a base vetorial quebrou. */
+        const aoErro = () => {
+            if (!map.isStyleLoaded()) {
+                cairNoRaster();
+            }
+        };
+
+        /** Nada desenhado no prazo: a base vetorial não vai vir. */
+        const prazo = setTimeout(() => {
+            if (!map.loaded()) {
+                cairNoRaster();
+            }
+        }, ESPERA_BASE);
+
+        map.on("error", aoErro);
+        map.once("idle", () => {
+            clearTimeout(prazo);
+            map.off("error", aoErro);
+        });
 
         map.on("click", () => onClearSelection());
         map.on("moveend", () => {
@@ -71,6 +90,7 @@ export default function GameMap({
         mapRef.current = map;
 
         return () => {
+            clearTimeout(prazo);
             map.remove();
             mapRef.current = null;
         };
@@ -78,10 +98,14 @@ export default function GameMap({
 
     useEffect(() => {
         const map = mapRef.current;
+        const alvo: BaseAtual = isDark ? "escuro" : "claro";
 
-        if (map) {
-            map.setStyle(baseMapStyle(isDark));
+        if (!map || baseRef.current === "raster" || baseRef.current === alvo) {
+            return;
         }
+
+        baseRef.current = alvo;
+        map.setStyle(baseMapStyle(isDark));
     }, [isDark]);
 
     useEffect(() => {
