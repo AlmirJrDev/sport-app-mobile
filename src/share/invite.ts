@@ -38,7 +38,7 @@ export function profileLink(userId: string): string {
 
 export function profileText(nome: string, userId: string): string {
     return [
-        `${nome} no Projeto H.`,
+        `${nome} no Panela.`,
         "Veja o perfil e chame para jogar:",
         "",
         profileLink(userId),

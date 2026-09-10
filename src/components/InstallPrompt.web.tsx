@@ -85,7 +85,7 @@ export default function InstallPrompt() {
     return (
         <View style={styles.bar}>
             <View style={styles.text}>
-                <Text style={styles.title}>Instalar o Projeto H</Text>
+                <Text style={styles.title}>Instalar o Panela</Text>
                 <Text style={styles.subtitle}>
                     {showIosHint
                         ? "Toque em Compartilhar e depois em Adicionar à Tela de Início."

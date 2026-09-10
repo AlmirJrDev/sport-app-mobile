@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "Projeto H",
+    "name": "Panela",
     "slug": "sport-app-mobile",
-    "scheme": "projetoh",
+    "scheme": "panela",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.projetoh.app",
+      "bundleIdentifier": "com.panela.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "O Projeto H usa sua localização para mostrar os jogos acontecendo perto de você."
+        "NSLocationWhenInUseUsageDescription": "O Panela usa sua localização para mostrar os jogos acontecendo perto de você."
       }
     },
     "android": {
-      "package": "com.projetoh.app",
+      "package": "com.panela.app",
       "adaptiveIcon": {
         "backgroundColor": "#FFFEFB",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -43,7 +43,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "O Projeto H usa sua localização para mostrar os jogos acontecendo perto de você."
+          "locationWhenInUsePermission": "O Panela usa sua localização para mostrar os jogos acontecendo perto de você."
         }
       ],
       "@maplibre/maplibre-react-native",

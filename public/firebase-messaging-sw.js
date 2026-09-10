@@ -25,7 +25,7 @@ if (config.apiKey && config.messagingSenderId && config.appId) {
     const messaging = firebase.messaging();
 
     messaging.onBackgroundMessage((payload) => {
-        const titulo = payload.notification?.title ?? "Projeto H";
+        const titulo = payload.notification?.title ?? "Panela";
 
         self.registration.showNotification(titulo, {
             body: payload.notification?.body ?? "",

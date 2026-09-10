@@ -58,7 +58,7 @@ const PREFERENCIAS: [keyof NotificationPrefs, string][] = [
     ["noApp", "Avisos dentro do app"],
     ["jogos", "Movimento nos meus jogos"],
     ["social", "Quando alguém interage comigo"],
-    ["novidades", "Novidades do Projeto H"],
+    ["novidades", "Novidades do Panela"],
 ];
 
 interface Grupo {

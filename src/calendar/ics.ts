@@ -12,13 +12,13 @@ export function buildIcs(game: Game): string {
     const titulo = `${game.sport} ${game.modality} — ${game.placeName}`;
     const descricao = [
         `${game.attendees.length} de ${game.spots} vagas confirmadas.`,
-        "Marcado pelo Projeto H.",
+        "Marcado pelo Panela.",
     ].join(" ");
 
     return [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Projeto H//pelada//PT-BR",
+        "PRODID:-//Panela//pelada//PT-BR",
         "CALSCALE:GREGORIAN",
         "BEGIN:VEVENT",
         `UID:${game.id}@projetoh`,
