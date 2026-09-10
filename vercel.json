@@ -5,6 +5,7 @@
       "source": "/api/:path*",
       "destination": "https://api--sport-app--cjlm46fp2mm6.code.run/:path*"
     },
+    { "source": "/inicio", "destination": "/inicio.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
