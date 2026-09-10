@@ -21,6 +21,13 @@ interface ApiPerson {
     avatar_id?: string | null;
 }
 
+interface ApiMembership {
+    user_id?: string;
+    arrived_at?: string | null;
+    left_at?: string | null;
+    user?: ApiPerson;
+}
+
 export interface ApiGame {
     id: string;
     creator_id: string;
@@ -40,6 +47,7 @@ export interface ApiGame {
     modality?: ApiNamed;
     creator?: ApiPerson;
     players?: ApiPerson[];
+    memberships?: ApiMembership[];
     distance_meters?: number;
 }
 
@@ -78,15 +86,28 @@ function situacaoDaApi(api: ApiGame, encerradoLocal: boolean): GameStatus {
 async function toGame(api: ApiGame): Promise<Game> {
     const overlay = (await readOverlay(api.id)) ?? EMPTY_OVERLAY;
 
-    const doServidor: Attendee[] | null = api.players
-        ? api.players.map((person) => ({
-              playerId: person.id,
-              name: fullName(person),
-              arrived: overlay.attendees.some(
-                  (one) => one.playerId === person.id && one.arrived,
-              ),
-          }))
+    const inscritos: Attendee[] | null = api.memberships
+        ? api.memberships
+              .filter((vinculo) => !vinculo.left_at)
+              .map((vinculo) => ({
+                  playerId: vinculo.user?.id ?? vinculo.user_id ?? "",
+                  name: vinculo.user ? fullName(vinculo.user) : "Atleta",
+                  arrived: Boolean(vinculo.arrived_at),
+              }))
+              .filter((pessoa) => pessoa.playerId !== "")
         : null;
+
+    const doServidor: Attendee[] | null =
+        inscritos ??
+        (api.players
+            ? api.players.map((person) => ({
+                  playerId: person.id,
+                  name: fullName(person),
+                  arrived: overlay.attendees.some(
+                      (one) => one.playerId === person.id && one.arrived,
+                  ),
+              }))
+            : null);
 
     return {
         source: "api",
