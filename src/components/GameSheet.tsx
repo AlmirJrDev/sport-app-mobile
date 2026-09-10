@@ -267,7 +267,7 @@ const criarEstilos = (c: Palette) =>
         justifyContent: "center",
     },
     extrasTexto: {
-        color: c.onPrimary,
+        color: c.canvas,
     },
     acoes: {
         flexDirection: "row",

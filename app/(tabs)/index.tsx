@@ -327,7 +327,7 @@ const criarEstilos = (c: Palette) =>
         color: c.body,
     },
     chipTextoAtivo: {
-        color: c.onPrimary,
+        color: c.canvas,
     },
     chipTextoAcao: {
         color: c.primary,
@@ -342,7 +342,7 @@ const criarEstilos = (c: Palette) =>
         color: c.primary,
     },
     falhaTexto: {
-        color: c.onPrimary,
+        color: c.canvas,
     },
     rodape: {
         position: "absolute",

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useThemedStyles } from "../design/theme";
+import type { Palette } from "../design/tokens";
+
 interface InstallEvent extends Event {
     prompt: () => Promise<void>;
     userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -20,6 +23,7 @@ function isIos(): boolean {
 }
 
 export default function InstallPrompt() {
+    const styles = useThemedStyles(criarEstilos);
     const [event, setEvent] = useState<InstallEvent | null>(null);
     const [showIosHint, setShowIosHint] = useState(false);
     const [hidden, setHidden] = useState(true);
@@ -102,41 +106,42 @@ export default function InstallPrompt() {
     );
 }
 
-const styles = StyleSheet.create({
-    bar: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        padding: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: "#e5e5e5",
-        backgroundColor: "#fff",
-    },
-    text: {
-        flex: 1,
-    },
-    title: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#333",
-    },
-    subtitle: {
-        fontSize: 13,
-        color: "#666",
-    },
-    install: {
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 6,
-        backgroundColor: "#333",
-    },
-    installLabel: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "600",
-    },
-    dismiss: {
-        fontSize: 13,
-        color: "#666",
-    },
-});
+const criarEstilos = (c: Palette) =>
+    StyleSheet.create({
+        bar: {
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+            padding: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: c.line,
+            backgroundColor: c.canvasSoft,
+        },
+        text: {
+            flex: 1,
+        },
+        title: {
+            fontSize: 14,
+            fontWeight: "600",
+            color: c.ink,
+        },
+        subtitle: {
+            fontSize: 13,
+            color: c.body,
+        },
+        install: {
+            paddingVertical: 8,
+            paddingHorizontal: 14,
+            borderRadius: 6,
+            backgroundColor: c.primary,
+        },
+        installLabel: {
+            color: c.onPrimary,
+            fontSize: 14,
+            fontWeight: "600",
+        },
+        dismiss: {
+            fontSize: 13,
+            color: c.mute,
+        },
+    });

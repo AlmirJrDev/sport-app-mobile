@@ -85,7 +85,7 @@ export default function GameMap({
         }, ESPERA_BASE);
 
         map.on("error", aoErro);
-        map.once("idle", () => {
+        map.on("idle", () => {
             clearTimeout(prazo);
             map.off("error", aoErro);
             setSemMapa(false);

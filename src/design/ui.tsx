@@ -55,9 +55,11 @@ export function Button({
             <Text
                 style={[
                     variant === "text" ? type.labelCampo : type.botao,
-                    variant === "primary" || variant === "secondary"
+                    variant === "primary"
                         ? styles.labelOnDark
-                        : styles.labelOnLight,
+                        : variant === "secondary"
+                          ? styles.labelOnInk
+                          : styles.labelOnLight,
                 ]}
             >
                 {label}
@@ -137,6 +139,9 @@ const criarEstilos = (c: Palette) =>
     },
     labelOnDark: {
         color: c.onPrimary,
+    },
+    labelOnInk: {
+        color: c.canvas,
     },
     labelOnLight: {
         color: c.ink,

@@ -47,7 +47,7 @@ export function Avatar({ name, size = 40, style }: AvatarProps) {
                 style={{
                     fontFamily: font.semibold,
                     fontSize: Math.round(size * 0.34),
-                    color: colors.onPrimary,
+                    color: colors.canvas,
                 }}
             >
                 {initials(name) || "?"}

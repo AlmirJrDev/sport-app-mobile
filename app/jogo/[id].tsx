@@ -145,7 +145,11 @@ export default function GameScreen() {
                             style={styles.voltar}
                             onPress={() => router.back()}
                         >
-                            <Icon name="chevron" size={20} color={colors.ink} />
+                            <Icon
+                                name="chevron"
+                                size={20}
+                                color={colors.header}
+                            />
                         </Pressable>
 
                         <Pressable
@@ -155,7 +159,7 @@ export default function GameScreen() {
                             <Icon
                                 name="compartilhar"
                                 size={18}
-                                color={colors.ink}
+                                color={colors.header}
                             />
                             <Text style={[type.labelCampo, styles.conviteTexto]}>
                                 Convidar
@@ -296,7 +300,9 @@ export default function GameScreen() {
                                                 <Text
                                                     style={[
                                                         type.labelTab,
-                                                        styles.pontoTexto,
+                                                        aoVivo
+                                                            ? styles.pontoTexto
+                                                            : styles.pontoTextoTravado,
                                                     ]}
                                                 >
                                                     +{valor}
@@ -555,7 +561,7 @@ const criarEstilos = (c: Palette) =>
         backgroundColor: "rgba(255,254,251,0.92)",
     },
     conviteTexto: {
-        color: c.ink,
+        color: c.header,
     },
     heroRodape: {
         gap: spacing.sm,
@@ -657,10 +663,13 @@ const criarEstilos = (c: Palette) =>
         backgroundColor: c.ink,
     },
     pontoTravado: {
-        backgroundColor: c.chipBorder,
+        backgroundColor: c.canvasSoft,
     },
     pontoTexto: {
-        color: c.onPrimary,
+        color: c.canvas,
+    },
+    pontoTextoTravado: {
+        color: c.mute,
     },
     desfazer: {
         color: c.mute,

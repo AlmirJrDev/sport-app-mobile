@@ -302,7 +302,7 @@ const criarEstilos = (c: Palette) =>
         paddingVertical: spacing.xs,
         paddingHorizontal: spacing.md,
         borderRadius: radius.pill,
-        backgroundColor: c.ink,
+        backgroundColor: c.header,
     },
     ponto: {
         width: 7,
