@@ -5,12 +5,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BebasNeue_400Regular } from "@expo-google-fonts/bebas-neue";
 import {
     Inter_400Regular,
-    Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
     useFonts,
 } from "@expo-google-fonts/inter";
-import { ActivityIndicator, View } from "react-native";
 
 import InstallPrompt from "../src/components/InstallPrompt";
 import { ThemeProvider, useTheme } from "../src/design/theme";
@@ -18,10 +16,13 @@ import { font, type } from "../src/design/tokens";
 import { registerPwa } from "../src/pwa/register";
 
 export default function RootLayout() {
-    const [fontsLoaded] = useFonts({
+    /**
+     * As fontes carregam em segundo plano. A tela aparece na hora com a fonte
+     * do sistema e troca sozinha quando elas chegam.
+     */
+    useFonts({
         BebasNeue_400Regular,
         Inter_400Regular,
-        Inter_500Medium,
         Inter_600SemiBold,
         Inter_700Bold,
     });
@@ -32,28 +33,13 @@ export default function RootLayout() {
 
     return (
         <ThemeProvider>
-            <Raiz pronto={fontsLoaded} />
+            <Raiz />
         </ThemeProvider>
     );
 }
 
-function Raiz({ pronto }: { pronto: boolean }) {
+function Raiz() {
     const { colors, isDark } = useTheme();
-
-    if (!pronto) {
-        return (
-            <View
-                style={{
-                    flex: 1,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: colors.canvas,
-                }}
-            >
-                <ActivityIndicator color={colors.ink} />
-            </View>
-        );
-    }
 
     return (
         <SafeAreaProvider>
