@@ -170,7 +170,14 @@ export async function deleteGame(gameId: string): Promise<void> {
     await writeGames(games.filter((game) => game.id !== gameId));
 }
 
-export async function toggleAttendance(gameId: string): Promise<Game | null> {
+/**
+ * Quem chama já sabe se está no jogo, então passar `jaEstou` evita uma ida ao
+ * servidor só para descobrir isso.
+ */
+export async function toggleAttendance(
+    gameId: string,
+    jaEstou?: boolean,
+): Promise<Game | null> {
     const player = await getPlayer();
 
     if (await isLocal(gameId)) {
@@ -197,12 +204,17 @@ export async function toggleAttendance(gameId: string): Promise<Game | null> {
         });
     }
 
-    const remoto = await getRemoteGame(gameId);
-    const jaEstou = remoto?.attendees.some(
-        (attendee) => attendee.playerId === player.id,
-    );
+    let dentro = jaEstou;
 
-    return jaEstou ? leaveRemoteGame(gameId) : joinRemoteGame(gameId);
+    if (dentro === undefined) {
+        const remoto = await getRemoteGame(gameId);
+
+        dentro = remoto?.attendees.some(
+            (attendee) => attendee.playerId === player.id,
+        );
+    }
+
+    return dentro ? leaveRemoteGame(gameId) : joinRemoteGame(gameId);
 }
 
 export async function toggleArrival(gameId: string): Promise<Game | null> {
@@ -224,6 +236,7 @@ export async function toggleArrival(gameId: string): Promise<Game | null> {
 
     const game = await arriveRemoteGame(gameId);
 
+    /** A chegada já vem do servidor; a cópia local serve só para o cartão do mapa. */
     await writeOverlay(gameId, (current) => ({
         ...current,
         attendees: game.attendees.map((attendee) =>
@@ -239,39 +252,31 @@ export async function toggleArrival(gameId: string): Promise<Game | null> {
         ),
     }));
 
-    return getRemoteGame(gameId);
+    return game;
 }
 
+/** O placar é local, então nada aqui vai à rede: o toque responde na hora. */
 export async function addPoints(
-    gameId: string,
+    game: Game,
     side: "home" | "away",
     points: number,
 ): Promise<Game | null> {
-    const alvo = await getGame(gameId);
-
-    if (!alvo || currentStatus(alvo) !== "em-andamento") {
-        return alvo;
+    if (currentStatus(game) !== "em-andamento") {
+        return game;
     }
 
-    if (await isLocal(gameId)) {
-        return updateGame(gameId, (game) => ({
-            ...game,
-            score: {
-                ...game.score,
-                [side]: Math.max(0, game.score[side] + points),
-            },
-        }));
+    const score = {
+        ...game.score,
+        [side]: Math.max(0, game.score[side] + points),
+    };
+
+    if (game.source === "local") {
+        return updateGame(game.id, (atual) => ({ ...atual, score }));
     }
 
-    await writeOverlay(gameId, (current) => ({
-        ...current,
-        score: {
-            ...current.score,
-            [side]: Math.max(0, current.score[side] + points),
-        },
-    }));
+    await writeOverlay(game.id, (current) => ({ ...current, score }));
 
-    return getRemoteGame(gameId);
+    return { ...game, score };
 }
 
 export async function cancelGame(gameId: string): Promise<Game | null> {

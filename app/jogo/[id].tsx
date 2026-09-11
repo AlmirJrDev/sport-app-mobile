@@ -66,6 +66,7 @@ export default function GameScreen() {
     const [playerId, setPlayerId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [avisoAcao, setAvisoAcao] = useState<string | null>(null);
+    const [ocupado, setOcupado] = useState(false);
 
     const load = useCallback(async () => {
         const [found, player] = await Promise.all([getGame(id), getPlayer()]);
@@ -116,6 +117,7 @@ export default function GameScreen() {
 
     const run = async (action: Promise<Game | null>) => {
         setAvisoAcao(null);
+        setOcupado(true);
 
         try {
             const updated = await action;
@@ -129,6 +131,8 @@ export default function GameScreen() {
                     ? raw.message
                     : "Não deu para fazer isso agora.",
             );
+        } finally {
+            setOcupado(false);
         }
     };
 
@@ -304,7 +308,7 @@ export default function GameScreen() {
                                                 onPress={() =>
                                                     run(
                                                         addPoints(
-                                                            game.id,
+                                                            game,
                                                             lado,
                                                             valor,
                                                         ),
@@ -328,7 +332,7 @@ export default function GameScreen() {
                                     <Pressable
                                         disabled={!aoVivo}
                                         onPress={() =>
-                                            run(addPoints(game.id, lado, -1))
+                                            run(addPoints(game, lado, -1))
                                         }
                                     >
                                         <Text
@@ -501,8 +505,10 @@ export default function GameScreen() {
                             styles.cta,
                             (travado || Boolean(me)) && styles.ctaNeutro,
                         ]}
-                        disabled={travado}
-                        onPress={() => run(toggleAttendance(game.id))}
+                        disabled={travado || ocupado}
+                        onPress={() =>
+                            run(toggleAttendance(game.id, Boolean(me)))
+                        }
                     >
                         <Text
                             style={[
@@ -512,13 +518,15 @@ export default function GameScreen() {
                                     : styles.ctaTexto,
                             ]}
                         >
-                            {bloqueio
-                                ? bloqueio
-                                : isFull
-                                  ? "Sem vagas"
-                                  : me
-                                    ? "Cancelar presença"
-                                    : "Confirmar presença"}
+                            {ocupado
+                                ? "Um instante…"
+                                : bloqueio
+                                  ? bloqueio
+                                  : isFull
+                                    ? "Sem vagas"
+                                    : me
+                                      ? "Cancelar presença"
+                                      : "Confirmar presença"}
                         </Text>
                     </Pressable>
 

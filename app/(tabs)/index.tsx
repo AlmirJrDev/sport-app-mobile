@@ -54,6 +54,7 @@ export default function MapScreen() {
     const [mapCenter, setMapCenter] = useState<Coordinates | null>(null);
     const [vista, setVista] = useState<"mapa" | "lista">("mapa");
     const [avisoAcao, setAvisoAcao] = useState<string | null>(null);
+    const [ocupado, setOcupado] = useState(false);
 
     const center: Coordinates = coordinate
         ? { longitude: coordinate[0], latitude: coordinate[1] }
@@ -63,6 +64,14 @@ export default function MapScreen() {
         status === "idle" ||
         status === "requesting-permission" ||
         status === "starting";
+
+    /** Estáveis de propósito: o mapa refaz todos os pinos se elas mudarem. */
+    const selecionarJogo = useCallback((game: Game) => {
+        setSelectedId(game.id);
+        setAvisoAcao(null);
+    }, []);
+
+    const limparSelecao = useCallback(() => setSelectedId(null), []);
 
     const refresh = useCallback(() => {
         listNearbyGames(center, RADIUS_KM).then((resultado) => {
@@ -104,6 +113,9 @@ export default function MapScreen() {
 
     const semLocalizacao = permission === "denied" || status === "error";
     const selectedGame = games.find((game) => game.id === selectedId) ?? null;
+    const jaConfirmado = Boolean(
+        selectedGame?.attendees.some((one) => one.playerId === account.id),
+    );
 
     const handleToggleJoin = async () => {
         if (!selectedGame) {
@@ -111,18 +123,32 @@ export default function MapScreen() {
         }
 
         setAvisoAcao(null);
+        setOcupado(true);
 
         try {
-            await toggleAttendance(selectedGame.id);
+            const atualizado = await toggleAttendance(
+                selectedGame.id,
+                jaConfirmado,
+            );
+
+            if (atualizado) {
+                setGames((atual) =>
+                    atual.map((game) =>
+                        game.id === atualizado.id ? atualizado : game,
+                    ),
+                );
+            } else {
+                refresh();
+            }
         } catch (raw) {
             setAvisoAcao(
                 raw instanceof Error
                     ? raw.message
                     : "Não deu para confirmar sua presença agora.",
             );
+        } finally {
+            setOcupado(false);
         }
-
-        refresh();
     };
 
     const handleCreate = () => {
@@ -140,11 +166,8 @@ export default function MapScreen() {
                     center={center}
                     games={games}
                     selectedGameId={selectedId}
-                    onSelectGame={(game) => {
-                        setSelectedId(game.id);
-                        setAvisoAcao(null);
-                    }}
-                    onClearSelection={() => setSelectedId(null)}
+                    onSelectGame={selecionarJogo}
+                    onClearSelection={limparSelecao}
                     onCenterChange={setMapCenter}
                 />
             ) : (
@@ -240,9 +263,8 @@ export default function MapScreen() {
                 <GameSheet
                     game={selectedGame}
                     distanceKm={distanceFor(selectedGame, center)}
-                    isJoined={selectedGame.attendees.some(
-                        (one) => one.playerId === account.id,
-                    )}
+                    isJoined={jaConfirmado}
+                    ocupado={ocupado}
                     aviso={avisoAcao}
                     onToggleJoin={handleToggleJoin}
                     onOpen={() => router.push(`/jogo/${selectedGame.id}`)}

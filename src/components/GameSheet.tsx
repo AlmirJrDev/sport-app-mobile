@@ -34,6 +34,7 @@ interface GameSheetProps {
     game: Game;
     distanceKm: number;
     isJoined: boolean;
+    ocupado?: boolean;
     aviso?: string | null;
     onToggleJoin: () => void;
     onOpen: () => void;
@@ -73,6 +74,7 @@ export default function GameSheet({
     game,
     distanceKm,
     isJoined,
+    ocupado,
     aviso,
     onToggleJoin,
     onOpen,
@@ -91,13 +93,15 @@ export default function GameSheet({
     const bloqueio = isJoined ? null : joinBlockReason(game);
     const travado = lotado || bloqueio !== null;
 
-    const rotulo = bloqueio
-        ? bloqueio
-        : lotado
-          ? "Sem vagas"
-          : isJoined
-            ? "Presença confirmada"
-            : "Entrar no jogo";
+    const rotulo = ocupado
+        ? "Um instante…"
+        : bloqueio
+          ? bloqueio
+          : lotado
+            ? "Sem vagas"
+            : isJoined
+              ? "Presença confirmada"
+              : "Entrar no jogo";
 
     return (
         <View style={styles.sheet}>
@@ -175,7 +179,7 @@ export default function GameSheet({
                         styles.cta,
                         (travado || isJoined) && styles.ctaNeutro,
                     ]}
-                    disabled={travado}
+                    disabled={travado || ocupado}
                     onPress={onToggleJoin}
                 >
                     <Text
