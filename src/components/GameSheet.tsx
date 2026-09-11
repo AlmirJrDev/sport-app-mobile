@@ -12,7 +12,12 @@ import {
     type,
     type Palette,
 } from "../design/tokens";
-import { SKILL_LABEL, currentStatus, type Game } from "../games/types";
+import {
+    SKILL_LABEL,
+    currentStatus,
+    joinBlockReason,
+    type Game,
+} from "../games/types";
 import { inviteText } from "../share/invite";
 import { shareInvite } from "../share/share";
 
@@ -29,6 +34,7 @@ interface GameSheetProps {
     game: Game;
     distanceKm: number;
     isJoined: boolean;
+    aviso?: string | null;
     onToggleJoin: () => void;
     onOpen: () => void;
     onClose: () => void;
@@ -67,6 +73,7 @@ export default function GameSheet({
     game,
     distanceKm,
     isJoined,
+    aviso,
     onToggleJoin,
     onOpen,
     onClose,
@@ -81,11 +88,16 @@ export default function GameSheet({
     const visiveis = game.attendees.slice(0, 4);
     const extras = game.attendees.length - visiveis.length;
 
-    const rotulo = lotado
-        ? "Sem vagas"
-        : isJoined
-          ? "Presença confirmada"
-          : "Entrar no jogo";
+    const bloqueio = isJoined ? null : joinBlockReason(game);
+    const travado = lotado || bloqueio !== null;
+
+    const rotulo = bloqueio
+        ? bloqueio
+        : lotado
+          ? "Sem vagas"
+          : isJoined
+            ? "Presença confirmada"
+            : "Entrar no jogo";
 
     return (
         <View style={styles.sheet}>
@@ -153,19 +165,23 @@ export default function GameSheet({
                 </Text>
             </View>
 
+            {aviso ? (
+                <Text style={[type.corpoSm, styles.aviso]}>{aviso}</Text>
+            ) : null}
+
             <View style={styles.acoes}>
                 <Pressable
                     style={[
                         styles.cta,
-                        (lotado || isJoined) && styles.ctaNeutro,
+                        (travado || isJoined) && styles.ctaNeutro,
                     ]}
-                    disabled={lotado}
+                    disabled={travado}
                     onPress={onToggleJoin}
                 >
                     <Text
                         style={[
                             type.botaoSheet,
-                            lotado || isJoined
+                            travado || isJoined
                                 ? styles.ctaNeutroTexto
                                 : styles.ctaTexto,
                         ]}
@@ -289,6 +305,10 @@ const criarEstilos = (c: Palette) =>
     },
     ctaNeutroTexto: {
         color: c.ink,
+    },
+    aviso: {
+        color: c.primary,
+        marginTop: spacing.sm,
     },
     quadrado: {
         width: size.sheetButton,

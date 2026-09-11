@@ -130,6 +130,7 @@ async function toGame(api: ApiGame): Promise<Game> {
             latitude: Number(api.latitude),
             longitude: Number(api.longitude),
         },
+        allowJoinAfterStart: api.allow_join_after_start ?? false,
         attendees: doServidor ?? overlay.attendees,
         score: overlay.score,
     };

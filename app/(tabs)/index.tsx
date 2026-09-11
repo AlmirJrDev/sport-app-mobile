@@ -53,6 +53,7 @@ export default function MapScreen() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [mapCenter, setMapCenter] = useState<Coordinates | null>(null);
     const [vista, setVista] = useState<"mapa" | "lista">("mapa");
+    const [avisoAcao, setAvisoAcao] = useState<string | null>(null);
 
     const center: Coordinates = coordinate
         ? { longitude: coordinate[0], latitude: coordinate[1] }
@@ -109,7 +110,18 @@ export default function MapScreen() {
             return;
         }
 
-        await toggleAttendance(selectedGame.id);
+        setAvisoAcao(null);
+
+        try {
+            await toggleAttendance(selectedGame.id);
+        } catch (raw) {
+            setAvisoAcao(
+                raw instanceof Error
+                    ? raw.message
+                    : "Não deu para confirmar sua presença agora.",
+            );
+        }
+
         refresh();
     };
 
@@ -128,7 +140,10 @@ export default function MapScreen() {
                     center={center}
                     games={games}
                     selectedGameId={selectedId}
-                    onSelectGame={(game) => setSelectedId(game.id)}
+                    onSelectGame={(game) => {
+                        setSelectedId(game.id);
+                        setAvisoAcao(null);
+                    }}
                     onClearSelection={() => setSelectedId(null)}
                     onCenterChange={setMapCenter}
                 />
@@ -228,9 +243,13 @@ export default function MapScreen() {
                     isJoined={selectedGame.attendees.some(
                         (one) => one.playerId === account.id,
                     )}
+                    aviso={avisoAcao}
                     onToggleJoin={handleToggleJoin}
                     onOpen={() => router.push(`/jogo/${selectedGame.id}`)}
-                    onClose={() => setSelectedId(null)}
+                    onClose={() => {
+                        setSelectedId(null);
+                        setAvisoAcao(null);
+                    }}
                 />
             ) : (
                 <View style={styles.rodape} pointerEvents="box-none">

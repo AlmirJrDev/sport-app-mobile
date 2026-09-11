@@ -34,6 +34,7 @@ import {
     SKILL_LABEL,
     currentStatus,
     endsAt,
+    joinBlockReason,
     type Game,
 } from "../../src/games/types";
 import { addToCalendar } from "../../src/calendar/addToCalendar";
@@ -64,6 +65,7 @@ export default function GameScreen() {
     const [game, setGame] = useState<Game | null>(null);
     const [playerId, setPlayerId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [avisoAcao, setAvisoAcao] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         const [found, player] = await Promise.all([getGame(id), getPlayer()]);
@@ -103,6 +105,8 @@ export default function GameScreen() {
     const isCancelled = situacao === "cancelado";
     const aoVivo = situacao === "em-andamento";
     const isOwner = game.ownerId === playerId;
+    const bloqueio = me ? null : joinBlockReason(game);
+    const travado = isFull || bloqueio !== null;
     const chegadaTravada = game.source === "api" && Boolean(me?.arrived);
     const livres = Math.max(0, game.spots - game.attendees.length);
     const preenchido = Math.min(
@@ -111,10 +115,20 @@ export default function GameScreen() {
     );
 
     const run = async (action: Promise<Game | null>) => {
-        const updated = await action;
+        setAvisoAcao(null);
 
-        if (updated) {
-            setGame(updated);
+        try {
+            const updated = await action;
+
+            if (updated) {
+                setGame(updated);
+            }
+        } catch (raw) {
+            setAvisoAcao(
+                raw instanceof Error
+                    ? raw.message
+                    : "Não deu para fazer isso agora.",
+            );
         }
     };
 
@@ -475,39 +489,46 @@ export default function GameScreen() {
             </ScrollView>
 
             <View style={styles.rodape}>
-                <Pressable
-                    style={[
-                        styles.cta,
-                        (isFull || isCancelled || Boolean(me)) &&
-                            styles.ctaNeutro,
-                    ]}
-                    disabled={isFull || isCancelled}
-                    onPress={() => run(toggleAttendance(game.id))}
-                >
-                    <Text
-                        style={[
-                            type.botao,
-                            isFull || isCancelled || me
-                                ? styles.ctaNeutroTexto
-                                : styles.ctaTexto,
-                        ]}
-                    >
-                        {isCancelled
-                            ? "Jogo cancelado"
-                            : isFull
-                              ? "Sem vagas"
-                              : me
-                                ? "Cancelar presença"
-                                : "Confirmar presença"}
+                {avisoAcao ? (
+                    <Text style={[type.metadado, styles.rodapeAviso]}>
+                        {avisoAcao}
                     </Text>
-                </Pressable>
+                ) : null}
 
-                <Pressable
-                    style={styles.calendario}
-                    onPress={() => addToCalendar(game)}
-                >
-                    <Icon name="calendario" size={22} color={colors.ink} />
-                </Pressable>
+                <View style={styles.rodapeLinha}>
+                    <Pressable
+                        style={[
+                            styles.cta,
+                            (travado || Boolean(me)) && styles.ctaNeutro,
+                        ]}
+                        disabled={travado}
+                        onPress={() => run(toggleAttendance(game.id))}
+                    >
+                        <Text
+                            style={[
+                                type.botao,
+                                travado || me
+                                    ? styles.ctaNeutroTexto
+                                    : styles.ctaTexto,
+                            ]}
+                        >
+                            {bloqueio
+                                ? bloqueio
+                                : isFull
+                                  ? "Sem vagas"
+                                  : me
+                                    ? "Cancelar presença"
+                                    : "Confirmar presença"}
+                        </Text>
+                    </Pressable>
+
+                    <Pressable
+                        style={styles.calendario}
+                        onPress={() => addToCalendar(game)}
+                    >
+                        <Icon name="calendario" size={22} color={colors.ink} />
+                    </Pressable>
+                </View>
             </View>
         </View>
     );
@@ -730,13 +751,19 @@ const criarEstilos = (c: Palette) =>
         color: c.primary,
     },
     rodape: {
-        flexDirection: "row",
-        gap: spacing.md,
+        gap: spacing.sm,
         padding: spacing.lg,
         paddingBottom: spacing.lg,
         borderTopWidth: 1,
         borderTopColor: c.line,
         backgroundColor: c.canvas,
+    },
+    rodapeLinha: {
+        flexDirection: "row",
+        gap: spacing.md,
+    },
+    rodapeAviso: {
+        color: c.primary,
     },
     cta: {
         flex: 1,

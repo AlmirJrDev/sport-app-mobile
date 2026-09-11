@@ -43,6 +43,8 @@ export interface Game {
     coordinates: Coordinates;
     attendees: Attendee[];
     score: Score;
+    /** Se a API aceita inscrição depois do horário de início. */
+    allowJoinAfterStart?: boolean;
 }
 
 export interface NewGame {
@@ -56,6 +58,29 @@ export interface NewGame {
     coordinates: Coordinates;
     isPublic: boolean;
     allowJoinAfterStart: boolean;
+}
+
+/** Motivo que impede entrar no jogo agora, ou null quando dá para entrar. */
+export function joinBlockReason(game: Game, now = Date.now()): string | null {
+    const situacao = currentStatus(game, now);
+
+    if (situacao === "cancelado") {
+        return "Jogo cancelado";
+    }
+
+    if (situacao === "encerrado") {
+        return "Jogo encerrado";
+    }
+
+    if (
+        game.source === "api" &&
+        situacao === "em-andamento" &&
+        !game.allowJoinAfterStart
+    ) {
+        return "Jogo já começou";
+    }
+
+    return null;
 }
 
 export const SKILL_LABEL: Record<SkillLevel, string> = {
