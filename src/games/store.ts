@@ -1,9 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { seedGames } from "./mock";
 import type { Game } from "./types";
 
 const KEY = "projetoh:games:v3";
+
+/** Os antigos jogos de demonstração foram gravados com esse dono. */
+const DONO_DEMONSTRACAO = "seed";
 
 let cache: Game[] | null = null;
 
@@ -13,15 +15,14 @@ export async function readGames(): Promise<Game[]> {
     }
 
     const raw = await AsyncStorage.getItem(KEY);
+    const guardados = raw ? (JSON.parse(raw) as Game[]) : [];
+    const reais = guardados.filter((game) => game.ownerId !== DONO_DEMONSTRACAO);
 
-    if (raw) {
-        cache = JSON.parse(raw) as Game[];
-        return cache;
+    if (reais.length !== guardados.length) {
+        await AsyncStorage.setItem(KEY, JSON.stringify(reais));
     }
 
-    const seeded = seedGames();
-    await AsyncStorage.setItem(KEY, JSON.stringify(seeded));
-    cache = seeded;
+    cache = reais;
 
     return cache;
 }

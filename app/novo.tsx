@@ -26,7 +26,7 @@ import {
     type,
     type Palette,
 } from "../src/design/tokens";
-import { FALLBACK_CENTER } from "../src/games/mock";
+import { FALLBACK_CENTER } from "../src/games/center";
 import { createGame } from "../src/games/service";
 import {
     DURATIONS,
