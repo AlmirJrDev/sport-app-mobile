@@ -23,12 +23,7 @@ import {
     type,
     type Palette,
 } from "../../src/design/tokens";
-import {
-    ATHLETE_BADGES,
-    ATHLETE_RANKINGS,
-    ATHLETE_SEASON,
-    ATHLETE_STATS,
-} from "../../src/mock/athlete";
+import { ATHLETE_BADGES, ATHLETE_RANKINGS } from "../../src/mock/athlete";
 import { getMyProfile, type Profile } from "../../src/profile/remote";
 import { profileText } from "../../src/share/invite";
 import { shareInvite } from "../../src/share/share";
@@ -73,11 +68,7 @@ export default function PerfilScreen() {
 
     const nome = perfil?.name || account.name;
 
-    const linha = [
-        perfil?.mainSport,
-        perfil?.city,
-        ATHLETE_SEASON,
-    ]
+    const linha = [perfil?.mainSport, perfil?.city]
         .filter(Boolean)
         .join(" · ");
 
@@ -161,34 +152,6 @@ export default function PerfilScreen() {
             <View style={styles.corpo}>
                 <View style={styles.secao}>
                     <Text style={[type.labelCampo, styles.secaoTitulo]}>
-                        Temporada
-                    </Text>
-
-                    {ATHLETE_STATS.map((item) => (
-                        <View key={item.label} style={styles.stat}>
-                            <View style={styles.statTopo}>
-                                <Text style={[type.metadado, styles.statRotulo]}>
-                                    {item.label}
-                                </Text>
-                                <Text style={[type.statMd, styles.statValor]}>
-                                    {item.value}
-                                </Text>
-                            </View>
-
-                            <View style={styles.trilha}>
-                                <View
-                                    style={[
-                                        styles.trilhaFill,
-                                        { width: `${item.fill * 100}%` },
-                                    ]}
-                                />
-                            </View>
-                        </View>
-                    ))}
-                </View>
-
-                <View style={styles.secao}>
-                    <Text style={[type.labelCampo, styles.secaoTitulo]}>
                         Conquistas
                     </Text>
 
@@ -249,7 +212,7 @@ export default function PerfilScreen() {
                     </View>
                 </View>
 
-                <MockNotice texto="Estatísticas, conquistas e rankings ainda são de exemplo — nome, foto, esporte, altura e bio já vêm da API." />
+                <MockNotice texto="Conquistas e rankings ainda são de exemplo — nome, foto, esporte, altura e bio já vêm da API." />
 
                 <Pressable style={styles.sair} onPress={sair}>
                     <Text style={[type.botao, styles.sairTexto]}>
@@ -358,31 +321,6 @@ const criarEstilos = (c: Palette) =>
     },
     secaoTitulo: {
         color: c.mute,
-    },
-    stat: {
-        gap: spacing.sm,
-    },
-    statTopo: {
-        flexDirection: "row",
-        alignItems: "baseline",
-        justifyContent: "space-between",
-    },
-    statRotulo: {
-        color: c.body,
-    },
-    statValor: {
-        color: c.ink,
-    },
-    trilha: {
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: c.line,
-        overflow: "hidden",
-    },
-    trilhaFill: {
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: c.primary,
     },
     conquistas: {
         flexDirection: "row",
