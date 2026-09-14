@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { signOut } from "../../src/auth/account";
 import { useSession } from "../../src/auth/useSession";
-import MockNotice from "../../src/components/MockNotice";
 import { Stripes, initials } from "../../src/design/pieces";
 import { useTheme, useThemedStyles } from "../../src/design/theme";
 import {
@@ -23,16 +22,9 @@ import {
     type,
     type Palette,
 } from "../../src/design/tokens";
-import { ATHLETE_BADGES, ATHLETE_RANKINGS } from "../../src/mock/athlete";
 import { getMyProfile, type Profile } from "../../src/profile/remote";
 import { profileText } from "../../src/share/invite";
 import { shareInvite } from "../../src/share/share";
-
-const TREND_LABEL = {
-    up: "▲",
-    down: "▼",
-    flat: "—",
-};
 
 export default function PerfilScreen() {
     const { colors, mode, setMode } = useTheme();
@@ -95,26 +87,6 @@ export default function PerfilScreen() {
                     {linha || account.email}
                 </Text>
 
-                <View style={styles.rankings}>
-                    {ATHLETE_RANKINGS.map((item, indice) => (
-                        <View key={item.scope} style={styles.rankingCard}>
-                            <Text
-                                style={[
-                                    type.statCard,
-                                    indice === 0
-                                        ? styles.rankingBranco
-                                        : styles.rankingLaranja,
-                                ]}
-                            >
-                                #{item.position} {TREND_LABEL[item.trend]}
-                            </Text>
-                            <Text style={[type.labelTab, styles.rankingEscopo]}>
-                                {item.scope}
-                            </Text>
-                        </View>
-                    ))}
-                </View>
-
                 <View style={styles.acoes}>
                     <Pressable
                         style={styles.acao}
@@ -138,44 +110,9 @@ export default function PerfilScreen() {
                         </Pressable>
                     ) : null}
                 </View>
-
-                <Pressable
-                    onPress={() => router.push("/onboarding?novo=1")}
-                    hitSlop={8}
-                >
-                    <Text style={[type.labelTab, styles.previa]}>
-                        Ver onboarding de boas-vindas
-                    </Text>
-                </Pressable>
             </View>
 
             <View style={styles.corpo}>
-                <View style={styles.secao}>
-                    <Text style={[type.labelCampo, styles.secaoTitulo]}>
-                        Conquistas
-                    </Text>
-
-                    <View style={styles.conquistas}>
-                        {ATHLETE_BADGES.map((badge) => (
-                            <View key={badge.title} style={styles.conquista}>
-                                <Text
-                                    style={[type.statMd, styles.conquistaTitulo]}
-                                >
-                                    {badge.title}
-                                </Text>
-                                <Text
-                                    style={[
-                                        type.labelTab,
-                                        styles.conquistaDetalhe,
-                                    ]}
-                                >
-                                    {badge.detail}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
-                </View>
-
                 <View style={styles.secao}>
                     <Text style={[type.labelCampo, styles.secaoTitulo]}>
                         Tema
@@ -211,8 +148,6 @@ export default function PerfilScreen() {
                         )}
                     </View>
                 </View>
-
-                <MockNotice texto="Conquistas e rankings ainda são de exemplo — nome, foto, esporte, altura e bio já vêm da API." />
 
                 <Pressable style={styles.sair} onPress={sair}>
                     <Text style={[type.botao, styles.sairTexto]}>
@@ -269,30 +204,6 @@ const criarEstilos = (c: Palette) =>
         color: c.onHeaderSoft,
         textAlign: "center",
     },
-    rankings: {
-        flexDirection: "row",
-        gap: spacing.sm,
-        marginTop: spacing.md,
-        alignSelf: "stretch",
-    },
-    rankingCard: {
-        flex: 1,
-        alignItems: "center",
-        gap: spacing.xxs,
-        paddingVertical: spacing.md,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: "rgba(255,254,251,0.16)",
-    },
-    rankingBranco: {
-        color: c.onHeader,
-    },
-    rankingLaranja: {
-        color: c.primary,
-    },
-    rankingEscopo: {
-        color: "#A29A8E",
-    },
     acoes: {
         flexDirection: "row",
         gap: spacing.sm,
@@ -308,10 +219,6 @@ const criarEstilos = (c: Palette) =>
     acaoTexto: {
         color: c.onHeader,
     },
-    previa: {
-        color: c.onHeaderSoft,
-        marginTop: spacing.md,
-    },
     corpo: {
         padding: spacing.xl,
         gap: spacing.xxl,
@@ -321,25 +228,6 @@ const criarEstilos = (c: Palette) =>
     },
     secaoTitulo: {
         color: c.mute,
-    },
-    conquistas: {
-        flexDirection: "row",
-        gap: spacing.sm,
-    },
-    conquista: {
-        flex: 1,
-        alignItems: "center",
-        gap: spacing.xxs,
-        padding: spacing.md,
-        borderRadius: radius.md,
-        backgroundColor: c.canvasSoft,
-    },
-    conquistaTitulo: {
-        color: c.ink,
-    },
-    conquistaDetalhe: {
-        color: c.mute,
-        textAlign: "center",
     },
     temas: {
         flexDirection: "row",
