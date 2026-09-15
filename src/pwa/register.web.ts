@@ -46,4 +46,92 @@ export function registerPwa(): void {
     if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
+
+    redeDeSeguranca();
+}
+
+const ESPERA_TELA = 12000;
+
+let ultimoErro = "";
+
+function anotarErros(): void {
+    window.addEventListener("error", (evento) => {
+        ultimoErro = evento.message || String(evento.error ?? "");
+    });
+
+    window.addEventListener("unhandledrejection", (evento) => {
+        const motivo = evento.reason;
+
+        ultimoErro =
+            motivo instanceof Error ? motivo.message : String(motivo ?? "");
+    });
+}
+
+/**
+ * Se nada foi desenhado, a pessoa fica olhando uma tela vazia sem saber o que
+ * fazer. Aqui ela ganha um botão que limpa o cache do app e recarrega.
+ */
+function redeDeSeguranca(): void {
+    anotarErros();
+
+    setTimeout(() => {
+        const raiz = document.getElementById("root");
+
+        if (raiz && raiz.childElementCount > 0) {
+            return;
+        }
+
+        const aviso = document.createElement("div");
+
+        aviso.setAttribute(
+            "style",
+            "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:#14100E;color:#F4F0EA;font-family:-apple-system,system-ui,sans-serif;z-index:9999",
+        );
+
+        const texto = document.createElement("p");
+        texto.textContent = "O Panela não abriu. Limpe e tente de novo.";
+
+        const botao = document.createElement("button");
+        botao.textContent = "Limpar e recarregar";
+        botao.setAttribute(
+            "style",
+            "margin-top:16px;padding:12px 20px;border:0;border-radius:12px;background:#DA680D;color:#fff;font-size:16px",
+        );
+        botao.onclick = () => limparTudo();
+
+        const bloco = document.createElement("div");
+        bloco.appendChild(texto);
+        bloco.appendChild(botao);
+
+        if (ultimoErro) {
+            const detalhe = document.createElement("p");
+
+            detalhe.textContent = ultimoErro.slice(0, 200);
+            detalhe.setAttribute(
+                "style",
+                "margin-top:20px;font-size:12px;opacity:.55;word-break:break-word",
+            );
+
+            bloco.appendChild(detalhe);
+        }
+        aviso.appendChild(bloco);
+        document.body.appendChild(aviso);
+    }, ESPERA_TELA);
+}
+
+async function limparTudo(): Promise<void> {
+    try {
+        const registros =
+            (await navigator.serviceWorker?.getRegistrations?.()) ?? [];
+
+        await Promise.all(registros.map((registro) => registro.unregister()));
+
+        const chaves = await caches.keys();
+
+        await Promise.all(chaves.map((chave) => caches.delete(chave)));
+    } catch {
+        // sem service worker ou sem cache: recarregar já resolve
+    }
+
+    location.replace("/");
 }
