@@ -135,11 +135,11 @@ export default function SignInScreen() {
                     </Pressable>
 
                     <Link href="/criar-conta" asChild>
-                        <View style={styles.secundario}>
+                        <Pressable style={styles.secundario}>
                             <Text style={[type.botao, styles.secundarioTexto]}>
                                 Criar conta
                             </Text>
-                        </View>
+                        </Pressable>
                     </Link>
 
                     <Text style={[type.metadado, styles.nota]}>

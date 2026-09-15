@@ -55,11 +55,13 @@ export function Button({
             <Text
                 style={[
                     variant === "text" ? type.labelCampo : type.botao,
-                    variant === "primary"
-                        ? styles.labelOnDark
-                        : variant === "secondary"
-                          ? styles.labelOnInk
-                          : styles.labelOnLight,
+                    disabled
+                        ? styles.labelDisabled
+                        : variant === "primary"
+                          ? styles.labelOnDark
+                          : variant === "secondary"
+                            ? styles.labelOnInk
+                            : styles.labelOnLight,
                 ]}
             >
                 {label}
@@ -142,6 +144,9 @@ const criarEstilos = (c: Palette) =>
     },
     labelOnInk: {
         color: c.canvas,
+    },
+    labelDisabled: {
+        color: c.mute,
     },
     labelOnLight: {
         color: c.ink,
