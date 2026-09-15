@@ -275,7 +275,53 @@ async function saveAccount(account: Account): Promise<void> {
     await AsyncStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Os erros de senha vêm como { campo: "motivo" }, fora do "message" de sempre. */
+function motivoDoCampo(raw: unknown, campo: string): string | null {
+    if (!(raw instanceof ApiError) || !raw.payload || typeof raw.payload !== "object") {
+        return null;
+    }
+
+    const corpo = raw.payload as Record<string, unknown>;
+    const valor = corpo[campo] ?? (corpo.message as Record<string, unknown> | undefined)?.[campo];
+
+    return typeof valor === "string" ? valor : null;
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+    try {
+        await apiFetch("/auth/email/reset-password-request", {
+            method: "POST",
+            body: { email: email.trim() },
+        });
+    } catch (raw) {
+        const motivo = motivoDoCampo(raw, "email");
+
+        throw motivo ? new ApiError(motivo, 422) : raw;
+    }
+}
+
+export async function resetPassword(
+    resetToken: string,
+    password: string,
+): Promise<void> {
+    try {
+        await apiFetch("/auth/email/reset-password", {
+            method: "POST",
+            body: { reset_token: resetToken, password },
+        });
+    } catch (raw) {
+        if (motivoDoCampo(raw, "reset_token")) {
+            throw new ApiError(
+                "Este link expirou ou já foi usado. Peça um novo.",
+                422,
+            );
+        }
+
+        throw raw;
+    }
+}
+
+const UUID =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Tema e aviso de instalar ficam: são do aparelho, não da conta. */
 const FICA_NO_APARELHO = new Set(["projetoh:tema", "projetoh:install-dismissed"]);

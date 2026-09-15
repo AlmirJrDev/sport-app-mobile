@@ -115,6 +115,16 @@ export default function SignInScreen() {
                         />
                     </View>
 
+                    <Pressable
+                        style={styles.esqueci}
+                        hitSlop={8}
+                        onPress={() => router.push("/esqueci-senha")}
+                    >
+                        <Text style={[type.labelCampo, styles.esqueciTexto]}>
+                            Esqueci minha senha
+                        </Text>
+                    </Pressable>
+
                     {error ? (
                         <Text style={[type.corpoSm, styles.erro]}>{error}</Text>
                     ) : null}
@@ -212,6 +222,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: CONTORNO,
         color: colors.onPrimary,
+    },
+    esqueci: {
+        alignSelf: "flex-end",
+        marginTop: -spacing.xs,
+    },
+    esqueciTexto: {
+        color: TEXTO_SUAVE,
     },
     erro: {
         color: colors.primary,

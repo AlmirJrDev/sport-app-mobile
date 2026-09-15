@@ -78,6 +78,14 @@ function Raiz() {
                     name="criar-conta"
                     options={{ title: "Criar conta", headerShown: false }}
                 />
+                <Stack.Screen
+                    name="esqueci-senha"
+                    options={{ title: "Esqueci minha senha", headerShown: false }}
+                />
+                <Stack.Screen
+                    name="auth/reset-password"
+                    options={{ headerShown: false }}
+                />
             </Stack>
 
             <ToastHost />
