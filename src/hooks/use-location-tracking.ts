@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Coordinate } from "../lib/mapcn/types";
+type Coordinate = [longitude: number, latitude: number];
 
 export type LocationAccuracy = "lowest" | "low" | "balanced" | "high" | "highest";
 

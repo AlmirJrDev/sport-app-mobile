@@ -7,7 +7,6 @@ import { font, size, type } from "../../src/design/tokens";
 const ABAS: { name: string; title: string; icon: IconName }[] = [
     { name: "index", title: "Mapa", icon: "mapa" },
     { name: "locais", title: "Locais", icon: "locais" },
-    { name: "rankings", title: "Rankings", icon: "rankings" },
     { name: "notificacoes", title: "Alertas", icon: "alertas" },
     { name: "perfil", title: "Perfil", icon: "perfil" },
 ];
