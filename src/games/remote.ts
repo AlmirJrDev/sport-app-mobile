@@ -37,7 +37,8 @@ export interface ApiGame {
     starts_at: string;
     duration_minutes: number;
     level: SkillLevel;
-    spots: number;
+    max_players?: number;
+    spots?: number;
     latitude: number;
     longitude: number;
     allow_join_after_start?: boolean;
@@ -58,7 +59,7 @@ export interface CreateGamePayload {
     starts_at: string;
     duration_minutes: number;
     level: SkillLevel;
-    spots: number;
+    max_players: number;
     latitude: number;
     longitude: number;
     is_public: boolean;
@@ -124,7 +125,7 @@ async function toGame(api: ApiGame): Promise<Game> {
         startsAt: api.starts_at,
         durationMinutes: api.duration_minutes,
         level: api.level,
-        spots: api.spots,
+        spots: Number(api.max_players ?? api.spots ?? 0),
         status: situacaoDaApi(api, overlay.finished),
         coordinates: {
             latitude: Number(api.latitude),

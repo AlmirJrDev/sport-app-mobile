@@ -127,7 +127,7 @@ export async function createGame(
         starts_at: input.startsAt,
         duration_minutes: input.durationMinutes,
         level: input.level,
-        spots: input.spots,
+        max_players: input.spots,
         latitude: input.coordinates.latitude,
         longitude: input.coordinates.longitude,
         is_public: input.isPublic,
