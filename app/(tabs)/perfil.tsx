@@ -13,6 +13,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { deleteAccount, signOut } from "../../src/auth/account";
 import { mostrarToast } from "../../src/components/Toast";
+import {
+    PRIVACIDADE_URL,
+    TERMOS_URL,
+    abrirDocumento,
+} from "../../src/legal/links";
 import { useSession } from "../../src/auth/useSession";
 import { Stripes, initials } from "../../src/design/pieces";
 import { useTheme, useThemedStyles } from "../../src/design/theme";
@@ -236,6 +241,26 @@ export default function PerfilScreen() {
                         </Text>
                     </Pressable>
                 )}
+
+                <View style={styles.legal}>
+                    <Pressable
+                        hitSlop={8}
+                        onPress={() => abrirDocumento(PRIVACIDADE_URL)}
+                    >
+                        <Text style={[type.metadado, styles.legalTexto]}>
+                            Política de privacidade
+                        </Text>
+                    </Pressable>
+                    <Text style={[type.metadado, styles.legalTexto]}>·</Text>
+                    <Pressable
+                        hitSlop={8}
+                        onPress={() => abrirDocumento(TERMOS_URL)}
+                    >
+                        <Text style={[type.metadado, styles.legalTexto]}>
+                            Termos de uso
+                        </Text>
+                    </Pressable>
+                </View>
             </View>
         </ScrollView>
     );
@@ -351,6 +376,14 @@ const criarEstilos = (c: Palette) =>
         paddingVertical: spacing.sm,
     },
     pedirExclusaoTexto: {
+        color: c.mute,
+    },
+    legal: {
+        flexDirection: "row",
+        justifyContent: "center",
+        gap: spacing.sm,
+    },
+    legalTexto: {
         color: c.mute,
     },
     confirmacao: {

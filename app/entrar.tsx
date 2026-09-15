@@ -13,6 +13,11 @@ import {
 
 import { AuthError, signIn } from "../src/auth/account";
 import { useReenvio } from "../src/auth/useReenvio";
+import {
+    PRIVACIDADE_URL,
+    TERMOS_URL,
+    abrirDocumento,
+} from "../src/legal/links";
 import { useSession } from "../src/auth/useSession";
 import { colors, radius, size, spacing, type } from "../src/design/tokens";
 
@@ -189,8 +194,21 @@ export default function SignInScreen() {
                     </Link>
 
                     <Text style={[type.metadado, styles.nota]}>
-                        Ao entrar você concorda em aparecer na lista de presença
-                        dos jogos que confirmar.
+                        Ao entrar você concorda com os{" "}
+                        <Text
+                            style={styles.notaLink}
+                            onPress={() => abrirDocumento(TERMOS_URL)}
+                        >
+                            Termos de uso
+                        </Text>{" "}
+                        e a{" "}
+                        <Text
+                            style={styles.notaLink}
+                            onPress={() => abrirDocumento(PRIVACIDADE_URL)}
+                        >
+                            Política de privacidade
+                        </Text>
+                        .
                     </Text>
                 </View>
             </ScrollView>
@@ -320,5 +338,9 @@ const styles = StyleSheet.create({
         marginTop: spacing.sm,
         textAlign: "center",
         color: NOTA,
+    },
+    notaLink: {
+        color: TEXTO_SUAVE,
+        textDecorationLine: "underline",
     },
 });

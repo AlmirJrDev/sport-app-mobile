@@ -17,6 +17,11 @@ import {
 } from "../src/auth/pending";
 import { toIsoDate, ufToCode } from "../src/auth/uf";
 import { useReenvio } from "../src/auth/useReenvio";
+import {
+    PRIVACIDADE_URL,
+    TERMOS_URL,
+    abrirDocumento,
+} from "../src/legal/links";
 import { useSession } from "../src/auth/useSession";
 import { useThemedStyles } from "../src/design/theme";
 import {
@@ -215,6 +220,25 @@ export default function SignUpScreen() {
                         onPress={handleStep1}
                         disabled={!canSubmitStep1}
                     />
+
+                    <Text style={[type.bodySm, styles.lead]}>
+                        Ao continuar você confirma ter 13 anos ou mais (menores
+                        de 18 com autorização do responsável) e concorda com os{" "}
+                        <Text
+                            style={styles.link}
+                            onPress={() => abrirDocumento(TERMOS_URL)}
+                        >
+                            Termos de uso
+                        </Text>{" "}
+                        e a{" "}
+                        <Text
+                            style={styles.link}
+                            onPress={() => abrirDocumento(PRIVACIDADE_URL)}
+                        >
+                            Política de privacidade
+                        </Text>
+                        .
+                    </Text>
                 </Card>
             ) : (
                 <Card style={styles.card}>

@@ -1,0 +1,113 @@
+:root {
+  color-scheme: light;
+  --fundo: #FAFAFB;
+  --texto: #1E293B;
+  --forte: #0F172A;
+  --suave: #64748B;
+  --linha: #E2E8F0;
+  --laranja: #E65100;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+a { color: var(--laranja); }
+a:focus-visible { outline: 2px solid var(--laranja); outline-offset: 3px; }
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px;
+  border-bottom: 1px solid var(--linha);
+}
+
+.topo nav a { font-size: 14px; font-weight: 600; text-decoration: none; }
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--forte);
+  font-family: "Teko", "Arial Narrow", sans-serif;
+  font-size: 28px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.marca img { width: 30px; height: 30px; }
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 20px 56px;
+}
+
+.rotulo {
+  margin: 0;
+  color: var(--laranja);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 4px 0 0;
+  color: var(--forte);
+  font-family: "Teko", "Arial Narrow", sans-serif;
+  font-size: clamp(40px, 9vw, 60px);
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.data { margin: 8px 0 28px; color: var(--suave); font-size: 14px; }
+
+h2 {
+  margin: 40px 0 8px;
+  padding-top: 24px;
+  border-top: 1px solid var(--linha);
+  color: var(--forte);
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+h3 { margin: 20px 0 4px; color: var(--forte); font-size: 16px; }
+
+p { margin: 10px 0; }
+
+ul { margin: 10px 0; padding-left: 22px; }
+li { margin: 6px 0; }
+li::marker { color: var(--laranja); }
+
+strong { color: var(--forte); }
+
+mark {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #FFEDD5;
+  color: #9A3412;
+}
+
+.rodape {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  border-top: 1px solid var(--linha);
+  color: var(--suave);
+  font-size: 14px;
+  text-align: center;
+}
