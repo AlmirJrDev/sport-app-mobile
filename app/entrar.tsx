@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import { AuthError, signIn } from "../src/auth/account";
+import { useReenvio } from "../src/auth/useReenvio";
 import { useSession } from "../src/auth/useSession";
 import { colors, radius, size, spacing, type } from "../src/design/tokens";
 
@@ -29,6 +30,8 @@ export default function SignInScreen() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    const [semVerificar, setSemVerificar] = useState(false);
+    const reenvio = useReenvio(email);
 
     if (loading) {
         return (
@@ -47,16 +50,24 @@ export default function SignInScreen() {
     const handleSubmit = async () => {
         setBusy(true);
         setError(null);
+        setSemVerificar(false);
 
         try {
             await signIn(email, password);
             reload();
             router.replace("/");
         } catch (raw) {
+            const naoVerificado =
+                raw instanceof AuthError &&
+                raw.message === "Usuário não autenticado";
+
+            setSemVerificar(naoVerificado);
             setError(
-                raw instanceof AuthError
-                    ? raw.message
-                    : "Não deu para entrar agora.",
+                naoVerificado
+                    ? "Falta confirmar seu e-mail. Abra o link que mandamos no cadastro."
+                    : raw instanceof AuthError
+                      ? raw.message
+                      : "Não deu para entrar agora.",
             );
         } finally {
             setBusy(false);
@@ -127,6 +138,31 @@ export default function SignInScreen() {
 
                     {error ? (
                         <Text style={[type.corpoSm, styles.erro]}>{error}</Text>
+                    ) : null}
+
+                    {semVerificar ? (
+                        <View style={styles.reenvio}>
+                            <Pressable
+                                style={[
+                                    styles.reenvioBotao,
+                                    reenvio.bloqueado && styles.reenvioBloqueado,
+                                ]}
+                                disabled={reenvio.bloqueado}
+                                onPress={reenvio.reenviar}
+                            >
+                                <Text
+                                    style={[type.labelCampo, styles.reenvioTexto]}
+                                >
+                                    {reenvio.rotulo}
+                                </Text>
+                            </Pressable>
+
+                            {reenvio.recado ? (
+                                <Text style={[type.corpoSm, styles.reenvioRecado]}>
+                                    {reenvio.recado}
+                                </Text>
+                            ) : null}
+                        </View>
                     ) : null}
 
                     <Pressable
@@ -232,6 +268,26 @@ const styles = StyleSheet.create({
     },
     erro: {
         color: colors.primary,
+    },
+    reenvio: {
+        gap: spacing.sm,
+    },
+    reenvioBotao: {
+        alignSelf: "flex-start",
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.lg,
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: CONTORNO,
+    },
+    reenvioBloqueado: {
+        opacity: 0.55,
+    },
+    reenvioTexto: {
+        color: colors.onPrimary,
+    },
+    reenvioRecado: {
+        color: TEXTO_SUAVE,
     },
     cta: {
         minHeight: size.cta,

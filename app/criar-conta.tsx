@@ -16,6 +16,7 @@ import {
     savePending,
 } from "../src/auth/pending";
 import { toIsoDate, ufToCode } from "../src/auth/uf";
+import { useReenvio } from "../src/auth/useReenvio";
 import { useSession } from "../src/auth/useSession";
 import { useThemedStyles } from "../src/design/theme";
 import {
@@ -177,24 +178,13 @@ export default function SignUpScreen() {
             </View>
 
             {sent ? (
-                <Card style={styles.card}>
-                    <Text style={[type.bodyMd, styles.title]}>
-                        Confira seu e-mail
-                    </Text>
-                    <Text style={[type.bodySm, styles.lead]}>
-                        Enviamos um link para {email}. Abra ele para completar
-                        seus dados e concluir o cadastro.
-                    </Text>
-
-                    <Button
-                        label="Continuar aqui mesmo"
-                        variant="tertiary"
-                        onPress={() => {
-                            setSent(false);
-                            setStep(2);
-                        }}
-                    />
-                </Card>
+                <ConfiraEmail
+                    email={email}
+                    onContinuar={() => {
+                        setSent(false);
+                        setStep(2);
+                    }}
+                />
             ) : step === 1 ? (
                 <Card style={styles.card}>
                     <Field
@@ -303,6 +293,42 @@ export default function SignUpScreen() {
                 </Link>
             </View>
         </ScrollView>
+    );
+}
+
+function ConfiraEmail({
+    email,
+    onContinuar,
+}: {
+    email: string;
+    onContinuar: () => void;
+}) {
+    const styles = useThemedStyles(criarEstilos);
+    const reenvio = useReenvio(email, true);
+
+    return (
+        <Card style={styles.card}>
+            <Text style={[type.bodyMd, styles.title]}>Confira seu e-mail</Text>
+            <Text style={[type.bodySm, styles.lead]}>
+                Enviamos um link para {email}. Abra ele para completar seus
+                dados e concluir o cadastro. Se não aparecer, olhe o spam.
+            </Text>
+
+            <Button label="Continuar aqui mesmo" onPress={onContinuar} />
+
+            <Button
+                label={reenvio.rotulo}
+                variant="tertiary"
+                disabled={reenvio.bloqueado}
+                onPress={reenvio.reenviar}
+            />
+
+            {reenvio.recado ? (
+                <Text style={[type.bodySm, styles.notice]}>
+                    {reenvio.recado}
+                </Text>
+            ) : null}
+        </Card>
     );
 }
 

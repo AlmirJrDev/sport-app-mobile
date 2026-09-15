@@ -287,6 +287,23 @@ function motivoDoCampo(raw: unknown, campo: string): string | null {
     return typeof valor === "string" ? valor : null;
 }
 
+export async function resendVerification(email: string): Promise<void> {
+    try {
+        await apiFetch("/auth/email/send-verify-email", {
+            method: "POST",
+            body: { email: email.trim() },
+        });
+    } catch (raw) {
+        const motivo = motivoDoCampo(raw, "email");
+
+        if (motivo === "Usuário já verificado") {
+            throw new ApiError("Esse e-mail já foi confirmado. É só entrar.", 422);
+        }
+
+        throw motivo ? new ApiError(motivo, 422) : raw;
+    }
+}
+
 export async function requestPasswordReset(email: string): Promise<void> {
     try {
         await apiFetch("/auth/email/reset-password-request", {
