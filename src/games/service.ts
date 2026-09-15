@@ -116,52 +116,23 @@ async function isLocal(gameId: string): Promise<boolean> {
     return local.some((game) => game.id === gameId);
 }
 
-export interface CreateResult {
-    game: Game;
-    fallbackReason: string | null;
-}
-
 export async function createGame(
     input: NewGame,
     ids: { sportId: string; modalityId: string },
-): Promise<CreateResult> {
-    try {
-        const game = await createRemoteGame({
-            sport_id: ids.sportId,
-            modality_id: ids.modalityId,
-            place_name: input.placeName,
-            starts_at: input.startsAt,
-            duration_minutes: input.durationMinutes,
-            level: input.level,
-            spots: input.spots,
-            latitude: input.coordinates.latitude,
-            longitude: input.coordinates.longitude,
-            is_public: input.isPublic,
-            allow_join_after_start: input.allowJoinAfterStart,
-        });
-
-        return { game, fallbackReason: null };
-    } catch (raw) {
-        const reason =
-            raw instanceof Error ? raw.message : "A API recusou o jogo.";
-
-        const games = await readGames();
-        const player = await getPlayer().catch(() => null);
-
-        const game: Game = {
-            ...input,
-            source: "local",
-            id: `gm-${Date.now().toString(36)}`,
-            ownerId: player?.id ?? "local",
-            status: "aberto",
-            attendees: [],
-            score: { home: 0, away: 0 },
-        };
-
-        await writeGames([...games, game]);
-
-        return { game, fallbackReason: reason };
-    }
+): Promise<Game> {
+    return createRemoteGame({
+        sport_id: ids.sportId,
+        modality_id: ids.modalityId,
+        place_name: input.placeName,
+        starts_at: input.startsAt,
+        duration_minutes: input.durationMinutes,
+        level: input.level,
+        spots: input.spots,
+        latitude: input.coordinates.latitude,
+        longitude: input.coordinates.longitude,
+        is_public: input.isPublic,
+        allow_join_after_start: input.allowJoinAfterStart,
+    });
 }
 
 export async function deleteGame(gameId: string): Promise<void> {

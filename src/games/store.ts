@@ -4,8 +4,9 @@ import type { Game } from "./types";
 
 const KEY = "projetoh:games:v3";
 
-/** Os antigos jogos de demonstração foram gravados com esse dono. */
-const DONO_DEMONSTRACAO = "seed";
+/** Jogos de demonstração e cópias de quando a API falhava não valem mais. */
+const valeGuardar = (game: Game) =>
+    game.ownerId !== "seed" && game.source !== "local";
 
 let cache: Game[] | null = null;
 
@@ -16,7 +17,7 @@ export async function readGames(): Promise<Game[]> {
 
     const raw = await AsyncStorage.getItem(KEY);
     const guardados = raw ? (JSON.parse(raw) as Game[]) : [];
-    const reais = guardados.filter((game) => game.ownerId !== DONO_DEMONSTRACAO);
+    const reais = guardados.filter(valeGuardar);
 
     if (reais.length !== guardados.length) {
         await AsyncStorage.setItem(KEY, JSON.stringify(reais));

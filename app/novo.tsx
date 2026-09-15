@@ -48,6 +48,9 @@ const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
     minute: "2-digit",
 });
 
+const SEM_CATALOGO =
+    "Não deu para carregar os esportes. Confira a internet e abra a tela de novo.";
+
 function nextHalfHour(): string {
     const now = new Date();
 
@@ -162,7 +165,12 @@ export default function NewGameScreen() {
 
         listSports()
             .then(async (list) => {
-                if (!active || list.length === 0) {
+                if (!active) {
+                    return;
+                }
+
+                if (list.length === 0) {
+                    setNotice(SEM_CATALOGO);
                     return;
                 }
 
@@ -181,6 +189,7 @@ export default function NewGameScreen() {
             .catch(() => {
                 if (active) {
                     setOffline(true);
+                    setNotice(SEM_CATALOGO);
                 }
             });
 
@@ -246,34 +255,42 @@ export default function NewGameScreen() {
             return;
         }
 
-        setSaving(true);
-        setNotice(null);
-
-        const { fallbackReason } = await createGame(
-            {
-                sport,
-                modality,
-                placeName: placeName.trim(),
-                startsAt: startsAt.toISOString(),
-                durationMinutes,
-                level,
-                spots: Math.max(2, Number(spots) || 10),
-                coordinates: point,
-                isPublic: visibilidade === "Todo mundo",
-                allowJoinAfterStart: atrasado === "Pode",
-            },
-            { sportId, modalityId },
-        );
-
-        if (fallbackReason) {
-            setSaving(false);
-            setNotice(
-                `Não deu para salvar na API (${fallbackReason}). Marquei como jogo de demonstração, só neste aparelho.`,
-            );
+        if (!sportId || !modalityId) {
+            setNotice(SEM_CATALOGO);
             return;
         }
 
-        router.back();
+        setSaving(true);
+        setNotice(null);
+
+        try {
+            await createGame(
+                {
+                    sport,
+                    modality,
+                    placeName: placeName.trim(),
+                    startsAt: startsAt.toISOString(),
+                    durationMinutes,
+                    level,
+                    spots: Math.max(2, Number(spots) || 10),
+                    coordinates: point,
+                    isPublic: visibilidade === "Todo mundo",
+                    allowJoinAfterStart: atrasado === "Pode",
+                },
+                { sportId, modalityId },
+            );
+
+            router.back();
+        } catch (raw) {
+            const motivo =
+                raw instanceof Error && raw.message
+                    ? raw.message
+                    : "Não deu para falar com o servidor.";
+
+            setNotice(`O jogo não foi marcado. ${motivo}`);
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
