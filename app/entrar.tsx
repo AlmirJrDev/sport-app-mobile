@@ -80,7 +80,7 @@ export default function SignInScreen() {
 
                     <Text style={[type.corpoLg, styles.subtitulo]}>
                         Ache quem está jogando na sua rua, confirme presença e
-                        acompanhe o placar.
+                        avise quando chegar na quadra.
                     </Text>
                 </View>
 

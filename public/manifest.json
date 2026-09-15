@@ -1,7 +1,7 @@
 {
   "name": "Panela",
   "short_name": "Panela",
-  "description": "Ache jogos acontecendo perto de você, marque presença e acompanhe o placar.",
+  "description": "Ache jogos acontecendo perto de você, marque presença e avise quando chegar.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

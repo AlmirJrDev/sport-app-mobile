@@ -15,6 +15,7 @@ import {
 import {
     SKILL_LABEL,
     currentStatus,
+    endsAt,
     joinBlockReason,
     type Game,
 } from "../games/types";
@@ -129,12 +130,10 @@ export default function GameSheet({
 
                 <View style={styles.placarBloco}>
                     <Text style={[type.placar, styles.placar]}>
-                        {aoVivo
-                            ? `${game.score.home}–${game.score.away}`
-                            : horaFormatter.format(inicio)}
+                        {horaFormatter.format(aoVivo ? endsAt(game) : inicio)}
                     </Text>
                     <Text style={[type.labelTab, styles.placarRotulo]}>
-                        {aoVivo ? "placar" : "início"}
+                        {aoVivo ? "termina" : "início"}
                     </Text>
                 </View>
             </View>

@@ -12,7 +12,6 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
-    addPoints,
     cancelGame,
     deleteGame,
     finishGame,
@@ -52,8 +51,6 @@ const hora = new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
 });
-
-const POINT_STEPS = [1, 2, 3];
 
 export default function GameScreen() {
     const { colors } = useTheme();
@@ -106,6 +103,8 @@ export default function GameScreen() {
     const isCancelled = situacao === "cancelado";
     const aoVivo = situacao === "em-andamento";
     const isOwner = game.ownerId === playerId;
+    const temSituacao =
+        isCancelled || isFinished || isOwner || game.source === "local";
     const bloqueio = me ? null : joinBlockReason(game);
     const travado = isFull || bloqueio !== null;
     const chegadaTravada = game.source === "api" && Boolean(me?.arrived);
@@ -275,86 +274,8 @@ export default function GameScreen() {
                         </Text>
                     </View>
 
+                    {temSituacao ? (
                     <View style={styles.bloco}>
-                        <Text style={[type.labelCampo, styles.rotulo]}>
-                            Placar
-                        </Text>
-
-                        <View style={styles.placar}>
-                            {(["home", "away"] as const).map((lado) => (
-                                <View style={styles.time} key={lado}>
-                                    <Text
-                                        style={[type.labelTab, styles.timeNome]}
-                                    >
-                                        {lado === "home" ? "Time A" : "Time B"}
-                                    </Text>
-
-                                    <Text
-                                        style={[type.placar, styles.timePlacar]}
-                                    >
-                                        {game.score[lado]}
-                                    </Text>
-
-                                    <View style={styles.pontos}>
-                                        {POINT_STEPS.map((valor) => (
-                                            <Pressable
-                                                key={valor}
-                                                style={[
-                                                    styles.ponto,
-                                                    !aoVivo &&
-                                                        styles.pontoTravado,
-                                                ]}
-                                                disabled={!aoVivo}
-                                                onPress={() =>
-                                                    run(
-                                                        addPoints(
-                                                            game,
-                                                            lado,
-                                                            valor,
-                                                        ),
-                                                    )
-                                                }
-                                            >
-                                                <Text
-                                                    style={[
-                                                        type.labelTab,
-                                                        aoVivo
-                                                            ? styles.pontoTexto
-                                                            : styles.pontoTextoTravado,
-                                                    ]}
-                                                >
-                                                    +{valor}
-                                                </Text>
-                                            </Pressable>
-                                        ))}
-                                    </View>
-
-                                    <Pressable
-                                        disabled={!aoVivo}
-                                        onPress={() =>
-                                            run(addPoints(game, lado, -1))
-                                        }
-                                    >
-                                        <Text
-                                            style={[
-                                                type.metadado,
-                                                styles.desfazer,
-                                            ]}
-                                        >
-                                            −1
-                                        </Text>
-                                    </Pressable>
-                                </View>
-                            ))}
-                        </View>
-
-                        {!aoVivo && !isFinished && !isCancelled ? (
-                            <Text style={[type.metadado, styles.nota]}>
-                                O placar abre {hora.format(new Date(game.startsAt))},
-                                quando o jogo começa.
-                            </Text>
-                        ) : null}
-
                         {isCancelled ? (
                             <Text style={[type.metadado, styles.nota]}>
                                 Jogo cancelado por quem marcou.
@@ -405,6 +326,7 @@ export default function GameScreen() {
                             </Pressable>
                         ) : null}
                     </View>
+                    ) : null}
 
                     <View style={styles.bloco}>
                         <Text style={[type.labelCampo, styles.rotulo]}>
@@ -662,46 +584,6 @@ const criarEstilos = (c: Palette) =>
         height: 8,
         borderRadius: 4,
         backgroundColor: c.primary,
-    },
-    placar: {
-        flexDirection: "row",
-        gap: spacing.md,
-    },
-    time: {
-        flex: 1,
-        alignItems: "center",
-        gap: spacing.sm,
-        paddingVertical: spacing.lg,
-        borderRadius: radius.md,
-        backgroundColor: c.canvasSoft,
-    },
-    timeNome: {
-        color: c.mute,
-    },
-    timePlacar: {
-        color: c.ink,
-    },
-    pontos: {
-        flexDirection: "row",
-        gap: spacing.xs,
-    },
-    ponto: {
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.md,
-        borderRadius: 10,
-        backgroundColor: c.ink,
-    },
-    pontoTravado: {
-        backgroundColor: c.canvasSoft,
-    },
-    pontoTexto: {
-        color: c.canvas,
-    },
-    pontoTextoTravado: {
-        color: c.mute,
-    },
-    desfazer: {
-        color: c.mute,
     },
     encerrar: {
         alignItems: "center",

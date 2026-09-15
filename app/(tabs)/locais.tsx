@@ -217,9 +217,7 @@ function LinhaJogo({ game, onPress }: { game: Game; onPress: () => void }) {
             </View>
 
             {vivo ? (
-                <Text style={[type.pontos, styles.linhaPlacar]}>
-                    {game.score.home}–{game.score.away}
-                </Text>
+                <Text style={[type.eyebrow, styles.linhaVivo]}>Ao vivo</Text>
             ) : null}
         </Pressable>
     );
@@ -335,7 +333,7 @@ const criarEstilos = (c: Palette) =>
     linhaDetalhe: {
         color: c.mute,
     },
-    linhaPlacar: {
+    linhaVivo: {
         color: c.primary,
     },
     rodape: {

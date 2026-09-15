@@ -11,7 +11,7 @@ import {
     listRemoteGames,
 } from "./remote";
 import { readGames, updateGame, writeGames } from "./store";
-import { currentStatus, endsAt } from "./types";
+import { endsAt } from "./types";
 import type { Coordinates, Game, NewGame } from "./types";
 
 const EARTH_RADIUS_KM = 6371;
@@ -224,30 +224,6 @@ export async function toggleArrival(gameId: string): Promise<Game | null> {
     }));
 
     return game;
-}
-
-/** O placar é local, então nada aqui vai à rede: o toque responde na hora. */
-export async function addPoints(
-    game: Game,
-    side: "home" | "away",
-    points: number,
-): Promise<Game | null> {
-    if (currentStatus(game) !== "em-andamento") {
-        return game;
-    }
-
-    const score = {
-        ...game.score,
-        [side]: Math.max(0, game.score[side] + points),
-    };
-
-    if (game.source === "local") {
-        return updateGame(game.id, (atual) => ({ ...atual, score }));
-    }
-
-    await writeOverlay(game.id, (current) => ({ ...current, score }));
-
-    return { ...game, score };
 }
 
 export async function cancelGame(gameId: string): Promise<Game | null> {
