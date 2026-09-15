@@ -11,7 +11,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.panela.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "O Panela usa sua localização para mostrar os jogos acontecendo perto de você."
+        "NSLocationWhenInUseUsageDescription": "O Panela usa sua localização para mostrar os jogos acontecendo perto de você.",
+        "NSPhotoLibraryUsageDescription": "O Panela abre suas fotos para você escolher a imagem do seu perfil.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -46,7 +48,15 @@
           "locationWhenInUsePermission": "O Panela usa sua localização para mostrar os jogos acontecendo perto de você."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Panela abre suas fotos para você escolher a imagem do seu perfil.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }
