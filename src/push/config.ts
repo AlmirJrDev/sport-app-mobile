@@ -12,11 +12,11 @@ export const VAPID_KEY =
  * A chave privada do VAPID e o service account ficam SÓ no servidor.
  */
 export const FIREBASE_CONFIG = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    messagingSenderId: "",
-    appId: "",
+    apiKey: "AIzaSyC7705KAccBAnK1gSPbVrodE2LK1VobDoA",
+    authDomain: "sport-app-a3ce7.firebaseapp.com",
+    projectId: "sport-app-a3ce7",
+    messagingSenderId: "527585209847",
+    appId: "1:527585209847:web:efbcdc71f571dcd4ec12f2",
 };
 
 export function isPushConfigured(): boolean {

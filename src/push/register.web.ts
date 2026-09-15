@@ -15,6 +15,9 @@ export interface PushResult {
 
 const SW_PATH = "/firebase-messaging-sw.js";
 
+/** Escopo próprio para não tomar o lugar do sw.js, que cuida do cache do PWA. */
+const SW_SCOPE = "/firebase-cloud-messaging-push-scope";
+
 function suportado(): boolean {
     return (
         typeof window !== "undefined" &&
@@ -83,7 +86,7 @@ export async function enablePush(): Promise<PushResult> {
 
     try {
         const registro = await navigator.serviceWorker.register(swUrl(), {
-            scope: "/",
+            scope: SW_SCOPE,
         });
 
         const [{ initializeApp }, { getMessaging, getToken, isSupported }] =

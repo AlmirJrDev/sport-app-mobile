@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
     ActivityIndicator,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -33,7 +34,6 @@ import {
     pushStatus,
     type PushState,
 } from "../../src/push/register";
-import { shareInvite } from "../../src/share/share";
 
 const ICONS: Record<string, IconName> = {
     game_joined: "convite",
@@ -44,17 +44,18 @@ const ICONS: Record<string, IconName> = {
 };
 
 const ESTADO_TEXTO: Record<PushState, string> = {
-    "sem-config": "Falta a configuração do Firebase para ligar o push.",
+    "sem-config": "As notificações ainda não estão disponíveis.",
     "nao-suportado":
-        "Este aparelho não faz push aqui. No iPhone, só com o app instalado na tela de início.",
+        "Este navegador não recebe notificações. No iPhone, instale o Panela na tela de início.",
     bloqueado:
         "As notificações estão bloqueadas para este site nas permissões do navegador.",
-    desativado: "Receba aviso quando seu jogo estiver perto de começar.",
+    desativado:
+        "Saiba quando alguém entrar no seu jogo ou quando um jogo for cancelado.",
     ativado: "Notificações ligadas neste aparelho.",
 };
 
 const PREFERENCIAS: [keyof NotificationPrefs, string][] = [
-    ["push", "Push neste aparelho"],
+    ["push", "Notificações no celular"],
     ["noApp", "Avisos dentro do app"],
     ["jogos", "Movimento nos meus jogos"],
     ["social", "Quando alguém interage comigo"],
@@ -277,36 +278,54 @@ export default function NotificacoesScreen() {
     );
 }
 
+/** Com a permissão já dada, renova o token na API sem pedir nada à pessoa. */
+async function sincronizarAparelho(): Promise<boolean> {
+    const resultado = await enablePush();
+
+    if (!resultado.token) {
+        return false;
+    }
+
+    await registerDevice(resultado.token);
+
+    return true;
+}
+
 function PushCard() {
     const styles = useThemedStyles(criarEstilos);
     const [estado, setEstado] = useState<PushState | null>(null);
-    const [token, setToken] = useState<string | null>(null);
     const [recado, setRecado] = useState<string | null>(null);
 
     useEffect(() => {
-        pushStatus().then(setEstado);
+        pushStatus().then((atual) => {
+            setEstado(atual);
+
+            if (atual === "ativado") {
+                sincronizarAparelho().catch(() => {});
+            }
+        });
     }, []);
 
-    if (!estado) {
+    if (!estado || Platform.OS !== "web") {
         return null;
     }
 
     const ligar = async () => {
         const resultado = await enablePush();
 
-        setEstado(resultado.state);
-        setToken(resultado.token ?? null);
-
         if (!resultado.token) {
+            setEstado(resultado.state);
             setRecado(resultado.message ?? null);
             return;
         }
 
         try {
             await registerDevice(resultado.token);
-            setRecado("Aparelho registrado para receber avisos.");
+            setEstado("ativado");
+            setRecado(null);
         } catch {
-            setRecado("Peguei o token, mas a API não registrou o aparelho.");
+            setEstado("desativado");
+            setRecado("Não deu para ligar as notificações agora. Tente de novo.");
         }
     };
 
@@ -325,16 +344,6 @@ function PushCard() {
                 </Pressable>
             ) : null}
 
-            {token ? (
-                <Pressable
-                    style={styles.pushToken}
-                    onPress={() => shareInvite(token)}
-                >
-                    <Text style={[type.metadado, styles.pushTokenTexto]}>
-                        {token.slice(0, 24)}… — toque para copiar o token
-                    </Text>
-                </Pressable>
-            ) : null}
         </View>
     );
 }
@@ -486,14 +495,6 @@ const criarEstilos = (c: Palette) =>
         },
         pushBotaoTexto: {
             color: c.onPrimary,
-        },
-        pushToken: {
-            padding: spacing.sm,
-            borderRadius: 10,
-            backgroundColor: c.canvasSoft,
-        },
-        pushTokenTexto: {
-            color: c.mute,
         },
         pref: {
             flexDirection: "row",
