@@ -3,12 +3,14 @@ import {
     Map as MapLibreMap,
     Marker,
     setWorkerUrl,
+    type GeoJSONSource,
 } from "maplibre-gl";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import type { Coordinates, Game } from "../games/types";
 import { OSM_STYLE, baseMapStyle } from "../map/basemap";
+import { COR_VOCE, areaDeBusca, type AreaBusca } from "../map/raio";
 import { useTheme } from "../design/theme";
 
 setWorkerUrl("/maplibre-gl-worker.mjs");
@@ -24,6 +26,52 @@ interface GameMapProps {
     onSelectGame: (game: Game) => void;
     onClearSelection: () => void;
     onCenterChange?: (center: Coordinates) => void;
+    /** Com raio, o mapa desenha a área da busca em volta de `center`. */
+    raioKm?: number;
+    voce?: Coordinates | null;
+}
+
+function desenharArea(map: MapLibreMap, area: AreaBusca, cor: string) {
+    const fonte = map.getSource("area") as GeoJSONSource | undefined;
+
+    if (fonte) {
+        fonte.setData(area.circulo);
+        return;
+    }
+
+    map.addSource("area", { type: "geojson", data: area.circulo });
+    map.addLayer({
+        id: "area-fundo",
+        type: "fill",
+        source: "area",
+        paint: { "fill-color": cor, "fill-opacity": 0.07 },
+    });
+    map.addLayer({
+        id: "area-borda",
+        type: "line",
+        source: "area",
+        paint: {
+            "line-color": cor,
+            "line-opacity": 0.55,
+            "line-width": 2,
+            "line-dasharray": [2, 2],
+        },
+    });
+}
+
+function pontoVoce(canvas: string): HTMLDivElement {
+    const element = document.createElement("div");
+
+    element.style.width = "20px";
+    element.style.height = "20px";
+    element.style.borderRadius = "50%";
+    element.style.boxSizing = "border-box";
+    element.style.backgroundColor = COR_VOCE;
+    element.style.border = `3px solid ${canvas}`;
+    element.style.boxShadow = `0 0 0 6px ${COR_VOCE}33, 0 6px 14px -4px rgba(10,8,6,.5)`;
+    element.style.pointerEvents = "none";
+
+    return element;
 }
 
 export default function GameMap({
@@ -33,13 +81,24 @@ export default function GameMap({
     onSelectGame,
     onClearSelection,
     onCenterChange,
+    raioKm,
+    voce,
 }: GameMapProps) {
     const { colors, isDark } = useTheme();
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<MapLibreMap | null>(null);
     const markersRef = useRef<Marker[]>([]);
+    const voceRef = useRef<Marker | null>(null);
+    const enquadrouRef = useRef(false);
     const baseRef = useRef<BaseAtual>(isDark ? "escuro" : "claro");
     const [semMapa, setSemMapa] = useState(false);
+
+    const area = raioKm ? areaDeBusca(center, raioKm) : null;
+    const areaRef = useRef(area);
+    const corRef = useRef(colors.primary);
+
+    areaRef.current = area;
+    corRef.current = colors.primary;
 
     useEffect(() => {
         if (!containerRef.current || mapRef.current) {
@@ -61,7 +120,7 @@ export default function GameMap({
             }
 
             baseRef.current = "raster";
-            map.setStyle(OSM_STYLE);
+            map.setStyle(OSM_STYLE, { diff: false });
 
             ultimaChance = setTimeout(() => {
                 if (!map.loaded()) {
@@ -89,6 +148,13 @@ export default function GameMap({
             clearTimeout(prazo);
             map.off("error", aoErro);
             setSemMapa(false);
+        });
+
+        /** Trocar o estilo apaga as camadas; a área volta a cada estilo novo. */
+        map.on("style.load", () => {
+            if (areaRef.current) {
+                desenharArea(map, areaRef.current, corRef.current);
+            }
         });
 
         map.on("click", () => onClearSelection());
@@ -120,8 +186,46 @@ export default function GameMap({
         }
 
         baseRef.current = alvo;
-        map.setStyle(baseMapStyle(isDark));
+        map.setStyle(baseMapStyle(isDark), { diff: false });
     }, [isDark]);
+
+    useEffect(() => {
+        const map = mapRef.current;
+
+        if (!map || !area) {
+            return;
+        }
+
+        if (map.isStyleLoaded()) {
+            desenharArea(map, area, colors.primary);
+        }
+
+        if (!enquadrouRef.current) {
+            enquadrouRef.current = true;
+            map.fitBounds(area.limites, { padding: 32, duration: 0 });
+        }
+    }, [area?.centro[0], area?.centro[1], raioKm]);
+
+    useEffect(() => {
+        const map = mapRef.current;
+
+        if (!map) {
+            return;
+        }
+
+        if (!voce) {
+            voceRef.current?.remove();
+            voceRef.current = null;
+            return;
+        }
+
+        if (!voceRef.current) {
+            voceRef.current = new Marker({ element: pontoVoce(colors.canvas) });
+            voceRef.current.addTo(map);
+        }
+
+        voceRef.current.setLngLat([voce.longitude, voce.latitude]);
+    }, [voce?.latitude, voce?.longitude]);
 
     useEffect(() => {
         const map = mapRef.current;

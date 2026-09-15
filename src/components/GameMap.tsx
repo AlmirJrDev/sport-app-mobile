@@ -5,6 +5,7 @@ import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { useTheme } from "../design/theme";
 import type { Coordinates, Game } from "../games/types";
 import { baseMapStyle } from "../map/basemap";
+import { areaDeBusca } from "../map/raio";
 import { buildMapHtml, type PinoMapa } from "../map/webMapHtml";
 
 interface GameMapProps {
@@ -14,6 +15,9 @@ interface GameMapProps {
     onSelectGame: (game: Game) => void;
     onClearSelection: () => void;
     onCenterChange?: (center: Coordinates) => void;
+    /** Com raio, o mapa desenha a área da busca em volta de `center`. */
+    raioKm?: number;
+    voce?: Coordinates | null;
 }
 
 type Mensagem =
@@ -41,30 +45,31 @@ export default function GameMap({
     onSelectGame,
     onClearSelection,
     onCenterChange,
+    raioKm,
+    voce,
 }: GameMapProps) {
     const { colors, isDark } = useTheme();
     const webview = useRef<WebView>(null);
     const pronto = useRef(false);
 
-    const atual = useRef({
-        games,
-        selectedGameId,
-        colors,
-        isDark,
-        onSelectGame,
-        onClearSelection,
-        onCenterChange,
-    });
+    const area = raioKm ? areaDeBusca(center, raioKm) : null;
+    const pontoVoce = voce ? { lat: voce.latitude, lng: voce.longitude } : null;
 
-    atual.current = {
+    const valores = {
         games,
         selectedGameId,
         colors,
         isDark,
+        area,
+        pontoVoce,
         onSelectGame,
         onClearSelection,
         onCenterChange,
     };
+
+    const atual = useRef(valores);
+
+    atual.current = valores;
 
     /** A página nasce uma vez; depois tudo muda por mensagem, sem recarregar o mapa. */
     const html = useMemo(
@@ -101,6 +106,14 @@ export default function GameMap({
         chamar("setTheme", baseMapStyle(isDark), colors);
     }, [isDark]);
 
+    useEffect(() => {
+        chamar("setArea", area);
+    }, [area?.centro[0], area?.centro[1], raioKm]);
+
+    useEffect(() => {
+        chamar("setVoce", pontoVoce);
+    }, [pontoVoce?.lat, pontoVoce?.lng]);
+
     const aoReceber = (evento: WebViewMessageEvent) => {
         let mensagem: Mensagem;
 
@@ -117,6 +130,8 @@ export default function GameMap({
             chamar("setTheme", baseMapStyle(agora.isDark), agora.colors);
             chamar("setGames", pinos(agora.games));
             chamar("setSelected", agora.selectedGameId);
+            chamar("setArea", agora.area);
+            chamar("setVoce", agora.pontoVoce);
             return;
         }
 

@@ -204,6 +204,8 @@ export default function MapScreen() {
                     onSelectGame={selecionarJogo}
                     onClearSelection={limparSelecao}
                     onCenterChange={setMapCenter}
+                    raioKm={RADIUS_KM}
+                    voce={coordinate ? center : null}
                 />
             ) : (
                 <GameList

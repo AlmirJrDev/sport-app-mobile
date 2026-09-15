@@ -1,4 +1,5 @@
 import type { Palette } from "../design/tokens";
+import { COR_VOCE } from "./raio";
 
 const MAPLIBRE = "https://cdn.jsdelivr.net/npm/maplibre-gl@5.9.0/dist";
 
@@ -35,6 +36,7 @@ export function buildMapHtml(inicio: Inicio): string {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap">
 <style>
   html, body, #mapa { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: ${inicio.colors.canvas}; }
+  .voce { width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%; background: ${COR_VOCE}; border: 3px solid ${inicio.colors.canvas}; box-shadow: 0 0 0 6px ${COR_VOCE}33, 0 6px 14px -4px rgba(10,8,6,.5); pointer-events: none; }
   .pino { display: flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 50%; cursor: pointer; font-family: "Bebas Neue", sans-serif; letter-spacing: 1px; -webkit-tap-highlight-color: transparent; }
   .maplibregl-ctrl-attrib { font-size: 10px; }
 </style>
@@ -49,6 +51,9 @@ export function buildMapHtml(inicio: Inicio): string {
   var pinos = [];
   var selecionado = null;
   var marcadores = [];
+  var area = null;
+  var enquadrou = false;
+  var voce = null;
 
   function avisar(mensagem) {
     if (window.ReactNativeWebView) {
@@ -103,13 +108,54 @@ export function buildMapHtml(inicio: Inicio): string {
     });
   }
 
+  function desenharArea(evento) {
+    if (!area || (!evento && !map.isStyleLoaded())) return;
+
+    var fonte = map.getSource("area");
+
+    if (fonte) {
+      fonte.setData(area.circulo);
+      return;
+    }
+
+    map.addSource("area", { type: "geojson", data: area.circulo });
+    map.addLayer({ id: "area-fundo", type: "fill", source: "area", paint: { "fill-color": cores.primary, "fill-opacity": 0.07 } });
+    map.addLayer({ id: "area-borda", type: "line", source: "area", paint: { "line-color": cores.primary, "line-opacity": 0.55, "line-width": 2, "line-dasharray": [2, 2] } });
+  }
+
+  map.on("style.load", desenharArea);
+
   window.panela = {
+    setArea: function (novaArea) {
+      area = novaArea;
+      desenharArea();
+
+      if (area && !enquadrou) {
+        enquadrou = true;
+        map.fitBounds(area.limites, { padding: 32, duration: 0 });
+      }
+    },
+    setVoce: function (pos) {
+      if (!pos) {
+        if (voce) voce.remove();
+        voce = null;
+        return;
+      }
+
+      if (!voce) {
+        var el = document.createElement("div");
+        el.className = "voce";
+        voce = new maplibregl.Marker({ element: el }).setLngLat([pos.lng, pos.lat]).addTo(map);
+      }
+
+      voce.setLngLat([pos.lng, pos.lat]);
+    },
     setGames: function (lista) { pinos = lista || []; desenhar(); },
     setSelected: function (id) { selecionado = id; desenhar(); },
     setTheme: function (estilo, novasCores) {
       cores = novasCores;
       document.body.style.background = cores.canvas;
-      map.setStyle(estilo);
+      map.setStyle(estilo, { diff: false });
       desenhar();
     }
   };
