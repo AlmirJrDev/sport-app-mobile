@@ -46,7 +46,6 @@
           "locationWhenInUsePermission": "O Panela usa sua localização para mostrar os jogos acontecendo perto de você."
         }
       ],
-      "@maplibre/maplibre-react-native",
       "expo-font"
     ]
   }

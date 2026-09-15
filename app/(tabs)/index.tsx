@@ -28,7 +28,6 @@ import {
     type Palette,
 } from "../../src/design/tokens";
 import { FALLBACK_CENTER } from "../../src/games/center";
-import { isExpoGo } from "../../src/platform/expoGo";
 import {
     distanceFor,
     listNearbyGames,
@@ -53,9 +52,7 @@ export default function MapScreen() {
     const [erroApi, setErroApi] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [mapCenter, setMapCenter] = useState<Coordinates | null>(null);
-    const [vista, setVista] = useState<"mapa" | "lista">(
-        isExpoGo ? "lista" : "mapa",
-    );
+    const [vista, setVista] = useState<"mapa" | "lista">("mapa");
     const [avisoAcao, setAvisoAcao] = useState<string | null>(null);
     const [ocupado, setOcupado] = useState(false);
 
