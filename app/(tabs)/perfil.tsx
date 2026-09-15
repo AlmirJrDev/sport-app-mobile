@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { signOut } from "../../src/auth/account";
+import { deleteAccount, signOut } from "../../src/auth/account";
+import { mostrarToast } from "../../src/components/Toast";
 import { useSession } from "../../src/auth/useSession";
 import { Stripes, initials } from "../../src/design/pieces";
 import { useTheme, useThemedStyles } from "../../src/design/theme";
@@ -33,6 +34,9 @@ export default function PerfilScreen() {
     const insets = useSafeAreaInsets();
     const { account, loading, reload } = useSession();
     const [perfil, setPerfil] = useState<Profile | null>(null);
+    const [confirmando, setConfirmando] = useState(false);
+    const [excluindo, setExcluindo] = useState(false);
+    const [erroExclusao, setErroExclusao] = useState<string | null>(null);
 
     useEffect(() => {
         if (account) {
@@ -56,6 +60,25 @@ export default function PerfilScreen() {
         await signOut();
         reload();
         router.replace("/entrar");
+    };
+
+    const excluir = async () => {
+        setErroExclusao(null);
+        setExcluindo(true);
+
+        try {
+            await deleteAccount();
+            reload();
+            router.replace("/entrar");
+            mostrarToast("Sua conta foi excluída.");
+        } catch (raw) {
+            setErroExclusao(
+                raw instanceof Error && raw.message
+                    ? raw.message
+                    : "Não deu para excluir sua conta agora. Tente de novo.",
+            );
+            setExcluindo(false);
+        }
     };
 
     const nome = perfil?.name || account.name;
@@ -154,6 +177,65 @@ export default function PerfilScreen() {
                         Sair da conta
                     </Text>
                 </Pressable>
+
+                {confirmando ? (
+                    <View style={styles.confirmacao}>
+                        <Text style={[type.nomeLista, styles.confirmacaoTitulo]}>
+                            Excluir sua conta?
+                        </Text>
+                        <Text style={[type.corpoSm, styles.confirmacaoTexto]}>
+                            Seu perfil e seus dados saem do Panela e você não
+                            consegue mais entrar com este e-mail. Não dá para
+                            desfazer.
+                        </Text>
+
+                        {erroExclusao ? (
+                            <Text style={[type.corpoSm, styles.erro]}>
+                                {erroExclusao}
+                            </Text>
+                        ) : null}
+
+                        <View style={styles.confirmacaoBotoes}>
+                            <Pressable
+                                style={styles.voltar}
+                                disabled={excluindo}
+                                onPress={() => {
+                                    setConfirmando(false);
+                                    setErroExclusao(null);
+                                }}
+                            >
+                                <Text style={[type.labelCampo, styles.voltarTexto]}>
+                                    Voltar
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={[
+                                    styles.excluir,
+                                    excluindo && styles.excluirOcupado,
+                                ]}
+                                disabled={excluindo}
+                                onPress={excluir}
+                            >
+                                <Text
+                                    style={[type.labelCampo, styles.excluirTexto]}
+                                >
+                                    {excluindo ? "Excluindo…" : "Excluir"}
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                ) : (
+                    <Pressable
+                        style={styles.pedirExclusao}
+                        hitSlop={8}
+                        onPress={() => setConfirmando(true)}
+                    >
+                        <Text style={[type.labelCampo, styles.pedirExclusaoTexto]}>
+                            Excluir conta
+                        </Text>
+                    </Pressable>
+                )}
             </View>
         </ScrollView>
     );
@@ -262,5 +344,59 @@ const criarEstilos = (c: Palette) =>
     },
     sairTexto: {
         color: c.ink,
+    },
+    pedirExclusao: {
+        alignSelf: "center",
+        marginTop: -spacing.md,
+        paddingVertical: spacing.sm,
+    },
+    pedirExclusaoTexto: {
+        color: c.mute,
+    },
+    confirmacao: {
+        gap: spacing.md,
+        padding: spacing.lg,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: c.primary,
+    },
+    confirmacaoTitulo: {
+        color: c.ink,
+    },
+    confirmacaoTexto: {
+        color: c.body,
+    },
+    erro: {
+        color: c.primary,
+    },
+    confirmacaoBotoes: {
+        flexDirection: "row",
+        gap: spacing.sm,
+    },
+    voltar: {
+        flex: 1,
+        height: 44,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        borderWidth: 1,
+        borderColor: c.chipBorder,
+    },
+    voltarTexto: {
+        color: c.ink,
+    },
+    excluir: {
+        flex: 1,
+        height: 44,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: radius.sm,
+        backgroundColor: c.primary,
+    },
+    excluirOcupado: {
+        opacity: 0.6,
+    },
+    excluirTexto: {
+        color: c.onPrimary,
     },
 });

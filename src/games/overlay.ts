@@ -41,6 +41,11 @@ export async function readOverlays(): Promise<OverlayMap> {
     return readAll();
 }
 
+export async function resetOverlays(): Promise<void> {
+    cache = null;
+    await AsyncStorage.removeItem(KEY);
+}
+
 export async function writeOverlay(
     gameId: string,
     change: (current: GameOverlay) => GameOverlay,

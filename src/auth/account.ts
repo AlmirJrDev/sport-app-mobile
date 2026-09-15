@@ -8,6 +8,9 @@ import {
     pickTokens,
     setTokens,
 } from "../api/client";
+import { resetOverlays } from "../games/overlay";
+import { resetGames } from "../games/store";
+import { dropDevice } from "../notifications/remote";
 
 const ACCOUNT_KEY = "projetoh:account";
 
@@ -270,6 +273,49 @@ export async function getSession(): Promise<Account | null> {
 async function saveAccount(account: Account): Promise<void> {
     cached = account;
     await AsyncStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Tema e aviso de instalar ficam: são do aparelho, não da conta. */
+const FICA_NO_APARELHO = new Set(["projetoh:tema", "projetoh:install-dismissed"]);
+
+async function limparAparelho(): Promise<void> {
+    const chaves = await AsyncStorage.getAllKeys();
+    const daConta = chaves.filter(
+        (chave) => chave.startsWith("projetoh:") && !FICA_NO_APARELHO.has(chave),
+    );
+
+    cached = null;
+    await setTokens(null, null);
+    await Promise.all([resetGames(), resetOverlays()]);
+    await AsyncStorage.multiRemove(daConta);
+}
+
+export async function deleteAccount(): Promise<void> {
+    const conta = await loadMe();
+
+    if (!conta || !UUID.test(conta.id)) {
+        throw new ApiError(
+            "Não deu para confirmar sua conta agora. Entre de novo e tente outra vez.",
+            401,
+            [],
+            null,
+        );
+    }
+
+    await dropDevice().catch(() => {});
+
+    await apiFetch(`/users/${conta.id}`, { method: "DELETE", auth: true });
+
+    /** No PWA a sessão também vive em cookie; o logout pede para apagá-lo. */
+    await apiFetch("/auth/logout", {
+        method: "POST",
+        auth: true,
+        retryOn401: false,
+    }).catch(() => {});
+
+    await limparAparelho();
 }
 
 export async function signOut(): Promise<void> {
