@@ -11,6 +11,7 @@ import {
 } from "@expo-google-fonts/inter";
 
 import InstallPrompt from "../src/components/InstallPrompt";
+import { ToastHost } from "../src/components/Toast";
 import { ThemeProvider, useTheme } from "../src/design/theme";
 import { font, type } from "../src/design/tokens";
 import { registerPwa } from "../src/pwa/register";
@@ -78,6 +79,8 @@ function Raiz() {
                     options={{ title: "Criar conta", headerShown: false }}
                 />
             </Stack>
+
+            <ToastHost />
 
             <StatusBar style={isDark ? "light" : "dark"} />
         </SafeAreaProvider>

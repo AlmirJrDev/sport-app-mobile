@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import GameMap from "../src/components/GameMap";
+import { mostrarToast } from "../src/components/Toast";
 import {
     listModalities,
     listSports,
@@ -264,7 +265,7 @@ export default function NewGameScreen() {
         setNotice(null);
 
         try {
-            await createGame(
+            const criado = await createGame(
                 {
                     sport,
                     modality,
@@ -280,7 +281,7 @@ export default function NewGameScreen() {
                 { sportId, modalityId },
             );
 
-            router.back();
+            router.navigate({ pathname: "/", params: { novo: criado.id } });
         } catch (raw) {
             const motivo =
                 raw instanceof Error && raw.message
@@ -288,6 +289,7 @@ export default function NewGameScreen() {
                     : "Não deu para falar com o servidor.";
 
             setNotice(`O jogo não foi marcado. ${motivo}`);
+            mostrarToast("O jogo não foi marcado.", "erro");
         } finally {
             setSaving(false);
         }

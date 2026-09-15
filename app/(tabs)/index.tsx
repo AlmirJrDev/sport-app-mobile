@@ -1,5 +1,10 @@
 import { useCallback, useState } from "react";
-import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import {
+    Redirect,
+    useFocusEffect,
+    useLocalSearchParams,
+    useRouter,
+} from "expo-router";
 import {
     ActivityIndicator,
     Image,
@@ -16,6 +21,7 @@ import { useSession } from "../../src/auth/useSession";
 import GameList from "../../src/components/GameList";
 import GameMap from "../../src/components/GameMap";
 import GameSheet from "../../src/components/GameSheet";
+import { mostrarToast } from "../../src/components/Toast";
 import { Icon } from "../../src/design/icons";
 import { Avatar } from "../../src/design/pieces";
 import { useTheme, useThemedStyles } from "../../src/design/theme";
@@ -41,6 +47,7 @@ export default function MapScreen() {
     const { colors } = useTheme();
     const styles = useThemedStyles(criarEstilos);
     const router = useRouter();
+    const { novo } = useLocalSearchParams<{ novo?: string }>();
     const insets = useSafeAreaInsets();
     const { account, loading } = useSession();
     const { coordinate, status, permission, start } = useLocationTracking({
@@ -73,19 +80,47 @@ export default function MapScreen() {
 
     const limparSelecao = useCallback(() => setSelectedId(null), []);
 
-    const refresh = useCallback(() => {
-        listNearbyGames(center, RADIUS_KM).then((resultado) => {
-            setGames(resultado.games);
-            setErroApi(resultado.remoteError);
-        });
-    }, [center.latitude, center.longitude]);
+    const refresh = useCallback(
+        () =>
+            listNearbyGames(center, RADIUS_KM).then((resultado) => {
+                setGames(resultado.games);
+                setErroApi(resultado.remoteError);
+
+                return resultado;
+            }),
+        [center.latitude, center.longitude],
+    );
 
     useFocusEffect(
         useCallback(() => {
-            if (!isLocating && account) {
-                refresh();
+            if (isLocating || !account) {
+                return;
             }
-        }, [isLocating, refresh, account]),
+
+            refresh().then(({ games: lista, remoteError }) => {
+                if (!novo) {
+                    return;
+                }
+
+                router.setParams({ novo: undefined });
+
+                if (lista.some((game) => game.id === novo)) {
+                    setVista("mapa");
+                    setSelectedId(novo);
+                    mostrarToast("Jogo marcado! Ele já está no mapa.");
+                } else if (remoteError) {
+                    mostrarToast(
+                        "Jogo marcado, mas não deu para atualizar o mapa.",
+                        "erro",
+                    );
+                } else {
+                    mostrarToast(
+                        `Jogo marcado, mas ele não veio nos jogos a ${RADIUS_KM} km de você.`,
+                        "erro",
+                    );
+                }
+            });
+        }, [isLocating, refresh, account, novo]),
     );
 
     if (loading) {
