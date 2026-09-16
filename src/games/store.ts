@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { lerJson } from "../storage/json";
 import type { Game } from "./types";
 
 const KEY = "projetoh:games:v3";
@@ -15,9 +16,10 @@ export async function readGames(): Promise<Game[]> {
         return cache;
     }
 
-    const raw = await AsyncStorage.getItem(KEY);
-    const guardados = raw ? (JSON.parse(raw) as Game[]) : [];
-    const reais = guardados.filter(valeGuardar);
+    const guardados = await lerJson<Game[]>(KEY, []);
+    const reais = Array.isArray(guardados)
+        ? guardados.filter(valeGuardar)
+        : [];
 
     if (reais.length !== guardados.length) {
         await AsyncStorage.setItem(KEY, JSON.stringify(reais));

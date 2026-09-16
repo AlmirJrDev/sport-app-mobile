@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { lerJson } from "../storage/json";
 import type { Attendee, Score } from "./types";
 
 const KEY = "projetoh:overlay:v1";
@@ -25,8 +26,7 @@ async function readAll(): Promise<OverlayMap> {
         return cache;
     }
 
-    const raw = await AsyncStorage.getItem(KEY);
-    cache = raw ? (JSON.parse(raw) as OverlayMap) : {};
+    cache = await lerJson<OverlayMap>(KEY, {});
 
     return cache;
 }

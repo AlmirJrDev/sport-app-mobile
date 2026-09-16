@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { lerJson } from "../storage/json";
+
 const KEY = "projetoh:pending-verify";
 
 export interface PendingVerification {
@@ -14,9 +16,7 @@ export async function savePending(
 }
 
 export async function readPending(): Promise<PendingVerification | null> {
-    const raw = await AsyncStorage.getItem(KEY);
-
-    return raw ? (JSON.parse(raw) as PendingVerification) : null;
+    return lerJson<PendingVerification | null>(KEY, null);
 }
 
 export async function clearPending(): Promise<void> {

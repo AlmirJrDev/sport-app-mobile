@@ -9,6 +9,7 @@ import {
     setTokens,
 } from "../api/client";
 import { resetOverlays } from "../games/overlay";
+import { lerJson } from "../storage/json";
 import { resetGames } from "../games/store";
 import { dropDevice } from "../notifications/remote";
 
@@ -260,10 +261,10 @@ export async function getSession(): Promise<Account | null> {
         return fresh;
     }
 
-    const stored = await AsyncStorage.getItem(ACCOUNT_KEY);
+    const stored = await lerJson<Account | null>(ACCOUNT_KEY, null);
 
-    if (stored) {
-        cached = JSON.parse(stored) as Account;
+    if (stored && typeof stored.id === "string") {
+        cached = stored;
         return cached;
     }
 

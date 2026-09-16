@@ -82,12 +82,17 @@ export default function MapScreen() {
 
     const refresh = useCallback(
         () =>
-            listNearbyGames(center, RADIUS_KM).then((resultado) => {
-                setGames(resultado.games);
-                setErroApi(resultado.remoteError);
+            listNearbyGames(center, RADIUS_KM)
+                .catch(() => ({
+                    games: [] as Game[],
+                    remoteError: "Não deu para carregar os jogos agora.",
+                }))
+                .then((resultado) => {
+                    setGames(resultado.games);
+                    setErroApi(resultado.remoteError);
 
-                return resultado;
-            }),
+                    return resultado;
+                }),
         [center.latitude, center.longitude],
     );
 

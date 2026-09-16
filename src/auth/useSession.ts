@@ -13,11 +13,14 @@ export function useSession(): SessionState {
     const [account, setAccount] = useState<Account | null>(null);
     const [loading, setLoading] = useState(true);
 
+    /** Qualquer falha vira "sem sessão": senão a tela fica carregando para sempre. */
     const reload = useCallback(() => {
-        getSession().then((found) => {
-            setAccount(found);
-            setLoading(false);
-        });
+        getSession()
+            .catch(() => null)
+            .then((found) => {
+                setAccount(found);
+                setLoading(false);
+            });
     }, []);
 
     useEffect(() => {
