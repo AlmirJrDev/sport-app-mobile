@@ -59,6 +59,19 @@ function desenharArea(map: MapLibreMap, area: AreaBusca, cor: string) {
     });
 }
 
+/** Coordenada quebrada derruba o MapLibre e leva a tela junto. */
+function ehPonto(ponto?: Coordinates | null): ponto is Coordinates {
+    return (
+        !!ponto &&
+        Number.isFinite(ponto.latitude) &&
+        Number.isFinite(ponto.longitude)
+    );
+}
+
+function temCoordenada(game: Game): boolean {
+    return ehPonto(game.coordinates);
+}
+
 function pontoVoce(canvas: string): HTMLDivElement {
     const element = document.createElement("div");
 
@@ -93,7 +106,7 @@ export default function GameMap({
     const baseRef = useRef<BaseAtual>(isDark ? "escuro" : "claro");
     const [semMapa, setSemMapa] = useState(false);
 
-    const area = raioKm ? areaDeBusca(center, raioKm) : null;
+    const area = raioKm && ehPonto(center) ? areaDeBusca(center, raioKm) : null;
     const areaRef = useRef(area);
     const corRef = useRef(colors.primary);
 
@@ -213,15 +226,19 @@ export default function GameMap({
             return;
         }
 
-        if (!voce) {
+        if (!ehPonto(voce)) {
             voceRef.current?.remove();
             voceRef.current = null;
             return;
         }
 
+        /** A posição vem antes de entrar no mapa: sem ela o marcador quebra. */
         if (!voceRef.current) {
-            voceRef.current = new Marker({ element: pontoVoce(colors.canvas) });
-            voceRef.current.addTo(map);
+            voceRef.current = new Marker({ element: pontoVoce(colors.canvas) })
+                .setLngLat([voce.longitude, voce.latitude])
+                .addTo(map);
+
+            return;
         }
 
         voceRef.current.setLngLat([voce.longitude, voce.latitude]);
@@ -237,7 +254,7 @@ export default function GameMap({
         markersRef.current.forEach((marker) => marker.remove());
         markersRef.current = [];
 
-        games.forEach((game) => {
+        games.filter(temCoordenada).forEach((game) => {
             const element = document.createElement("div");
             const isSelected = game.id === selectedGameId;
             const size = isSelected ? 62 : 46;

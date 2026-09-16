@@ -29,13 +29,24 @@ type Mensagem =
 /** A origem dá um Referer às imagens do mapa; o OpenStreetMap recusa pedido sem ele. */
 const ORIGEM = "https://sport-app-mobile.vercel.app/";
 
+/** Coordenada quebrada derruba o mapa dentro da WebView. */
+function ehPonto(ponto?: Coordinates | null): ponto is Coordinates {
+    return (
+        !!ponto &&
+        Number.isFinite(ponto.latitude) &&
+        Number.isFinite(ponto.longitude)
+    );
+}
+
 function pinos(games: Game[]): PinoMapa[] {
-    return games.map((game) => ({
-        id: game.id,
-        letra: game.sport.slice(0, 1).toUpperCase(),
-        lat: game.coordinates.latitude,
-        lng: game.coordinates.longitude,
-    }));
+    return games
+        .filter((game) => ehPonto(game.coordinates))
+        .map((game) => ({
+            id: game.id,
+            letra: game.sport.slice(0, 1).toUpperCase(),
+            lat: game.coordinates.latitude,
+            lng: game.coordinates.longitude,
+        }));
 }
 
 export default function GameMap({
@@ -52,8 +63,10 @@ export default function GameMap({
     const webview = useRef<WebView>(null);
     const pronto = useRef(false);
 
-    const area = raioKm ? areaDeBusca(center, raioKm) : null;
-    const pontoVoce = voce ? { lat: voce.latitude, lng: voce.longitude } : null;
+    const area = raioKm && ehPonto(center) ? areaDeBusca(center, raioKm) : null;
+    const pontoVoce = ehPonto(voce)
+        ? { lat: voce.latitude, lng: voce.longitude }
+        : null;
 
     const valores = {
         games,
