@@ -18,6 +18,14 @@ import {
     type Palette,
 } from "../../src/design/tokens";
 import CaixaMotivo from "../../src/components/CaixaMotivo";
+import {
+    acceptFriend,
+    addFriend,
+    cancelFriend,
+    friendshipWith,
+    type FriendshipState,
+} from "../../src/friends/remote";
+import { getPlayer } from "../../src/player/identity";
 import { mostrarToast } from "../../src/components/Toast";
 import { MOTIVOS_PESSOA, blockUser } from "../../src/moderation/remote";
 import { getProfile, type Profile } from "../../src/profile/remote";
@@ -33,6 +41,37 @@ export default function AtletaScreen() {
     const [perfil, setPerfil] = useState<Profile | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [bloqueando, setBloqueando] = useState(false);
+    const [amizade, setAmizade] = useState<FriendshipState | null>(null);
+    const [mexendoAmizade, setMexendoAmizade] = useState(false);
+    const [souEu, setSouEu] = useState(false);
+
+    useEffect(() => {
+        let ativo = true;
+
+        getPlayer()
+            .then((eu) => {
+                if (!ativo) {
+                    return;
+                }
+
+                if (eu.id === id) {
+                    setSouEu(true);
+                    return Promise.resolve(null);
+                }
+
+                return friendshipWith(id);
+            })
+            .then((estado) => {
+                if (ativo && estado) {
+                    setAmizade(estado);
+                }
+            })
+            .catch(() => {});
+
+        return () => {
+            ativo = false;
+        };
+    }, [id]);
 
     useEffect(() => {
         getProfile(id).then((encontrado) => {
@@ -61,6 +100,56 @@ export default function AtletaScreen() {
             </View>
         );
     }
+
+    const pediramParaMim =
+        amizade?.status === "PENDING" && !amizade.souQuemPediu;
+
+    const rotuloAmizade = mexendoAmizade
+        ? "Um instante…"
+        : amizade?.status === "ACCEPTED"
+          ? "Amigos · desfazer"
+          : pediramParaMim
+            ? "Aceitar pedido de amizade"
+            : amizade?.status === "PENDING"
+              ? "Pedido enviado · cancelar"
+              : "Adicionar como amigo";
+
+    const mudarAmizade = async () => {
+        if (!amizade) {
+            return;
+        }
+
+        setMexendoAmizade(true);
+
+        try {
+            if (amizade.status === "ACCEPTED" || amizade.status === "PENDING") {
+                const acao = pediramParaMim ? acceptFriend : cancelFriend;
+
+                await acao(amizade.friendshipId ?? "");
+                mostrarToast(
+                    pediramParaMim
+                        ? "Pedido aceito."
+                        : amizade.status === "ACCEPTED"
+                          ? "Amizade desfeita."
+                          : "Pedido cancelado.",
+                );
+            } else {
+                await addFriend(id);
+                mostrarToast("Pedido de amizade enviado.");
+            }
+
+            setAmizade(await friendshipWith(id));
+        } catch (raw) {
+            mostrarToast(
+                raw instanceof Error
+                    ? raw.message
+                    : "Não deu para fazer isso agora.",
+                "erro",
+            );
+        } finally {
+            setMexendoAmizade(false);
+        }
+    };
 
     const iniciais = perfil.name
         .split(" ")
@@ -114,6 +203,28 @@ export default function AtletaScreen() {
                     </View>
                 ) : null}
             </View>
+
+            {amizade && !souEu ? (
+                <Pressable
+                    style={[
+                        styles.amizade,
+                        amizade.status === "ACCEPTED" && styles.amizadeFeita,
+                    ]}
+                    disabled={mexendoAmizade}
+                    onPress={mudarAmizade}
+                >
+                    <Text
+                        style={[
+                            type.label,
+                            amizade.status === "ACCEPTED"
+                                ? styles.amizadeTextoFeita
+                                : styles.amizadeTexto,
+                        ]}
+                    >
+                        {rotuloAmizade}
+                    </Text>
+                </Pressable>
+            ) : null}
 
             <Pressable
                 style={styles.compartilhar}
@@ -232,6 +343,23 @@ const criarEstilos = (c: Palette) =>
         borderColor: c.ink,
     },
     compartilharTexto: {
+        color: c.ink,
+    },
+    amizade: {
+        alignItems: "center",
+        paddingVertical: spacing.md,
+        borderRadius: radius.sm,
+        backgroundColor: c.primary,
+    },
+    amizadeFeita: {
+        backgroundColor: "transparent",
+        borderWidth: 1,
+        borderColor: c.chipBorder,
+    },
+    amizadeTexto: {
+        color: c.onPrimary,
+    },
+    amizadeTextoFeita: {
         color: c.ink,
     },
     bloquear: {

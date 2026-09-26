@@ -125,6 +125,15 @@ export default function PerfilScreen() {
                         </Text>
                     </Pressable>
 
+                    <Pressable
+                        style={styles.acao}
+                        onPress={() => router.push("/amigos")}
+                    >
+                        <Text style={[type.labelCampo, styles.acaoTexto]}>
+                            Amigos
+                        </Text>
+                    </Pressable>
+
                     {perfil ? (
                         <Pressable
                             style={styles.acao}
