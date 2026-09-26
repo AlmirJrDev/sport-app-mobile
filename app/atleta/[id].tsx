@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     ActivityIndicator,
     Image,
@@ -17,6 +17,9 @@ import {
     type,
     type Palette,
 } from "../../src/design/tokens";
+import CaixaMotivo from "../../src/components/CaixaMotivo";
+import { mostrarToast } from "../../src/components/Toast";
+import { MOTIVOS_PESSOA, blockUser } from "../../src/moderation/remote";
 import { getProfile, type Profile } from "../../src/profile/remote";
 import { profileText } from "../../src/share/invite";
 import { shareInvite } from "../../src/share/share";
@@ -25,9 +28,11 @@ export default function AtletaScreen() {
     const { colors } = useTheme();
     const styles = useThemedStyles(criarEstilos);
     const { id } = useLocalSearchParams<{ id: string }>();
+    const router = useRouter();
 
     const [perfil, setPerfil] = useState<Profile | null>(null);
     const [carregando, setCarregando] = useState(true);
+    const [bloqueando, setBloqueando] = useState(false);
 
     useEffect(() => {
         getProfile(id).then((encontrado) => {
@@ -120,6 +125,35 @@ export default function AtletaScreen() {
                     Compartilhar este perfil
                 </Text>
             </Pressable>
+
+            {bloqueando ? (
+                <CaixaMotivo
+                    titulo={`Bloquear ${perfil.name || "este atleta"}?`}
+                    explicacao="Vocês param de se ver no app: os jogos de um somem para o outro."
+                    motivos={MOTIVOS_PESSOA}
+                    rotuloEnviar="Bloquear"
+                    onCancelar={() => setBloqueando(false)}
+                    onEnviar={async (motivo, detalhe) => {
+                        await blockUser(
+                            perfil.id,
+                            detalhe.trim() ? `${motivo}: ${detalhe}` : motivo,
+                        );
+                        setBloqueando(false);
+                        mostrarToast("Pessoa bloqueada.");
+                        router.back();
+                    }}
+                />
+            ) : (
+                <Pressable
+                    style={styles.bloquear}
+                    hitSlop={8}
+                    onPress={() => setBloqueando(true)}
+                >
+                    <Text style={[type.label, styles.bloquearTexto]}>
+                        Bloquear e denunciar
+                    </Text>
+                </Pressable>
+            )}
         </ScrollView>
     );
 }
@@ -199,5 +233,12 @@ const criarEstilos = (c: Palette) =>
     },
     compartilharTexto: {
         color: c.ink,
+    },
+    bloquear: {
+        alignSelf: "center",
+        paddingVertical: spacing.sm,
+    },
+    bloquearTexto: {
+        color: c.mute,
     },
 });

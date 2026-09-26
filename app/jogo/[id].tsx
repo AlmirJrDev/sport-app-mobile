@@ -19,7 +19,10 @@ import {
     toggleArrival,
     toggleAttendance,
 } from "../../src/games/service";
+import CaixaMotivo from "../../src/components/CaixaMotivo";
 import Placar from "../../src/components/Placar";
+import { mostrarToast } from "../../src/components/Toast";
+import { MOTIVOS_JOGO, reportGame } from "../../src/moderation/remote";
 import { Icon } from "../../src/design/icons";
 import { Avatar, Stripes } from "../../src/design/pieces";
 import { useTheme, useThemedStyles } from "../../src/design/theme";
@@ -65,6 +68,7 @@ export default function GameScreen() {
     const [loading, setLoading] = useState(true);
     const [avisoAcao, setAvisoAcao] = useState<string | null>(null);
     const [ocupado, setOcupado] = useState(false);
+    const [denunciando, setDenunciando] = useState(false);
 
     const load = useCallback(async () => {
         const [found, player] = await Promise.all([getGame(id), getPlayer()]);
@@ -350,7 +354,14 @@ export default function GameScreen() {
                             </Text>
                         ) : (
                             game.attendees.map((pessoa) => (
-                                <View style={styles.pessoa} key={pessoa.playerId}>
+                                <Pressable
+                                    style={styles.pessoa}
+                                    key={pessoa.playerId}
+                                    disabled={pessoa.playerId === playerId}
+                                    onPress={() =>
+                                        router.push(`/atleta/${pessoa.playerId}`)
+                                    }
+                                >
                                     <Avatar name={pessoa.name} size={40} />
 
                                     <View style={styles.pessoaTexto}>
@@ -383,7 +394,7 @@ export default function GameScreen() {
                                     >
                                         {pessoa.arrived ? "chegou" : "a caminho"}
                                     </Text>
-                                </View>
+                                </Pressable>
                             ))
                         )}
 
@@ -408,6 +419,35 @@ export default function GameScreen() {
                             </Pressable>
                         ) : null}
                     </View>
+
+                    {game.source === "api" && !isOwner ? (
+                        denunciando ? (
+                            <CaixaMotivo
+                                titulo="Denunciar este jogo"
+                                explicacao="Conte o que há de errado. A gente analisa e pode tirar o jogo do mapa."
+                                motivos={MOTIVOS_JOGO}
+                                rotuloEnviar="Enviar denúncia"
+                                onCancelar={() => setDenunciando(false)}
+                                onEnviar={async (motivo, detalhe) => {
+                                    await reportGame(game.id, motivo, detalhe);
+                                    setDenunciando(false);
+                                    mostrarToast("Denúncia enviada. Obrigado.");
+                                }}
+                            />
+                        ) : (
+                            <Pressable
+                                style={styles.denunciar}
+                                hitSlop={8}
+                                onPress={() => setDenunciando(true)}
+                            >
+                                <Text
+                                    style={[type.labelCampo, styles.denunciarTexto]}
+                                >
+                                    Denunciar jogo
+                                </Text>
+                            </Pressable>
+                        )
+                    ) : null}
 
                     {isOwner && game.source === "local" ? (
                         <Pressable
@@ -643,6 +683,13 @@ const criarEstilos = (c: Palette) =>
     },
     chegadaTexto: {
         color: c.ink,
+    },
+    denunciar: {
+        alignSelf: "center",
+        paddingVertical: spacing.sm,
+    },
+    denunciarTexto: {
+        color: c.mute,
     },
     apagar: {
         alignItems: "center",
