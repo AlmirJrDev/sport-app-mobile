@@ -71,6 +71,8 @@ function Raiz() {
                 />
                 <Stack.Screen name="atleta/[id]" options={{ title: "Atleta" }} />
                 <Stack.Screen name="amigos" options={{ title: "Amigos" }} />
+                <Stack.Screen name="times" options={{ title: "Times" }} />
+                <Stack.Screen name="time/[id]" options={{ title: "Time" }} />
                 <Stack.Screen
                     name="entrar"
                     options={{ title: "Entrar", headerShown: false }}

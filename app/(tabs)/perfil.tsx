@@ -134,6 +134,15 @@ export default function PerfilScreen() {
                         </Text>
                     </Pressable>
 
+                    <Pressable
+                        style={styles.acao}
+                        onPress={() => router.push("/times")}
+                    >
+                        <Text style={[type.labelCampo, styles.acaoTexto]}>
+                            Times
+                        </Text>
+                    </Pressable>
+
                     {perfil ? (
                         <Pressable
                             style={styles.acao}
