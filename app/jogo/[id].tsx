@@ -19,6 +19,7 @@ import {
     toggleArrival,
     toggleAttendance,
 } from "../../src/games/service";
+import Placar from "../../src/components/Placar";
 import { Icon } from "../../src/design/icons";
 import { Avatar, Stripes } from "../../src/design/pieces";
 import { useTheme, useThemedStyles } from "../../src/design/theme";
@@ -273,6 +274,16 @@ export default function GameScreen() {
                                 : `${livres} ${livres === 1 ? "vaga livre" : "vagas livres"} · ${chegaram} já na quadra`}
                         </Text>
                     </View>
+
+                    {game.source === "api" ? (
+                        <Placar
+                            gameId={game.id}
+                            playerId={playerId}
+                            souParticipante={Boolean(me)}
+                            aoVivo={aoVivo}
+                            podeCriar={isOwner || Boolean(me)}
+                        />
+                    ) : null}
 
                     {temSituacao ? (
                     <View style={styles.bloco}>
